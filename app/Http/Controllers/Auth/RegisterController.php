@@ -28,9 +28,11 @@ class RegisterController extends Controller
             'name' => ['required', 'string', 'max:255', 'regex:/^[\pL\s]+$/u'],
             'email' => ['required', 'string', 'email', 'max:255', 'unique:users', 'ends_with:@gmail.com'],
             'password' => ['required', 'string', 'min:8', 'confirmed'],
+            'role' => ['required', 'in:admin,user'],
         ], [
             'name.regex' => 'Le nom ne doit contenir que des lettres (pas de chiffres).',
             'email.ends_with' => "L'adresse email doit être une adresse Gmail (se terminant par @gmail.com).",
+            'role.in' => 'Le type de compte doit être Admin ou User.',
         ]);
     }
 
@@ -40,7 +42,7 @@ class RegisterController extends Controller
             'name' => $data['name'],
             'email' => $data['email'],
             'password' => Hash::make($data['password']),
-            'role' => UserRole::User,
+            'role' => UserRole::from($data['role']),
         ]);
     }
 
@@ -60,6 +62,7 @@ class RegisterController extends Controller
                 'message' => 'Inscription réussie !',
                 'name' => $user->name,
                 'email' => $user->email,
+                'role' => $user->role->value,
             ]);
         }
 

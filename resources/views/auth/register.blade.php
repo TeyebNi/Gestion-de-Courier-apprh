@@ -44,6 +44,16 @@
                             </div>
                         </div>
 
+                        <div class="row mb-3">
+                            <label class="col-md-4 col-form-label text-md-end">Compte :</label>
+                            <div class="col-md-6">
+                                <input type="hidden" name="role" id="role" value="user">
+                                <button type="button" class="btn btn-outline-primary role-btn" data-role="admin">Admin</button>
+                                <button type="button" class="btn btn-primary role-btn" data-role="user">User</button>
+                                <span class="invalid-feedback d-block" data-error-for="role"></span>
+                            </div>
+                        </div>
+
                         <div class="row mb-0">
                             <div class="col-md-6 offset-md-4">
                                 <button type="submit" id="registerBtn" class="btn btn-primary">
@@ -65,7 +75,7 @@
     </div>
 </div>
 
-<!-- Modale de succès, façon confirmation de transfert -->
+<!-- Modale de succès -->
 <div id="successOverlay" style="display:none; position:fixed; inset:0; background:rgba(0,0,0,0.5); z-index:2000; align-items:center; justify-content:center;">
     <div style="background:#fff; border-radius:12px; padding:32px; width:90%; max-width:360px; text-align:center; box-shadow:0 10px 30px rgba(0,0,0,0.2);">
         <div style="margin:0 auto 16px; width:64px; height:64px; border-radius:50%; border:3px solid #28a745; display:flex; align-items:center; justify-content:center;">
@@ -78,6 +88,19 @@
 </div>
 
 <script>
+// Sélection Admin / User
+document.querySelectorAll('.role-btn').forEach(function (btn) {
+    btn.addEventListener('click', function () {
+        document.querySelectorAll('.role-btn').forEach(function (b) {
+            b.classList.remove('btn-primary');
+            b.classList.add('btn-outline-primary');
+        });
+        this.classList.remove('btn-outline-primary');
+        this.classList.add('btn-primary');
+        document.getElementById('role').value = this.dataset.role;
+    });
+});
+
 document.getElementById('registerForm').addEventListener('submit', function (e) {
     e.preventDefault();
 
@@ -85,7 +108,6 @@ document.getElementById('registerForm').addEventListener('submit', function (e) 
     var btn = document.getElementById('registerBtn');
     var errorsBox = document.getElementById('ajax-errors');
 
-    // Réinitialise les erreurs affichées
     errorsBox.innerHTML = '';
     document.querySelectorAll('[data-error-for]').forEach(function (el) { el.textContent = ''; });
     document.querySelectorAll('.form-control').forEach(function (el) { el.classList.remove('is-invalid'); });
@@ -110,7 +132,7 @@ document.getElementById('registerForm').addEventListener('submit', function (e) 
         btn.disabled = false;
 
         if (result.status === 200 && result.data.success) {
-            document.getElementById('successDetails').textContent = result.data.name + ' (' + result.data.email + ')';
+            document.getElementById('successDetails').textContent = result.data.name + ' (' + result.data.email + ') - ' + result.data.role;
             document.getElementById('successOverlay').style.display = 'flex';
             form.reset();
         } else if (result.status === 422) {
@@ -132,7 +154,7 @@ document.getElementById('registerForm').addEventListener('submit', function (e) 
 });
 
 document.getElementById('closeSuccess').addEventListener('click', function () {
-    document.getElementById("successOverlay").style.display = "none";
+    document.getElementById('successOverlay').style.display = 'none';
 });
 </script>
 @endsection
