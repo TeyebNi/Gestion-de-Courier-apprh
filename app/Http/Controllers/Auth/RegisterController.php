@@ -15,7 +15,7 @@ class RegisterController extends Controller
 {
     use RegistersUsers;
 
-    protected $redirectTo = '/home';
+    protected $redirectTo = '/login';
 
     public function __construct()
     {
@@ -54,7 +54,7 @@ class RegisterController extends Controller
 
         event(new Registered($user));
 
-        $this->guard()->login($user);
+        // Pas de connexion automatique : l'utilisateur doit se connecter lui-même.
 
         if ($request->wantsJson() || $request->ajax()) {
             return response()->json([
@@ -66,8 +66,6 @@ class RegisterController extends Controller
             ]);
         }
 
-        session()->flash('status', 'Inscription réussie ! Bienvenue, ' . $user->name . '.');
-
-        return redirect($this->redirectPath());
+        return redirect('/login')->with('status', 'Inscription réussie ! Vous pouvez maintenant vous connecter.');
     }
 }

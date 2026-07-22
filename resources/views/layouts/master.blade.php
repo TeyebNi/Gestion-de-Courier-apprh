@@ -138,13 +138,28 @@
                                     <a class="dropdown-item" href="#">Something else here</a>
                                 </div>
                             </li>
-                            <li class="nav-item">
-                                <a class="nav-link" href="#pablo">
+                            <li class="nav-item dropdown">
+                                <a class="nav-link dropdown-toggle" href="#" id="userAccountDropdown" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
                                     <i class="now-ui-icons users_single-02"></i>
                                     <p>
-                                        <span class="d-lg-none d-md-block">Account</span>
+                                        <span class="d-lg-none d-md-block">
+                                            {{ auth()->check() ? auth()->user()->name : 'Compte' }}
+                                        </span>
                                     </p>
                                 </a>
+                                <div class="dropdown-menu dropdown-menu-right" aria-labelledby="userAccountDropdown">
+                                    @auth
+                                        <span class="dropdown-item-text">
+                                            <strong>{{ auth()->user()->name }}</strong><br>
+                                            <small class="text-muted">{{ auth()->user()->email }}</small><br>
+                                            <span class="badge badge-{{ auth()->user()->isAdmin() ? 'danger' : 'info' }}">
+                                                {{ auth()->user()->isAdmin() ? 'Admin' : 'User' }}
+                                            </span>
+                                        </span>
+                                        <div class="dropdown-divider"></div>
+                                        <a class="dropdown-item" href="{{ route('auth.login.logout') }}"><i class="now-ui-icons media-1_button-power"></i> Logout</a>
+                                    @endauth
+                                </div>
                             </li>
                         </ul>
                     </div>
@@ -213,7 +228,7 @@
 (function () {
     var logoutUrl = "{{ route('auth.login.logout') }}";
     var keepAliveUrl = "{{ route('keep-alive') }}";
-    var timeoutMinutes = 15;
+    var timeoutMinutes = 2;
     var warningBeforeMinutes = 1;
     var inactivityTimer, warningTimer;
     var lastPing = 0;

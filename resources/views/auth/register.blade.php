@@ -154,7 +154,7 @@ document.getElementById('registerForm').addEventListener('submit', function (e) 
 });
 
 document.getElementById('closeSuccess').addEventListener('click', function () {
-    document.getElementById('successOverlay').style.display = 'none';
+    window.location.href = "{{ route('login') }}";
 });
 </script>
 @endsection

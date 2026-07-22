@@ -25,8 +25,11 @@
 
                 <div class="mb-3">
                     <label for="email" class="form-label">{{ __('Email Address') }}</label>
-                    <input id="email" type="email" class="form-control @error('email') is-invalid @enderror"
-                           name="email" value="{{ old('email') }}" required autofocus autocomplete="username">
+                    <div class="input-group">
+                        <span class="input-group-text">&#9993;</span>
+                        <input id="email" type="email" class="form-control @error('email') is-invalid @enderror"
+                               name="email" value="{{ old('email') }}" required autofocus autocomplete="username">
+                    </div>
                     @error('email')
                         <span class="invalid-feedback d-block">{{ $message }}</span>
                     @enderror
@@ -35,15 +38,16 @@
                 <div class="mb-3">
                     <label for="password" class="form-label">{{ __('Password') }}</label>
                     <div class="input-group">
+                        <span class="input-group-text">&#128274;</span>
                         <input id="password" type="password" class="form-control @error('password') is-invalid @enderror"
                                name="password" required autocomplete="current-password">
                         <button class="btn btn-outline-secondary" type="button" id="togglePassword" style="min-width: 42px;">
-                            <span id="toggleIcon">👁</span>
+                            <span id="toggleIcon">&#128065;</span>
                         </button>
-                        @error('password')
-                            <span class="invalid-feedback d-block">{{ $message }}</span>
-                        @enderror
                     </div>
+                    @error('password')
+                        <span class="invalid-feedback d-block">{{ $message }}</span>
+                    @enderror
                 </div>
 
                 <div class="d-flex align-items-center justify-content-between mb-3">
@@ -82,10 +86,10 @@
         const icon = document.getElementById('toggleIcon');
         if (passwordInput.type === 'password') {
             passwordInput.type = 'text';
-            icon.textContent = '🙈';
+            icon.textContent = '\u{1F648}';
         } else {
             passwordInput.type = 'password';
-            icon.textContent = '👁';
+            icon.textContent = '\u{1F441}';
         }
     });
 </script>
