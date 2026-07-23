@@ -7,6 +7,8 @@ use App\Http\Controllers\TypedemController;
 use App\Http\Controllers\OrientationController;
 use App\Http\Controllers\RemarqueController;
 use App\Http\Controllers\AdminController;
+use App\Http\Controllers\UserController;
+use App\Http\Controllers\ServiceNotificationController;
 
 // Routes d'authentification (login, register, mot de passe oublié...)
 Auth::routes();
@@ -30,6 +32,9 @@ Route::middleware('auth')->group(function () {
     Route::get('/export-pdf', [TabdepotController::class, 'exportPDF1']);
     Route::get('invoice', [TabdepotController::class, 'exportPDF']);
 
+    Route::get('notifications', [ServiceNotificationController::class, 'index'])->name('notifications.index');
+    Route::patch('notifications/{notification}/read', [ServiceNotificationController::class, 'markRead'])->name('notifications.read');
+
     // Réservé aux administrateurs (pages de configuration)
     Route::middleware('admin')->group(function () {
         Route::get('affectation', [AffectationController::class, 'index'])->name('affectation.index');
@@ -42,5 +47,9 @@ Route::middleware('auth')->group(function () {
         Route::post('typedem', [TypedemController::class, 'store'])->name('typedem.store');
 
         Route::get('exportpdf', [AdminController::class, 'exportpdf'])->name('exportpdf');
+
+        Route::get('utilisateurs', [UserController::class, 'index'])->name('users.index');
+        Route::put('utilisateurs/{user}', [UserController::class, 'update'])->name('users.update');
+        Route::delete('utilisateurs/{user}', [UserController::class, 'destroy'])->name('users.destroy');
     });
 });

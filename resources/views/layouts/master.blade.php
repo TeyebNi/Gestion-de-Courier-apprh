@@ -54,9 +54,14 @@
                     </li>
                     @endif
                     <li>
-                        <a href="{{('')}}">
+                        <a href="{{('notifications')}}">
                             <i class="now-ui-icons ui-1_bell-53"></i>
-                            <p>Notifications</p>
+                            <p>Notifications
+                                @php $unread = \App\Models\ServiceNotification::where('is_read', false)->count(); @endphp
+                                @if($unread > 0)
+                                    <span class="badge badge-danger">{{ $unread }}</span>
+                                @endif
+                            </p>
                         </a>
                     </li>
                     <li>
@@ -76,6 +81,12 @@
                         <a href="{{('typedem')}}">
                             <i class="now-ui-icons text_caps-small"></i>
                             <p>Type Demande</p>
+                        </a>
+                    </li>
+                    <li>
+                        <a href="{{('utilisateurs')}}">
+                            <i class="now-ui-icons users_single-02"></i>
+                            <p>Les Utilisateurs</p>
                         </a>
                     </li>
                     @endif
@@ -250,7 +261,20 @@
 
     function showWarning() {
         if (confirm("Vous allez être déconnecté dans " + warningBeforeMinutes + " minute(s) pour cause d'inactivité. Cliquez sur OK pour rester connecté.")) {
-            resetTimers();
+            // Vérifie que la session est encore vraiment valide côté serveur
+            // avant de relancer les minuteurs (le temps de répondre au message
+            // peut avoir suffi à faire expirer la session pendant ce temps).
+            fetch(keepAliveUrl, { credentials: 'same-origin', redirect: 'manual' })
+                .then(function (response) {
+                    if (response.type === 'opaqueredirect' || response.status === 0 || response.status === 401 || response.status === 419) {
+                        window.location.href = logoutUrl;
+                    } else {
+                        resetTimers();
+                    }
+                })
+                .catch(function () {
+                    window.location.href = logoutUrl;
+                });
         }
     }
 
