@@ -28,11 +28,9 @@ class RegisterController extends Controller
             'name' => ['required', 'string', 'max:255', 'regex:/^[\pL\s]+$/u'],
             'email' => ['required', 'string', 'email', 'max:255', 'unique:users', 'ends_with:@gmail.com'],
             'password' => ['required', 'string', 'min:8', 'confirmed'],
-            'role' => ['required', 'in:admin,user'],
         ], [
-            'name.regex' => 'Le nom ne doit contenir que des lettres (pas de chiffres).',
+            'name.regex' => 'Le nom ne doit contenir que des lettres.',
             'email.ends_with' => "L'adresse email doit être une adresse Gmail (se terminant par @gmail.com).",
-            'role.in' => 'Le type de compte doit être Admin ou User.',
         ]);
     }
 
@@ -42,7 +40,7 @@ class RegisterController extends Controller
             'name' => $data['name'],
             'email' => $data['email'],
             'password' => Hash::make($data['password']),
-            'role' => UserRole::from($data['role']),
+            'role' => UserRole::User,
         ]);
     }
 
@@ -59,13 +57,12 @@ class RegisterController extends Controller
         if ($request->wantsJson() || $request->ajax()) {
             return response()->json([
                 'success' => true,
-                'message' => 'Inscription réussie !',
+                'message' => 'Compte créé avec succès !',
                 'name' => $user->name,
                 'email' => $user->email,
-                'role' => $user->role->value,
             ]);
         }
 
-        return redirect('/login')->with('status', 'Inscription réussie ! Vous pouvez maintenant vous connecter.');
+        return redirect('/login')->with('status', 'Compte créé avec succès ! Vous pouvez maintenant vous connecter.');
     }
 }

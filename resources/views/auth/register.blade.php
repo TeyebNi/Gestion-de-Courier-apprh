@@ -5,7 +5,7 @@
     <div class="row justify-content-center">
         <div class="col-md-8">
             <div class="card">
-                <div class="card-header">{{ __('Register') }}</div>
+                <div class="card-header">Créer un compte</div>
 
                 <div class="card-body">
                     <div id="ajax-errors"></div>
@@ -14,7 +14,7 @@
                         @csrf
 
                         <div class="row mb-3">
-                            <label for="name" class="col-md-4 col-form-label text-md-end">{{ __('Name') }}</label>
+                            <label for="name" class="col-md-4 col-form-label text-md-end">Nom complet</label>
                             <div class="col-md-6">
                                 <input id="name" type="text" class="form-control" name="name" value="{{ old('name') }}" required autocomplete="name" autofocus>
                                 <span class="invalid-feedback d-block" data-error-for="name"></span>
@@ -22,7 +22,7 @@
                         </div>
 
                         <div class="row mb-3">
-                            <label for="email" class="col-md-4 col-form-label text-md-end">{{ __('Email Address') }}</label>
+                            <label for="email" class="col-md-4 col-form-label text-md-end">Adresse Email</label>
                             <div class="col-md-6">
                                 <input id="email" type="email" class="form-control" name="email" value="{{ old('email') }}" required autocomplete="email">
                                 <span class="invalid-feedback d-block" data-error-for="email"></span>
@@ -30,7 +30,7 @@
                         </div>
 
                         <div class="row mb-3">
-                            <label for="password" class="col-md-4 col-form-label text-md-end">{{ __('Password') }}</label>
+                            <label for="password" class="col-md-4 col-form-label text-md-end">Mot de passe</label>
                             <div class="col-md-6">
                                 <input id="password" type="password" class="form-control" name="password" required autocomplete="new-password">
                                 <span class="invalid-feedback d-block" data-error-for="password"></span>
@@ -38,34 +38,24 @@
                         </div>
 
                         <div class="row mb-3">
-                            <label for="password-confirm" class="col-md-4 col-form-label text-md-end">{{ __('Confirm Password') }}</label>
+                            <label for="password-confirm" class="col-md-4 col-form-label text-md-end">Confirmer le mot de passe</label>
                             <div class="col-md-6">
                                 <input id="password-confirm" type="password" class="form-control" name="password_confirmation" required autocomplete="new-password">
-                            </div>
-                        </div>
-
-                        <div class="row mb-3">
-                            <label class="col-md-4 col-form-label text-md-end">Compte :</label>
-                            <div class="col-md-6">
-                                <input type="hidden" name="role" id="role" value="user">
-                                <button type="button" class="btn btn-outline-primary role-btn" data-role="admin">Admin</button>
-                                <button type="button" class="btn btn-primary role-btn" data-role="user">User</button>
-                                <span class="invalid-feedback d-block" data-error-for="role"></span>
                             </div>
                         </div>
 
                         <div class="row mb-0">
                             <div class="col-md-6 offset-md-4">
                                 <button type="submit" id="registerBtn" class="btn btn-primary">
-                                    {{ __('Register') }}
+                                    Confirmer
                                 </button>
                             </div>
                         </div>
 
                         <div class="row mt-3">
                             <div class="col-md-6 offset-md-4">
-                                {{ __('Already have an account?') }}
-                                <a href="{{ route('login') }}">{{ __('Signin') }}</a>
+                                Vous avez déjà un compte ?
+                                <a href="{{ route('login') }}">Se connecter</a>
                             </div>
                         </div>
                     </form>
@@ -81,26 +71,13 @@
         <div style="margin:0 auto 16px; width:64px; height:64px; border-radius:50%; border:3px solid #28a745; display:flex; align-items:center; justify-content:center;">
             <span style="color:#28a745; font-size:32px;">&#10003;</span>
         </div>
-        <h5 style="margin-bottom:8px;">Inscription réussie !</h5>
+        <h5 style="margin-bottom:8px;">Compte créé avec succès !</h5>
         <p id="successDetails" style="color:#666; margin-bottom:20px;"></p>
         <button id="closeSuccess" class="btn btn-primary" style="width:100%;">OK</button>
     </div>
 </div>
 
 <script>
-// Sélection Admin / User
-document.querySelectorAll('.role-btn').forEach(function (btn) {
-    btn.addEventListener('click', function () {
-        document.querySelectorAll('.role-btn').forEach(function (b) {
-            b.classList.remove('btn-primary');
-            b.classList.add('btn-outline-primary');
-        });
-        this.classList.remove('btn-outline-primary');
-        this.classList.add('btn-primary');
-        document.getElementById('role').value = this.dataset.role;
-    });
-});
-
 document.getElementById('registerForm').addEventListener('submit', function (e) {
     e.preventDefault();
 
@@ -132,7 +109,7 @@ document.getElementById('registerForm').addEventListener('submit', function (e) 
         btn.disabled = false;
 
         if (result.status === 200 && result.data.success) {
-            document.getElementById('successDetails').textContent = result.data.name + ' (' + result.data.email + ') - ' + result.data.role;
+            document.getElementById('successDetails').textContent = result.data.name + ' (' + result.data.email + ')';
             document.getElementById('successOverlay').style.display = 'flex';
             form.reset();
         } else if (result.status === 422) {
@@ -143,6 +120,9 @@ document.getElementById('registerForm').addEventListener('submit', function (e) 
                 if (span) span.textContent = errors[field][0];
                 if (input) input.classList.add('is-invalid');
             });
+        } else if (result.status === 419) {
+            errorsBox.innerHTML = '<div class="alert alert-warning">Votre page a expiré (session trop ancienne). Rechargement automatique...</div>';
+            setTimeout(function () { window.location.reload(); }, 1500);
         } else {
             errorsBox.innerHTML = '<div class="alert alert-danger">Une erreur est survenue. Réessayez.</div>';
         }

@@ -22,7 +22,7 @@ class TabdepotController extends Controller
     {
       $typedem=Typedem::all();   
       $data=$request->all();
-      $client['tabdepot']=Tabdepot::orderby('id','asc')->paginate(50);
+      $client['tabdepot']=Tabdepot::orderby('id','asc')->paginate(5);
       return view('depot.index', $client)->with('typedem',$typedem);
     }
 
