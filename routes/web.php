@@ -31,6 +31,8 @@ Route::middleware('auth')->group(function () {
     Route::post('depot', [TabdepotController::class, 'store'])->name('depot.store');
     Route::get('/export-pdf', [TabdepotController::class, 'exportPDF1']);
     Route::get('invoice', [TabdepotController::class, 'exportPDF']);
+    Route::get('depot/print_reçu/{idt}',[TabdepotController::class,'print_facture'])->name('depot.print_reçu');
+
 
     Route::get('notifications', [ServiceNotificationController::class, 'index'])->name('notifications.index');
     Route::patch('notifications/{notification}/read', [ServiceNotificationController::class, 'markRead'])->name('notifications.read');

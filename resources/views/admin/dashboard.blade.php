@@ -20,7 +20,7 @@
 
 <body class="">
     <div class="wrapper ">
-        <div class="sidebar" data-color="orange">
+        <div class="sidebar" data-color="blue">
             <!--
         Tip 1: You can change the color of the sidebar using: data-color="blue | green | orange | red | yellow"
     -->
@@ -32,7 +32,7 @@
                     Courier
                 </a>
             </div>
-             <div class="sidebar-wrapper">
+              <div class="sidebar-wrapper">
                 <ul class="nav">
                     <li>
                         <a href="">
@@ -40,46 +40,61 @@
                             <p>Dashboard</p>
                         </a>
                     </li>
+                    @if(auth()->check() && auth()->user()->isAdmin())
                     <li>
-                        <a href="">
+                        <a href="{{('orientation')}}">
                             <i class="now-ui-icons education_atom"></i>
-                            <p>Rapport</p>
+                            <p>Orientation</p>
                         </a>
                     </li>
                     <li>
-                        <a href="">
+                        <a href="{{('affectation')}}">
                             <i class="now-ui-icons location_map-big"></i>
                             <p>Affectation</p>
                         </a>
                     </li>
+                    @endif
                     <li>
-                        <a href="">
+                        <a href="{{('notifications')}}">
                             <i class="now-ui-icons ui-1_bell-53"></i>
-                            <p>Notifications</p>
+                            <p>Notifications
+                                @php $unread = \App\Models\ServiceNotification::where('is_read', false)->count(); @endphp
+                                @if($unread > 0)
+                                    <span class="badge badge-danger">{{ $unread }}</span>
+                                @endif
+                            </p>
                         </a>
                     </li>
                     <li>
-                        <a href="">
+                        <a href="{{('')}}">
                             <i class="now-ui-icons users_single-02"></i>
                             <p>User Profile</p>
                         </a>
                     </li>
                     <li class="active">
-                        <a href="">
+                        <a href="{{('depot')}}">
                             <i class="now-ui-icons design_bullet-list-67"></i>
                             <p>Dépôt des Demandes</p>
                         </a>
                     </li>
+                    @if(auth()->check() && auth()->user()->isAdmin())
                     <li>
-                        <a href="">
+                        <a href="{{('typedem')}}">
                             <i class="now-ui-icons text_caps-small"></i>
-                            <p>Orientation</p>
+                            <p>Type Demande</p>
                         </a>
                     </li>
+                    <li>
+                        <a href="{{('utilisateurs')}}">
+                            <i class="now-ui-icons users_single-02"></i>
+                            <p>Les Utilisateurs</p>
+                        </a>
+                    </li>
+                    @endif
                     <li class="active-pro">
-                        <a href="">
-                            <i class=""></i>
-                            <p>Type de Demande</p>
+                        <a href="{{('typedem')}}">
+                            <i class="now-ui-icons arrows-1_cloud-download-93"></i>
+                            <p></p>
                         </a>
                     </li>
                 </ul>

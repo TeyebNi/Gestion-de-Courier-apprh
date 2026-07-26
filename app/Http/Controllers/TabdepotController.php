@@ -1,7 +1,7 @@
 <?php
 
 namespace App\Http\Controllers;
-
+use App\Http\Requests\TabdepotRequest;
 use App\Models\Tabdepot;
 use App\Models\Typedem;
 use App\Http\Controllers\Controller;
@@ -18,13 +18,51 @@ class TabdepotController extends Controller
         $this->sms = $sms;
     }
 
-    public function index(Request $request)
+  public function index(Request $request)
+    {
+
+      $search = $request->search;
+
+    
+
+    $search = $request->search;
+
+    $tabdepots = Tabdepot::query()
+        ->when($search, function ($query) use ($search) {
+            $query->where('typdm', 'like', "%{$search}%")
+                  ->orWhere('typdm', 'like', "%{$search}%");
+        })
+        ->paginate(5);
+
+    //return view('tabdepot.index', compact('tabdepots'));
+        $tabdepot = Tabdepot::all();
+        //$tabdepot = Tabdepot::get();
+        $tabdepot = Tabdepot::paginate(5);
+      $typedem=Typedem::all();   
+      //$data=$request->all();
+      return view('depot.index', compact('tabdepot', 'typedem','tabdepots'));
+    
+    }
+
+    public function indexTest(Request $request)
     {
       $typedem=Typedem::all();   
       $data=$request->all();
       $client['tabdepot']=Tabdepot::orderby('id','asc')->paginate(50);
       return view('depot.index', $client)->with('typedem',$typedem);
     }
+
+ public function print_facture($idt)
+    {
+        
+   $detailfac=Tabdepot::where('id',$idt)->get();
+   $detailf=Tabdepot::where('id',$idt)->first();
+    //$detailf=Tabdepot::where('idt',$idt)->first(s); 
+    //$detailsomme=Detailfacture::where('idFacture',$idFacture)->sum('montant');
+    //view()->share('facture',$facture);
+     return view('depot.print_reçu',compact('detailfac','detailf'));
+    }  
+
 
      public function exportPDF4()
     { 

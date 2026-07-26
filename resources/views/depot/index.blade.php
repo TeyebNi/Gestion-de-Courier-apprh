@@ -55,7 +55,7 @@ Dashboard Courier
                                             </th>
                                         </thead>
                                         <tbody>
-                                          @foreach($tabdepot as $key=>$tabdepot)
+                                          @foreach($tabdepots as $key=>$tabdepot)
                                             <tr>
                                                 <td>
                                                   {{++$key}}
@@ -81,7 +81,7 @@ Dashboard Courier
                                                   <td class="text-right">
                                                     {{$tabdepot->daterecp}}
                                                 </td>
-                                                <td><a  data-id="{{$tabdepot->id}}" data-typdm="{{$tabdepot->typdm}}" data-nom="{{$tabdepot->nom}}" data-nni="{{$tabdepot->nni}}" data-adresse="{{$tabdepot->adresse}}"  data-tel="{{$tabdepot->tel}}" data-daterecp="{{$tabdepot->daterecp}}"   data-toggle="modal" data-target="#exampleModal-show" type="button" class="btn btn-success"> Show</a>
+                                                <td> <a href ="{{route('depot.print_reçu',$tabdepot->id)}}"  type="button"  class="btn btn-success"> Print</a>
     <a  data-id="{{$tabdepot->id}}" data-typdm="{{$tabdepot->typdm}}" data-nom="{{$tabdepot->nom}}" data-nni="{{$tabdepot->nni}}" data-adresse="{{$tabdepot->adresse}}"  data-tel="{{$tabdepot->tel}}" data-daterecp="{{$tabdepot->daterecp}}" data-toggle="modal" data-target="#exampleModal-edit" type="button" class="btn btn-info"> Edit</a> 
  <a   data-id="{{$tabdepot->id}}" data-toggle="modal" data-target="#exampleModal-delete"  type="button" class="btn btn-danger"> Delete</a></td>
                                             </tr>
@@ -90,6 +90,9 @@ Dashboard Courier
                                     </table>
                                 </div>
                             </div>
+                            <div class="d-flex justify-content-center mt-3">
+                    {{ $tabdepots->appends(request()->query())->links() }}
+                </div>
                         </div>
                     </div>
                     <div class="col-md-12">

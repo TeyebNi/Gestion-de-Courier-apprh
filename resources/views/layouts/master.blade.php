@@ -22,7 +22,7 @@
 
 <body class="">
     <div class="wrapper ">
-        <div class="sidebar" data-color="orange"><!-- Tip 1: You can change the color sidebar using: data-color="blue | green | orange | red | yellow"-->
+        <div class="sidebar" data-color="blue"><!-- Tip 1: You can change the color sidebar using: data-color="blue | green | orange | red | yellow"-->
             <div class="logo">
                 <a href="http://www.creative-tim.com" class="simple-text logo-mini">
                     Gt
@@ -119,9 +119,9 @@
                         <span class="navbar-toggler-bar navbar-kebab"></span>
                     </button>
                     <div class="collapse navbar-collapse justify-content-end" id="navigation">
-                        <form>
+                        <form  method="get" action="{{route('depot.index')}}">
                             <div class="input-group no-border">
-                                <input type="text" value="" class="form-control" placeholder="Search...">
+                                <input type="text" class="form-control"   name="search" value="{{ request('search') }}"  placeholder="Search...">
                                 <span class="input-group-addon">
                                     <i class="now-ui-icons ui-1_zoom-bold"></i>
                                 </span>
