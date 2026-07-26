@@ -26,6 +26,7 @@ Les Utilisateurs
                             <th>Nom</th>
                             <th>Email</th>
                             <th>Rôle</th>
+                            <th>Service</th>
                             <th>Inscrit le</th>
                             <th class="text-right">Action</th>
                         </thead>
@@ -40,19 +41,21 @@ Les Utilisateurs
                                         {{ $u->isAdmin() ? 'Admin' : 'User' }}
                                     </span>
                                 </td>
+                                <td>{{ $u->service ?: '—' }}</td>
                                 <td>{{ $u->created_at?->format('Y-m-d') }}</td>
                                 <td class="text-right">
                                     <a data-id="{{ $u->id }}"
                                        data-name="{{ $u->name }}"
                                        data-role="{{ $u->role->value }}"
+                                       data-service="{{ $u->service }}"
                                        data-toggle="modal" data-target="#editUserModal"
-                                       type="button" class="btn btn-success btn-sm edit-user-btn">Edit</a>
+                                       type="button" class="btn btn-success btn-sm edit-user-btn" title="Modifier"><svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"></path><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"></path></svg></a>
 
                                     @if($u->id !== auth()->id())
                                     <a data-id="{{ $u->id }}"
                                        data-name="{{ $u->name }}"
                                        data-toggle="modal" data-target="#deleteUserModal"
-                                       type="button" class="btn btn-danger btn-sm delete-user-btn">Delete</a>
+                                       type="button" class="btn btn-danger btn-sm delete-user-btn" title="Supprimer"><svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"></polyline><path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"></path><path d="M10 11v6"></path><path d="M14 11v6"></path><path d="M9 6V4a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v2"></path></svg></a>
                                     @endif
                                 </td>
                             </tr>
@@ -90,13 +93,24 @@ Les Utilisateurs
                         </div>
                         <input type="text" class="form-control" name="name" id="edit_name" required>
                     </div>
-                    <div class="input-group">
+                    <div class="input-group mb-3">
                         <div class="input-group-prepend">
                             <span class="input-group-text">Rôle</span>
                         </div>
                         <select class="form-control" name="role" id="edit_role">
                             <option value="user">User</option>
                             <option value="admin">Admin</option>
+                        </select>
+                    </div>
+                    <div class="input-group">
+                        <div class="input-group-prepend">
+                            <span class="input-group-text">Service</span>
+                        </div>
+                        <select class="form-control" name="service" id="edit_service">
+                            <option value="">Aucun</option>
+                            @foreach($services as $s)
+                                <option value="{{ $s }}">{{ $s }}</option>
+                            @endforeach
                         </select>
                     </div>
                 </div>
@@ -157,6 +171,7 @@ $('#editUserModal').on('show.bs.modal', function (event) {
     $('#editUserForm').attr('action', '/utilisateurs/' + id);
     $('#edit_name').val(button.data('name'));
     $('#edit_role').val(button.data('role'));
+    $('#edit_service').val(button.data('service'));
 });
 
 $('#deleteUserModal').on('show.bs.modal', function (event) {

@@ -47,6 +47,17 @@ class AffectationController extends Controller
 
     public function store(Request $request)
     {
+        $request->validate([
+            'sevice' => ['required', 'string'],
+            'iddmd' => ['required'],
+            'dateaff' => ['required', 'date', 'before_or_equal:today'],
+        ], [
+            'sevice.required' => "Veuillez sélectionner l'orientation (service).",
+            'iddmd.required' => 'Veuillez sélectionner la demande.',
+            'dateaff.required' => 'Veuillez entrer une date.',
+            'dateaff.before_or_equal' => "La date ne peut pas être dans le futur.",
+        ]);
+
         $affectation = Affectation::create([
             'sevice' => $request->sevice,
             'dateaff' => $request->dateaff,
@@ -59,6 +70,13 @@ class AffectationController extends Controller
             'iddmd' => $affectation->iddmd,
             'message' => "Nouvelle demande affectée au service {$affectation->sevice} (Code demande : {$affectation->iddmd}).",
         ]);
+
+        if ($request->wantsJson() || $request->ajax()) {
+            return response()->json([
+                'success' => true,
+                'message' => "Affectation créée avec succès vers le service {$affectation->sevice} (Demande #{$affectation->iddmd}).",
+            ]);
+        }
 
         session()->flash('success', 'les donnees successfully enregistre.');
 

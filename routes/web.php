@@ -36,6 +36,7 @@ Route::middleware('auth')->group(function () {
 
     Route::get('notifications', [ServiceNotificationController::class, 'index'])->name('notifications.index');
     Route::patch('notifications/{notification}/read', [ServiceNotificationController::class, 'markRead'])->name('notifications.read');
+    Route::post('notifications/{notification}/respond', [ServiceNotificationController::class, 'respond'])->name('notifications.respond');
 
     // Réservé aux administrateurs (pages de configuration)
     Route::middleware('admin')->group(function () {

@@ -3,6 +3,7 @@
 
 <head>
     <meta charset="utf-8" />
+    <meta name="csrf-token" content="{{ csrf_token() }}">
     <link rel="apple-touch-icon" sizes="76x76" href="../assets/img/apple-icon.png">
     <link rel="icon" type="image/png" href="../assets/img/favicon.png">
     <meta http-equiv="X-UA-Compatible" content="IE=edge,chrome=1" />
@@ -53,17 +54,7 @@
                         </a>
                     </li>
                     @endif
-                    <li>
-                        <a href="{{('notifications')}}">
-                            <i class="now-ui-icons ui-1_bell-53"></i>
-                            <p>Notifications
-                                @php $unread = \App\Models\ServiceNotification::where('is_read', false)->count(); @endphp
-                                @if($unread > 0)
-                                    <span class="badge badge-danger">{{ $unread }}</span>
-                                @endif
-                            </p>
-                        </a>
-                    </li>
+                    
                     <li>
                         <a href="{{('')}}">
                             <i class="now-ui-icons users_single-02"></i>
@@ -128,6 +119,15 @@
                             </div>
                         </form>
                         <ul class="navbar-nav">
+                            <li class="nav-item" style="position:relative;">
+                                <a class="nav-link" href="{{('notifications')}}" style="position:relative; display:inline-block;">
+                                    <i class="now-ui-icons ui-1_bell-53"></i>
+                                    @php $unread = \App\Models\ServiceNotification::where('is_read', false)->where('service', auth()->user()->service)->count(); @endphp
+                                    @if($unread > 0)
+                                        <span class="badge badge-danger" style="position:absolute; top:-2px; right:-2px; font-size:10px; padding:2px 5px;">{{ $unread }}</span>
+                                    @endif
+                                </a>
+                            </li>
                             <li class="nav-item">
                                 <a class="nav-link" href="#pablo">
                                     <i class="now-ui-icons media-2_sound-wave"></i>
@@ -232,6 +232,41 @@
 <script src="../assets/js/now-ui-dashboard.js?v=1.0.1"></script>
 <!-- Now Ui Dashboard DEMO methods, don't include it in your project! -->
 <script src="../assets/demo/demo.js"></script>
+
+<style>
+/* Corrections responsive - mobile et tablette */
+@media (max-width: 768px) {
+    .modal-right {
+        margin: 0 !important;
+        max-width: 100% !important;
+        width: 100% !important;
+    }
+    .modal-right .modal-content {
+        border-radius: 0;
+        min-height: 100vh;
+    }
+    .table-responsive {
+        font-size: 13px;
+    }
+    .btn-sm, .btn {
+        white-space: nowrap;
+    }
+    .card-header .category {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 8px;
+    }
+}
+@media (max-width: 576px) {
+    .navbar .form-group {
+        display: none;
+    }
+    h4.card-title {
+        font-size: 1.1rem;
+    }
+}
+</style>
+
 @yield('scripts')
 
 <!-- Déconnexion automatique après 15 minutes d'inactivité -->

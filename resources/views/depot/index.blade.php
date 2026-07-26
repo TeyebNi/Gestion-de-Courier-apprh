@@ -55,35 +55,45 @@ Dashboard Courier
                                             </th>
                                         </thead>
                                         <tbody>
+<<<<<<< HEAD
                                           @foreach($tabdepots as $key=>$tabdepot)
+=======
+                                          @foreach($tabdepot as $key=>$item)
+>>>>>>> 1817cc7f428a827ca79743958efb01e013ccb3d4
                                             <tr>
                                                 <td>
                                                   {{++$key}}
                                                 </td>
                                                 <td>
-                                                  {{$tabdepot->id}}
+                                                  {{$item->id}}
                                                 </td>
                                                 <td>
-                                                   {{$tabdepot->typdm}}
+                                                   {{$item->typdm}}
                                                 </td>
                                                 <td class="text-right">
-                                                    {{$tabdepot->nom}}
+                                                    {{$item->nom}}
                                                 </td>
                                                   <td class="text-right">
-                                                   {{$tabdepot->nni}}
+                                                   {{$item->nni}}
                                                 </td>
                                                 <td class="text-right">
-                                                    {{$tabdepot->tel}}
+                                                    {{$item->tel}}
                                                 </td>
                                                   <td class="text-right">
-                                                    {{$tabdepot->adresse}}
+                                                    {{$item->adresse}}
                                                 </td>
                                                   <td class="text-right">
-                                                    {{$tabdepot->daterecp}}
+                                                    {{$item->daterecp}}
                                                 </td>
+<<<<<<< HEAD
                                                 <td> <a href ="{{route('depot.print_reçu',$tabdepot->id)}}"  type="button"  class="btn btn-success"> Print</a>
     <a  data-id="{{$tabdepot->id}}" data-typdm="{{$tabdepot->typdm}}" data-nom="{{$tabdepot->nom}}" data-nni="{{$tabdepot->nni}}" data-adresse="{{$tabdepot->adresse}}"  data-tel="{{$tabdepot->tel}}" data-daterecp="{{$tabdepot->daterecp}}" data-toggle="modal" data-target="#exampleModal-edit" type="button" class="btn btn-info"> Edit</a> 
  <a   data-id="{{$tabdepot->id}}" data-toggle="modal" data-target="#exampleModal-delete"  type="button" class="btn btn-danger"> Delete</a></td>
+=======
+                                                <td><a  data-id="{{$item->id}}" data-typdm="{{$item->typdm}}" data-nom="{{$item->nom}}" data-nni="{{$item->nni}}" data-adresse="{{$item->adresse}}"  data-tel="{{$item->tel}}" data-daterecp="{{$item->daterecp}}"   data-toggle="modal" data-target="#exampleModal-show" type="button" class="btn btn-success"> Show</a>
+    <a  data-id="{{$item->id}}" data-typdm="{{$item->typdm}}" data-nom="{{$item->nom}}" data-nni="{{$item->nni}}" data-adresse="{{$item->adresse}}"  data-tel="{{$item->tel}}" data-daterecp="{{$item->daterecp}}" data-toggle="modal" data-target="#exampleModal-edit" type="button" class="btn btn-info"> Edit</a> 
+ <a   data-id="{{$item->id}}" data-toggle="modal" data-target="#exampleModal-delete"  type="button" class="btn btn-danger"> Delete</a></td>
+>>>>>>> 1817cc7f428a827ca79743958efb01e013ccb3d4
                                             </tr>
                                             @endforeach
                                         </tbody>
@@ -97,12 +107,9 @@ Dashboard Courier
                     </div>
                     <div class="col-md-12">
                         <div class="card card-plain">
-                            <div class="card-header">
-                               
-                            </div>
                             <div class="card-body">
-                                <div class="table-responsive">
-                                    
+                                <div class="d-flex justify-content-center">
+                                    {{ $tabdepot->links() }}
                                 </div>
                             </div>
                         </div>
