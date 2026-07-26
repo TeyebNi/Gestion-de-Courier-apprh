@@ -26,6 +26,10 @@ class UserController extends Controller
             'name.regex' => 'Le nom ne doit contenir que des lettres.',
         ]);
 
+        if ($user->isAdmin() && $request->role === 'user' && User::where('role', 'admin')->count() <= 1) {
+            return redirect()->route('users.index')->with('error', 'Impossible de rétrograder le dernier administrateur.');
+        }
+
         $user->update([
             'name' => $request->name,
             'role' => UserRole::from($request->role),
@@ -41,6 +45,10 @@ class UserController extends Controller
     {
         if ($user->id === auth()->id()) {
             return redirect()->route('users.index')->with('error', 'Vous ne pouvez pas supprimer votre propre compte.');
+        }
+
+        if ($user->isAdmin()) {
+            return redirect()->route('users.index')->with('error', 'Impossible de supprimer un compte administrateur.');
         }
 
         $name = $user->name;
