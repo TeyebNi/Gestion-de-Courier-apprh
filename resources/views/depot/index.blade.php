@@ -12,7 +12,7 @@ Dashboard Courier
             <div class="card-header">
                <p class="category">
                 <button class="btn btn-primary" data-toggle="modal" data-target="#exampleModal">Nouvelle Demande</button>
-                 <a href="{{('invoice')}}">Exporter en PDF</a>
+                 <a href="{{ route('depot.export') }}" class="btn btn-success btn-sm" title="Exporter en Excel"><i class="fas fa-file-excel"></i></a>
                 </p>
             </div>
             <div class="card-body">

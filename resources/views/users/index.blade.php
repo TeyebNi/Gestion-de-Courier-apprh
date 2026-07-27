@@ -11,6 +11,7 @@ Les Utilisateurs
             <div class="card-header">
                 <p class="category">
                     Gestion des comptes utilisateurs
+                    <a href="{{ route('users.export') }}" class="btn btn-success btn-sm" title="Exporter en Excel"><i class="fas fa-file-excel"></i></a>
                 </p>
             </div>
             <div class="card-body">

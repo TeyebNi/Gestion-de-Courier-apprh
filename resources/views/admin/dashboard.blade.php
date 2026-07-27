@@ -5,208 +5,334 @@ Tableau de bord
 @endsection
 
 @section('content')
-<div class="panel-header panel-header-lg" style="margin: -30px -15px 20px -15px; border-radius: 0;">
-    <canvas id="bigDashboardChart"></canvas>
+
+<!-- KPI cards -->
+<div class="row">
+    <div class="col-lg-3 col-md-6">
+        <div class="card card-stats">
+            <div class="card-body">
+                <div class="row">
+                    <div class="col-5 col-md-4">
+                        <div class="icon-big text-center icon-warning">
+                            <i class="now-ui-icons files_paper text-info"></i>
+                        </div>
+                    </div>
+                    <div class="col-7 col-md-8">
+                        <div class="numbers">
+                            <p class="card-category">Nombre de Demandes</p>
+                            <h4 class="card-title">{{ $totalDemandes }}</h4>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="card-footer">
+                <hr>
+                <div class="stats">
+                    <i class="now-ui-icons files_box"></i> Total déposé au guichet
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-lg-3 col-md-6">
+        <div class="card card-stats">
+            <div class="card-body">
+                <div class="row">
+                    <div class="col-5 col-md-4">
+                        <div class="icon-big text-center icon-warning">
+                            <i class="now-ui-icons shopping_delivery-fast text-primary"></i>
+                        </div>
+                    </div>
+                    <div class="col-7 col-md-8">
+                        <div class="numbers">
+                            <p class="card-category">Affectations</p>
+                            <h4 class="card-title">{{ $totalAffectations }}</h4>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="card-footer">
+                <hr>
+                <div class="stats">
+                    <i class="now-ui-icons location_compass-05"></i>
+                    {{ $isAdmin ? 'Tous services confondus' : 'Pour votre service' }}
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-lg-3 col-md-6">
+        <div class="card card-stats">
+            <div class="card-body">
+                <div class="row">
+                    <div class="col-5 col-md-4">
+                        <div class="icon-big text-center icon-warning">
+                            <i class="now-ui-icons design_bullet-list-67 text-warning"></i>
+                        </div>
+                    </div>
+                    <div class="col-7 col-md-8">
+                        <div class="numbers">
+                            <p class="card-category">Types de Demande</p>
+                            <h4 class="card-title">{{ $totalTypes }}</h4>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="card-footer">
+                <hr>
+                <div class="stats">
+                    <i class="now-ui-icons ui-1_settings-gear-63"></i> Catégories actives
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-lg-3 col-md-6">
+        <div class="card card-stats">
+            <div class="card-body">
+                <div class="row">
+                    <div class="col-5 col-md-4">
+                        <div class="icon-big text-center icon-warning">
+                            <i class="now-ui-icons ui-1_check text-success"></i>
+                        </div>
+                    </div>
+                    <div class="col-7 col-md-8">
+                        <div class="numbers">
+                            <p class="card-category">Taux d'Acceptation</p>
+                            <h4 class="card-title">{{ $tauxAcceptation }}%</h4>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="card-footer">
+                <hr>
+                <div class="stats">
+                    <i class="now-ui-icons ui-1_bell-53"></i> {{ $totalEnAttente }} en attente de réponse
+                </div>
+            </div>
+        </div>
+    </div>
 </div>
 
+<!-- Évolution + Type de demande -->
 <div class="row">
+    <div class="col-lg-8">
+        <div class="card card-chart">
+            <div class="card-header">
+                <h5 class="card-category">Suivi dans le temps</h5>
+                <h4 class="card-title">Évolution des Demandes (6 derniers mois)</h4>
+            </div>
+            <div class="card-body">
+                <div class="chart-area">
+                    <canvas id="evolutionChart"></canvas>
+                </div>
+            </div>
+            <div class="card-footer">
+                <div class="stats">
+                    <i class="now-ui-icons arrows-1_refresh-69"></i> Basé sur la date de réception des demandes
+                </div>
+            </div>
+        </div>
+    </div>
     <div class="col-lg-4">
         <div class="card card-chart">
             <div class="card-header">
-                <h5 class="card-category">Ventes Globales</h5>
-                <h4 class="card-title">Produits Expédiés</h4>
+                <h5 class="card-category">Répartition</h5>
+                <h4 class="card-title">Type de Demande</h4>
             </div>
             <div class="card-body">
                 <div class="chart-area">
-                    <canvas id="lineChartExample"></canvas>
+                    <canvas id="typeChart"></canvas>
                 </div>
             </div>
             <div class="card-footer">
                 <div class="stats">
-                    <i class="now-ui-icons arrows-1_refresh-69"></i> Mis à jour à l'instant
-                </div>
-            </div>
-        </div>
-    </div>
-    <div class="col-lg-4 col-md-6">
-        <div class="card card-chart">
-            <div class="card-header">
-                <h5 class="card-category">Ventes 2018</h5>
-                <h4 class="card-title">Tous les produits</h4>
-            </div>
-            <div class="card-body">
-                <div class="chart-area">
-                    <canvas id="lineChartExampleWithNumbersAndGrid"></canvas>
-                </div>
-            </div>
-            <div class="card-footer">
-                <div class="stats">
-                    <i class="now-ui-icons arrows-1_refresh-69"></i> Mis à jour à l'instant
-                </div>
-            </div>
-        </div>
-    </div>
-    <div class="col-lg-4 col-md-6">
-        <div class="card card-chart">
-            <div class="card-header">
-                <h5 class="card-category">Statistiques Email</h5>
-                <h4 class="card-title">Performance des dernières 24 heures</h4>
-            </div>
-            <div class="card-body">
-                <div class="chart-area">
-                    <canvas id="barChartSimpleGradientsNumbers"></canvas>
-                </div>
-            </div>
-            <div class="card-footer">
-                <div class="stats">
-                    <i class="now-ui-icons ui-2_time-alarm"></i> Les 7 derniers jours
+                    <i class="now-ui-icons design_bullet-list-67"></i> {{ $totalTypes }} types au total
                 </div>
             </div>
         </div>
     </div>
 </div>
+
+<!-- Acceptées/Refusées + Dernières demandes -->
 <div class="row">
-  <div class="col-md-6">
-    <div class="card card-tasks">
-      <div class="card-header">
-        <h5 class="card-category">Développement Backend</h5>
-        <h4 class="card-title">Tâches</h4>
-      </div>
-      <div class="card-body">
-        <div class="table-full-width table-responsive">
-          <table class="table">
-            <tbody>
-                <tr>
-                    <td>
-                        <div class="form-check">
-                            <label class="form-check-label">
-                                <input class="form-check-input" type="checkbox" checked="">
-                                <span class="form-check-sign"></span>
-                            </label>
-                        </div>
-                    </td>
-                    <td class="text-left">Signer le contrat pour "What are conference organizers afraid of?"</td>
-                    <td class="td-actions text-right">
-                        <button type="button" rel="tooltip" title="" class="btn btn-info btn-round btn-icon btn-icon-mini btn-neutral" data-original-title="Modifier la tâche">
-                            <i class="now-ui-icons ui-2_settings-90"></i>
-                        </button>
-                        <button type="button" rel="tooltip" title="" class="btn btn-danger btn-round btn-icon btn-icon-mini btn-neutral" data-original-title="Supprimer">
-                            <i class="now-ui-icons ui-1_simple-remove"></i>
-                        </button>
-                    </td>
-                </tr>
-                <tr>
-                    <td>
-                        <div class="form-check">
-                            <label class="form-check-label">
-                                <input class="form-check-input" type="checkbox">
-                                <span class="form-check-sign"></span>
-                            </label>
-                        </div>
-                    </td>
-                    <td class="text-left">Lignes de la grande littérature russe ? Ou emails de mon patron ?</td>
-                    <td class="td-actions text-right">
-                        <button type="button" rel="tooltip" title="" class="btn btn-info btn-round btn-icon btn-icon-mini btn-neutral" data-original-title="Modifier la tâche">
-                            <i class="now-ui-icons ui-2_settings-90"></i>
-                        </button>
-                        <button type="button" rel="tooltip" title="" class="btn btn-danger btn-round btn-icon btn-icon-mini btn-neutral" data-original-title="Supprimer">
-                            <i class="now-ui-icons ui-1_simple-remove"></i>
-                        </button>
-                    </td>
-                </tr>
-                <tr>
-                    <td>
-                        <div class="form-check">
-                            <label class="form-check-label">
-                                <input class="form-check-input" type="checkbox" checked="">
-                                <span class="form-check-sign"></span>
-                            </label>
-                        </div>
-                    </td>
-                    <td class="text-left">Inondations : un an après, bilan des pertes et des retrouvailles suite aux pluies torrentielles à Detroit</td>
-                    <td class="td-actions text-right">
-                        <button type="button" rel="tooltip" title="" class="btn btn-info btn-round btn-icon btn-icon-mini btn-neutral" data-original-title="Modifier la tâche">
-                            <i class="now-ui-icons ui-2_settings-90"></i>
-                        </button>
-                        <button type="button" rel="tooltip" title="" class="btn btn-danger btn-round btn-icon btn-icon-mini btn-neutral" data-original-title="Supprimer">
-                            <i class="now-ui-icons ui-1_simple-remove"></i>
-                        </button>
-                    </td>
-                </tr>
-            </tbody>
-          </table>
-        </div>
-      </div>
-      <div class="card-footer">
-        <hr>
-        <div class="stats">
-          <i class="now-ui-icons loader_refresh spin"></i> Mis à jour il y a 3 minutes
-        </div>
-      </div>
-  </div>
-  </div>
-  <div class="col-md-6">
-      <div class="card">
-        <div class="card-header">
-            <h5 class="card-category">Liste de toutes les personnes</h5>
-            <h4 class="card-title">Statistiques des employés</h4>
-        </div>
-        <div class="card-body">
-            <div class="table-responsive">
-              <table class="table">
-                <thead class=" text-primary">
-                  <th>Nom</th>
-                  <th>Pays</th>
-                  <th>Ville</th>
-                  <th class="text-right">Salaire</th>
-                </thead>
-                <tbody>
-                  <tr>
-                    <td>Dakota Rice</td>
-                    <td>Niger</td>
-                    <td>Oud-Turnhout</td>
-                    <td class="text-right">36 738 €</td>
-                  </tr>
-                  <tr>
-                    <td>Minerva Hooper</td>
-                    <td>Curaçao</td>
-                    <td>Sinaai-Waas</td>
-                    <td class="text-right">23 789 €</td>
-                  </tr>
-                  <tr>
-                    <td>Sage Rodriguez</td>
-                    <td>Pays-Bas</td>
-                    <td>Baileux</td>
-                    <td class="text-right">56 142 €</td>
-                  </tr>
-                  <tr>
-                    <td>Doris Greene</td>
-                    <td>Malawi</td>
-                    <td>Feldkirchen in Kärnten</td>
-                    <td class="text-right">63 542 €</td>
-                  </tr>
-                  <tr>
-                    <td>Mason Porter</td>
-                    <td>Chili</td>
-                    <td>Gloucester</td>
-                    <td class="text-right">78 615 €</td>
-                  </tr>
-                </tbody>
-              </table>
+    <div class="col-lg-5">
+        <div class="card card-chart">
+            <div class="card-header">
+                <h5 class="card-category">Traitement des demandes</h5>
+                <h4 class="card-title">Acceptées / Refusées</h4>
+            </div>
+            <div class="card-body">
+                <div class="chart-area">
+                    <canvas id="reponseChart"></canvas>
+                </div>
+            </div>
+            <div class="card-footer">
+                <div class="stats">
+                    <i class="now-ui-icons ui-1_check"></i> {{ $totalAcceptees }} acceptées
+                    &nbsp;·&nbsp;
+                    <i class="now-ui-icons ui-1_simple-remove"></i> {{ $totalRefusees }} refusées
+                </div>
             </div>
         </div>
-      </div>
-  </div>
+    </div>
+
+    <div class="col-lg-7">
+        <div class="card card-tasks">
+            <div class="card-header">
+                <h5 class="card-category">Activité récente</h5>
+                <h4 class="card-title">Dernières Demandes Déposées</h4>
+            </div>
+            <div class="card-body">
+                <div class="table-full-width table-responsive">
+                    <table class="table">
+                        <thead class="text-primary">
+                            <th>Nom</th>
+                            <th>Type</th>
+                            <th>Date</th>
+                        </thead>
+                        <tbody>
+                            @forelse($recentDemandes as $d)
+                            <tr>
+                                <td>{{ $d->nom }}</td>
+                                <td>{{ $d->typdm }}</td>
+                                <td>{{ $d->daterecp }}</td>
+                            </tr>
+                            @empty
+                            <tr>
+                                <td colspan="3" class="text-center text-muted">Aucune demande pour le moment.</td>
+                            </tr>
+                            @endforelse
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+            <div class="card-footer">
+                <hr>
+                <div class="stats">
+                    <i class="now-ui-icons loader_refresh"></i> Mis à jour à l'instant
+                </div>
+            </div>
+        </div>
+    </div>
 </div>
+
+@if($isAdmin && $serviceLabels->isNotEmpty())
+<div class="row">
+    <div class="col-md-12">
+        <div class="card card-chart">
+            <div class="card-header">
+                <h5 class="card-category">Charge de travail</h5>
+                <h4 class="card-title">Affectations par Service</h4>
+            </div>
+            <div class="card-body">
+                <div class="chart-area">
+                    <canvas id="serviceChart"></canvas>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+@endif
+
 @endsection
 
 @section('scripts')
-<script src="https://maps.googleapis.com/maps/api/js?key=YOUR_KEY_HERE"></script>
 <script src="../assets/js/plugins/chartjs.min.js"></script>
-<script src="../assets/demo/demo.js"></script>
 <script>
-    $(document).ready(function() {
-        demo.initDashboardPageCharts();
+document.addEventListener('DOMContentLoaded', function () {
+    var months = @json($months);
+    var monthCounts = @json($monthCounts);
+    var typeLabels = @json($typeLabels);
+    var typeCounts = @json($typeCounts);
+    var serviceLabels = @json($serviceLabels);
+    var serviceCounts = @json($serviceCounts);
+    var totalAcceptees = {{ $totalAcceptees }};
+    var totalRefusees = {{ $totalRefusees }};
+    var totalEnAttente = {{ $totalEnAttente }};
+
+    var palette = ['#2CA8FF', '#FB404B', '#18ce0f', '#FFA534', '#9C27B0', '#00BCD4', '#FF5722', '#607D8B'];
+
+    new Chart(document.getElementById('evolutionChart'), {
+        type: 'line',
+        data: {
+            labels: months,
+            datasets: [{
+                label: 'Demandes',
+                data: monthCounts,
+                borderColor: '#2CA8FF',
+                backgroundColor: 'rgba(44,168,255,0.15)',
+                fill: true,
+                tension: 0.35,
+                pointBackgroundColor: '#2CA8FF',
+            }]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            scales: { y: { beginAtZero: true, ticks: { precision: 0 } } },
+            plugins: { legend: { display: false } }
+        }
     });
+
+    new Chart(document.getElementById('typeChart'), {
+        type: 'doughnut',
+        data: {
+            labels: typeLabels,
+            datasets: [{
+                data: typeCounts,
+                backgroundColor: palette,
+            }]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: { legend: { position: 'bottom', labels: { boxWidth: 12 } } }
+        }
+    });
+
+    new Chart(document.getElementById('reponseChart'), {
+        type: 'bar',
+        data: {
+            labels: ['Acceptées', 'Refusées', 'En attente'],
+            datasets: [{
+                data: [totalAcceptees, totalRefusees, totalEnAttente],
+                backgroundColor: ['#18ce0f', '#FB404B', '#FFA534'],
+                borderRadius: 6,
+            }]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            scales: { y: { beginAtZero: true, ticks: { precision: 0 } } },
+            plugins: { legend: { display: false } }
+        }
+    });
+
+    @if($isAdmin)
+    var serviceChartEl = document.getElementById('serviceChart');
+    if (serviceChartEl) {
+        new Chart(serviceChartEl, {
+            type: 'bar',
+            data: {
+                labels: serviceLabels,
+                datasets: [{
+                    label: 'Affectations',
+                    data: serviceCounts,
+                    backgroundColor: '#2CA8FF',
+                    borderRadius: 6,
+                }]
+            },
+            options: {
+                indexAxis: 'y',
+                responsive: true,
+                maintainAspectRatio: false,
+                scales: { x: { beginAtZero: true, ticks: { precision: 0 } } },
+                plugins: { legend: { display: false } }
+            }
+        });
+    }
+    @endif
+});
 </script>
 @endsection

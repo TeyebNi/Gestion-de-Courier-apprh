@@ -10,8 +10,12 @@ use App\Http\Controllers\Controller;
 use Illuminate\Http\Request;
 use Barryvdh\DomPDF\Facade\Pdf;
 
+use App\Traits\ExportsCsv;
+
 class AffectationController extends Controller
 {
+    use ExportsCsv;
+
     public function index(Request $request)
     {
         if (!auth()->user()->isAdmin() && empty(auth()->user()->service)) {
@@ -36,6 +40,32 @@ class AffectationController extends Controller
         }
         $client['affectation'] = $query->paginate(5)->appends(['search' => $search]);
         return view('affectation.index', $client)->with('tabdepot', $tabdepot)->with('orientation', $orientation)->with('search', $search);
+    }
+
+    public function exportExcel(Request $request)
+    {
+        if (!auth()->user()->isAdmin() && empty(auth()->user()->service)) {
+            abort(403, "Cette page est réservée aux administrateurs et aux utilisateurs rattachés à un service.");
+        }
+
+        $query = Affectation::orderby('id', 'asc');
+
+        if (!auth()->user()->isAdmin()) {
+            $query->where('sevice', auth()->user()->service);
+        }
+
+        $affectations = $query->get();
+
+        $prefix = auth()->user()->isAdmin()
+            ? 'affectations'
+            : 'affectations_' . auth()->user()->service;
+
+        return $this->streamCsv(
+            $affectations,
+            ['N°', 'Service', 'Date', 'Demande'],
+            fn ($a, $i) => [$i + 1, $a->sevice, $a->dateaff, $a->iddmd],
+            $prefix
+        );
     }
 
     public function exportPDF4()

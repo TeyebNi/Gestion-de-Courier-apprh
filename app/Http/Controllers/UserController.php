@@ -7,8 +7,12 @@ use App\Models\User;
 use App\Models\Orientation;
 use Illuminate\Http\Request;
 
+use App\Traits\ExportsCsv;
+
 class UserController extends Controller
 {
+    use ExportsCsv;
+
     public function index(Request $request)
 {
     $search = $request->input('search');
@@ -24,6 +28,18 @@ class UserController extends Controller
     $adminCount = User::where('role', 'admin')->count();
     return view('users.index', compact('users', 'services', 'adminCount', 'search'));
 }
+
+    public function exportExcel()
+    {
+        $users = User::orderby('id', 'asc')->get();
+
+        return $this->streamCsv(
+            $users,
+            ['N°', 'Nom', 'Email', 'Rôle', 'Service'],
+            fn ($u, $i) => [$i + 1, $u->name, $u->email, $u->isAdmin() ? 'Admin' : 'User', $u->service ?: ''],
+            'utilisateurs'
+        );
+    }
 
    public function update(Request $request, User $user)
 {

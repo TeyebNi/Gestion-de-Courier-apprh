@@ -7,8 +7,12 @@ use App\Http\Controllers\Controller;
 use Illuminate\Http\Request;
 use Barryvdh\DomPDF\Facade\Pdf;
 
+use App\Traits\ExportsCsv;
+
 class OrientationController extends Controller
 {
+    use ExportsCsv;
+
     public function index(Request $request)
     {
         $search = $request->input('search');
@@ -18,6 +22,18 @@ class OrientationController extends Controller
         }
         $client['orientation'] = $query->paginate(5)->appends(['search' => $search]);
         return view('orientation.index', $client)->with('search', $search);
+    }
+
+    public function exportExcel()
+    {
+        $orientations = Orientation::orderby('id', 'asc')->get();
+
+        return $this->streamCsv(
+            $orientations,
+            ['N°', 'Orientation'],
+            fn ($o, $i) => [$i + 1, $o->name],
+            'orientations'
+        );
     }
 
     public function exportPDF4()

@@ -12,6 +12,7 @@ Orientation
                 <p class="category">
                     Gestion des Orientations
                     <button class="btn btn-primary btn-sm" data-toggle="modal" data-target="#exampleModal">Nouvelle Orientation</button>
+                    <a href="{{ route('orientation.export') }}" class="btn btn-success btn-sm" title="Exporter en Excel"><i class="fas fa-file-excel"></i></a>
                 </p>
             </div>
             <div class="card-body">

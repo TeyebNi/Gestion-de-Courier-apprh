@@ -34,61 +34,55 @@
             </div>
             <div class="sidebar-wrapper">
                 <ul class="nav">
-                    <li>
+                    <li class="{{ request()->routeIs('dashboard') ? 'active' : '' }}">
                         <a href="{{ route('dashboard') }}">
                             <i class="now-ui-icons design_app"></i>
                             <p>Dashboard</p>
                         </a>
                     </li>
                     @if(auth()->user()->isAdmin() || !empty(auth()->user()->service))
-                    <li>
+                    <li class="{{ request()->is('affectation*') ? 'active' : '' }}">
                         <a href="{{('affectation')}}">
-                            <i class="now-ui-icons location_map-big"></i>
+                            <i class="now-ui-icons shopping_delivery-fast"></i>
                             <p>Affectation</p>
                         </a>
                     </li>
                     @endif
                     @if(auth()->check() && auth()->user()->isAdmin())
-                    <li>
+                    <li class="{{ request()->is('orientation*') ? 'active' : '' }}">
                         <a href="{{('orientation')}}">
-                            <i class="now-ui-icons education_atom"></i>
+                            <i class="now-ui-icons location_compass-05"></i>
                             <p>Orientation</p>
                         </a>
                     </li>
                     @endif
-                    
-<li class="active">
+
+                    <li class="{{ request()->is('depot*') ? 'active' : '' }}">
                         <a href="{{('depot')}}">
-                            <i class="now-ui-icons design_bullet-list-67"></i>
+                            <i class="now-ui-icons files_box"></i>
                             <p>Dépôt des Demandes</p>
                         </a>
                     </li>
                     @if(auth()->check() && auth()->user()->isAdmin())
-                    <li>
+                    <li class="{{ request()->is('typedem*') ? 'active' : '' }}">
                         <a href="{{('typedem')}}">
-                            <i class="now-ui-icons text_caps-small"></i>
+                            <i class="now-ui-icons design_bullet-list-67"></i>
                             <p>Type Demande</p>
                         </a>
                     </li>
-                    <li>
+                    <li class="{{ request()->is('utilisateurs*') ? 'active' : '' }}">
                         <a href="{{('utilisateurs')}}">
                             <i class="now-ui-icons users_single-02"></i>
                             <p>Les Utilisateurs</p>
                         </a>
                     </li>
                     @endif
-                    <li class="active-pro">
-                        <a href="{{('typedem')}}">
-                            <i class="now-ui-icons arrows-1_cloud-download-93"></i>
-                            <p></p>
-                        </a>
-                    </li>
                 </ul>
             </div>
         </div>
         <div class="main-panel">
             <!-- Navbar -->
-            <nav class="navbar navbar-expand-lg navbar-transparent  navbar-absolute bg-primary fixed-top">
+            <nav class="navbar navbar-expand-lg navbar-absolute bg-white fixed-top">
                 <div class="container-fluid">
                     <div class="navbar-wrapper">
                         <div class="navbar-toggle">
@@ -124,27 +118,6 @@
                                     @endif
                                 </a>
                             </li>
-                            <li class="nav-item">
-                                <a class="nav-link" href="#pablo">
-                                    <i class="now-ui-icons media-2_sound-wave"></i>
-                                    <p>
-                                        <span class="d-lg-none d-md-block">Stats</span>
-                                    </p>
-                                </a>
-                            </li>
-                            <li class="nav-item dropdown">
-                                <a class="nav-link dropdown-toggle" href="http://example.com" id="navbarDropdownMenuLink" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
-                                    <i class="now-ui-icons location_world"></i>
-                                    <p>
-                                        <span class="d-lg-none d-md-block">Some Actions</span>
-                                    </p>
-                                </a>
-                                <div class="dropdown-menu dropdown-menu-right" aria-labelledby="navbarDropdownMenuLink">
-                                    <a class="dropdown-item" href="#">Action</a>
-                                    <a class="dropdown-item" href="#">Another action</a>
-                                    <a class="dropdown-item" href="#">Something else here</a>
-                                </div>
-                            </li>
                             <li class="nav-item dropdown">
                                 <a class="nav-link dropdown-toggle" href="#" id="userAccountDropdown" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
                                     <i class="now-ui-icons users_single-02"></i>
@@ -173,7 +146,7 @@
                 </div>
             </nav>
             <!-- End Navbar -->
-            <div class="panel-header panel-header-sm">
+            <div class="panel-header panel-header-sm" style="background: #FFFFFF;">
             </div>
             <div class="content">
                 @yield('content')

@@ -14,6 +14,7 @@ Affectation
                     @if(auth()->user()->isAdmin())
                     <button class="btn btn-primary btn-sm" data-toggle="modal" data-target="#exampleModal">Nouvelle Affectation</button>
                     @endif
+                    <a href="{{ route('affectation.export') }}" class="btn btn-success btn-sm" title="Exporter en Excel"><i class="fas fa-file-excel"></i></a>
                 </p>
             </div>
             <div class="card-body">

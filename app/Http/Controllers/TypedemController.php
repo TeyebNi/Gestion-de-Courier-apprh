@@ -6,8 +6,12 @@ use App\Models\Typedem;
 use App\Http\Controllers\Controller;
 use Illuminate\Http\Request;
 
+use App\Traits\ExportsCsv;
+
 class TypedemController extends Controller
 {
+    use ExportsCsv;
+
     /**
      * Display a listing of the resource.
      */
@@ -19,7 +23,7 @@ class TypedemController extends Controller
         if ($search) {
             $query->where('name', 'like', "%{$search}%");
         }
-        $client['typedem'] = $query->paginate(50)->appends(['search' => $search]);
+        $client['typedem'] = $query->paginate(5)->appends(['search' => $search]);
         return view('typedem.index', $client)->with('search', $search);
     }
 
@@ -28,6 +32,18 @@ class TypedemController extends Controller
     /**
      * Show the form for creating a new resource.
      */
+     public function exportExcel()
+    {
+        $typedems = Typedem::orderby('id', 'asc')->get();
+
+        return $this->streamCsv(
+            $typedems,
+            ['N°', 'Type de demande'],
+            fn ($t, $i) => [$i + 1, $t->name],
+            'types_demande'
+        );
+    }
+
      public function exportPDF4()
     { 
       $data =Typedem::all();
@@ -66,13 +82,27 @@ class TypedemController extends Controller
      */
     public function store(Request $request)
     {
-        Typedem::create([ 
+        $request->validate([
+            'name' => ['required', 'string', 'max:255'],
+        ], [
+            'name.required' => "Veuillez entrer le type de demande.",
+        ]);
 
-         'name'=>$request->name,
-      ]);
-      session()->flash('success', 'les donnees successfully enregistre.');
-             
-     return redirect()->route('typedem.index')->with('succes',' Type Demande saved');
+        $typedem = Typedem::create([
+            'name' => $request->name,
+        ]);
+
+        if ($request->wantsJson() || $request->ajax()) {
+            return response()->json([
+                'success' => true,
+                'message' => "Le type de demande « {$typedem->name} » a été ajouté avec succès.",
+                'name' => $typedem->name,
+            ]);
+        }
+
+        session()->flash('success', 'les donnees successfully enregistre.');
+
+        return redirect()->route('typedem.index')->with('succes', ' Type Demande saved');
     }
    
     /**
@@ -106,16 +136,29 @@ class TypedemController extends Controller
     /**
      * Update the specified resource in storage.
      */
-    public function update(Request $request, typedem $typedem)
+    public function update(Request $request, Typedem $typedem)
     {
-        //
+        $request->validate([
+            'name' => ['required', 'string', 'max:255'],
+        ], [
+            'name.required' => "Veuillez entrer le type de demande.",
+        ]);
+
+        $typedem->update([
+            'name' => $request->name,
+        ]);
+
+        return redirect()->route('typedem.index')->with('success', "Type de demande #{$typedem->id} modifié avec succès.");
     }
 
     /**
      * Remove the specified resource from storage.
      */
-    public function destroy(typedem $typedem)
+    public function destroy(Typedem $typedem)
     {
-        //
+        $id = $typedem->id;
+        $typedem->delete();
+
+        return redirect()->route('typedem.index')->with('success', "Type de demande #{$id} supprimé avec succès.");
     }
 }

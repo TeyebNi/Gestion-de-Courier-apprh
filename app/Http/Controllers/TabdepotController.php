@@ -9,8 +9,12 @@ use App\Services\SmsService;
 use Illuminate\Http\Request;
 use Barryvdh\DomPDF\Facade\Pdf;
 
+use App\Traits\ExportsCsv;
+
 class TabdepotController extends Controller
 {
+    use ExportsCsv;
+
     protected SmsService $sms;
 
     public function __construct(SmsService $sms)
@@ -36,6 +40,18 @@ class TabdepotController extends Controller
             ->appends(['search' => $search]);
 
         return view('depot.index', compact('tabdepot', 'typedem', 'search'));
+    }
+
+    public function exportExcel(Request $request)
+    {
+        $tabdepots = Tabdepot::orderby('id', 'asc')->get();
+
+        return $this->streamCsv(
+            $tabdepots,
+            ['N°', 'Nom', 'NNI', 'Téléphone', 'Adresse', 'Type demande', 'Date réception'],
+            fn ($t, $i) => [$i + 1, $t->nom, $t->nni, $t->tel, $t->adresse, $t->typdm, $t->daterecp],
+            'depot_demandes'
+        );
     }
 
     public function print_facture($idt)
