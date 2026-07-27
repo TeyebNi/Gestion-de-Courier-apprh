@@ -49,6 +49,8 @@ Route::middleware('auth')->group(function () {
 
         Route::get('orientation', [OrientationController::class, 'index'])->name('orientation.index');
         Route::post('orientation', [OrientationController::class, 'store'])->name('orientation.store');
+        Route::put('orientation/{orientation}', [OrientationController::class, 'update'])->name('orientation.update');
+        Route::delete('orientation/{orientation}', [OrientationController::class, 'destroy'])->name('orientation.destroy');
 
         Route::get('typedem', [TypedemController::class, 'index'])->name('typedem.index');
         Route::post('typedem', [TypedemController::class, 'store'])->name('typedem.store');

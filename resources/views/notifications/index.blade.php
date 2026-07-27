@@ -59,7 +59,7 @@ Notifications
                                     <form method="POST" action="{{ route('notifications.read', $n->id) }}" style="display:inline;">
                                         @csrf
                                         @method('PATCH')
-                                        <button type="submit" class="btn btn-info btn-sm">Marquer lue</button>
+                                        <button type="submit" class="btn btn-info btn-sm" title="Marquer lue"><i class="fa fa-eye"></i></button>
                                     </form>
                                     @endif
 
@@ -67,12 +67,12 @@ Notifications
                                     <form method="POST" action="{{ route('notifications.respond', $n->id) }}" style="display:inline;">
                                         @csrf
                                         <input type="hidden" name="response" value="accepted">
-                                        <button type="submit" class="btn btn-success btn-sm" onclick="return confirm('Envoyer un SMS d\'acceptation au demandeur ?')">Accepter</button>
+                                        <button type="submit" class="btn btn-success btn-sm" title="Accepter" onclick="return confirm('Envoyer un SMS d\'acceptation au demandeur ?')"><i class="now-ui-icons ui-1_check"></i></button>
                                     </form>
                                     <form method="POST" action="{{ route('notifications.respond', $n->id) }}" style="display:inline;">
                                         @csrf
                                         <input type="hidden" name="response" value="rejected">
-                                        <button type="submit" class="btn btn-danger btn-sm" onclick="return confirm('Envoyer un SMS de refus au demandeur ?')">Refuser</button>
+                                        <button type="submit" class="btn btn-danger btn-sm" title="Refuser" onclick="return confirm('Envoyer un SMS de refus au demandeur ?')"><i class="now-ui-icons ui-1_simple-remove"></i></button>
                                     </form>
                                     @endif
                                 </td>

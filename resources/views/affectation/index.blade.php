@@ -11,7 +11,7 @@ Affectation
             <div class="card-header">
                 <p class="category">
                     Gestion des Affectations
-                    @if(auth()->user()->isAdmin() || !empty(auth()->user()->service))
+                    @if(auth()->user()->isAdmin())
                     <button class="btn btn-primary btn-sm" data-toggle="modal" data-target="#exampleModal">Nouvelle Affectation</button>
                     @endif
                 </p>
@@ -125,8 +125,8 @@ Affectation
       <span class="text-danger" data-error-for="iddmd"></span>
       </div>
       <div class="modal-footer">
-        <button type="button" class="btn btn-secondary" data-dismiss="modal" title="Fermer"><i class="now-ui-icons ui-1_simple-remove"></i></button>
-        <button type="submit" id="affectationBtn" class="btn btn-primary" title="Ajouter"><i class="now-ui-icons ui-1_check"></i></button>
+        <button type="button" class="btn btn-warning" data-dismiss="modal" title="Fermer"><i class="now-ui-icons ui-1_simple-remove"></i></button>
+        <button type="submit" id="affectationBtn" class="btn btn-success" title="Ajouter"><i class="now-ui-icons ui-1_check"></i></button>
       </div>
       </form>
     </div>
@@ -179,8 +179,8 @@ Affectation
           </div>
         </div>
         <div class="modal-footer">
-          <button type="button" class="btn btn-secondary" data-dismiss="modal" title="Fermer"><i class="now-ui-icons ui-1_simple-remove"></i></button>
-          <button type="submit" class="btn btn-primary" title="Modifier"><i class="now-ui-icons ui-1_check"></i></button>
+          <button type="button" class="btn btn-warning" data-dismiss="modal" title="Fermer"><i class="now-ui-icons ui-1_simple-remove"></i></button>
+          <button type="submit" class="btn btn-success" title="Modifier"><i class="now-ui-icons ui-1_check"></i></button>
         </div>
       </form>
     </div>
@@ -225,27 +225,29 @@ Affectation
 @endif
 
 <script>
-$('#exampleModal-edit').on('show.bs.modal', function (event) {
-    var button = $(event.relatedTarget);
-    var id = button.data('id');
-    $('#editAffectationForm').attr('action', '/affectation/' + id);
-    $('#edit_aff_sevice').val(button.data('sevice'));
-    $('#edit_aff_iddmd').val(button.data('iddmd'));
-    $('#edit_aff_dateaff').val(button.data('dateaff'));
-});
-
-$('#exampleModal-delete').on('show.bs.modal', function (event) {
-    var button = $(event.relatedTarget);
-    var id = button.data('id');
-    $('#deleteAffectationForm').attr('action', '/affectation/' + id);
-});
-
-var closeBtnAffEdit = document.getElementById('closeAffectationEditSuccess');
-if (closeBtnAffEdit) {
-    closeBtnAffEdit.addEventListener('click', function () {
-        document.getElementById('affectationEditSuccessOverlay').style.display = 'none';
+document.addEventListener('DOMContentLoaded', function () {
+    $('#exampleModal-edit').on('show.bs.modal', function (event) {
+        var button = $(event.relatedTarget);
+        var id = button.data('id');
+        $('#editAffectationForm').attr('action', '/affectation/' + id);
+        $('#edit_aff_sevice').val(button.data('sevice'));
+        $('#edit_aff_iddmd').val(button.data('iddmd'));
+        $('#edit_aff_dateaff').val(button.data('dateaff'));
     });
-}
+
+    $('#exampleModal-delete').on('show.bs.modal', function (event) {
+        var button = $(event.relatedTarget);
+        var id = button.data('id');
+        $('#deleteAffectationForm').attr('action', '/affectation/' + id);
+    });
+
+    var closeBtnAffEdit = document.getElementById('closeAffectationEditSuccess');
+    if (closeBtnAffEdit) {
+        closeBtnAffEdit.addEventListener('click', function () {
+            document.getElementById('affectationEditSuccessOverlay').style.display = 'none';
+        });
+    }
+});
 </script>
  <!-- Modal Show-->
 <div class="modal fade" id="exampleModal-show" tabindex="-1" role="dialog" aria-labelledby="exampleModalLabel" aria-hidden="true">

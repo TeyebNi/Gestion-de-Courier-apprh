@@ -64,8 +64,8 @@ class AffectationController extends Controller
 
     public function store(Request $request)
     {
-        if (!auth()->user()->isAdmin() && empty(auth()->user()->service)) {
-            abort(403, "Vous devez être administrateur ou appartenir à un service pour créer une affectation.");
+        if (!auth()->user()->isAdmin()) {
+            abort(403, "Seuls les administrateurs peuvent créer une affectation.");
         }
 
         $request->validate([

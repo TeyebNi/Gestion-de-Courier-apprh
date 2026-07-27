@@ -16,7 +16,7 @@ class OrientationController extends Controller
         if ($search) {
             $query->where('name', 'like', "%{$search}%");
         }
-        $client['orientation'] = $query->paginate(50)->appends(['search' => $search]);
+        $client['orientation'] = $query->paginate(5)->appends(['search' => $search]);
         return view('orientation.index', $client)->with('search', $search);
     }
 
@@ -59,7 +59,7 @@ class OrientationController extends Controller
         if ($request->wantsJson() || $request->ajax()) {
             return response()->json([
                 'success' => true,
-                'message' => 'Orientation ajoutée avec succès !',
+                'message' => "L'orientation « {$orientation->name} » a été ajoutée avec succès.",
                 'name' => $orientation->name,
             ]);
         }
@@ -80,11 +80,24 @@ class OrientationController extends Controller
 
     public function update(Request $request, Orientation $orientation)
     {
-        //
+        $request->validate([
+            'name' => ['required', 'string', 'max:255'],
+        ], [
+            'name.required' => "Veuillez entrer le nom de l'orientation.",
+        ]);
+
+        $orientation->update([
+            'name' => $request->name,
+        ]);
+
+        return redirect()->route('orientation.index')->with('success', "Orientation #{$orientation->id} modifiée avec succès.");
     }
 
     public function destroy(Orientation $orientation)
     {
-        //
+        $id = $orientation->id;
+        $orientation->delete();
+
+        return redirect()->route('orientation.index')->with('success', "Orientation #{$id} supprimée avec succès.");
     }
 }
