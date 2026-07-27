@@ -102,7 +102,7 @@ Les Utilisateurs
                             <option value="admin">Admin</option>
                         </select>
                     </div>
-                    <div class="input-group">
+                    <div class="input-group" id="edit_service_group">
                         <div class="input-group-prepend">
                             <span class="input-group-text">Service</span>
                         </div>
@@ -168,11 +168,31 @@ Les Utilisateurs
 $('#editUserModal').on('show.bs.modal', function (event) {
     var button = $(event.relatedTarget);
     var id = button.data('id');
+    var role = button.data('role');
+
     $('#editUserForm').attr('action', '/utilisateurs/' + id);
     $('#edit_name').val(button.data('name'));
-    $('#edit_role').val(button.data('role'));
+    $('#edit_role').val(role);
     $('#edit_service').val(button.data('service'));
+
+    var isLastAdmin = (role === 'admin' && {{ $adminCount }} <= 1);
+    $('#edit_role option[value="user"]').prop('disabled', isLastAdmin);
+
+    toggleServiceField(role);
 });
+
+$('#edit_role').on('change', function () {
+    toggleServiceField($(this).val());
+});
+
+function toggleServiceField(role) {
+    if (role === 'admin') {
+        $('#edit_service_group').hide();
+        $('#edit_service').val('');
+    } else {
+        $('#edit_service_group').show();
+    }
+}
 
 $('#deleteUserModal').on('show.bs.modal', function (event) {
     var button = $(event.relatedTarget);

@@ -14,11 +14,28 @@ class AffectationController extends Controller
 {
     public function index(Request $request)
     {
+        if (!auth()->user()->isAdmin() && empty(auth()->user()->service)) {
+            abort(403, "Cette page est réservée aux administrateurs et aux utilisateurs rattachés à un service.");
+        }
+
+        $search = $request->input('search');
         $orientation = Orientation::all();
         $tabdepot = Tabdepot::all();
-        $data = $request->all();
-        $client['affectation'] = Affectation::orderby('id', 'asc')->paginate(50);
-        return view('affectation.index', $client)->with('tabdepot', $tabdepot)->with('orientation', $orientation);
+
+        $query = Affectation::orderby('id', 'asc');
+
+        if (!auth()->user()->isAdmin()) {
+            $query->where('sevice', auth()->user()->service);
+        }
+
+        if ($search) {
+            $query->where(function ($q) use ($search) {
+                $q->where('sevice', 'like', "%{$search}%")
+                  ->orWhere('iddmd', 'like', "%{$search}%");
+            });
+        }
+        $client['affectation'] = $query->paginate(5)->appends(['search' => $search]);
+        return view('affectation.index', $client)->with('tabdepot', $tabdepot)->with('orientation', $orientation)->with('search', $search);
     }
 
     public function exportPDF4()
@@ -47,6 +64,10 @@ class AffectationController extends Controller
 
     public function store(Request $request)
     {
+        if (!auth()->user()->isAdmin() && empty(auth()->user()->service)) {
+            abort(403, "Vous devez être administrateur ou appartenir à un service pour créer une affectation.");
+        }
+
         $request->validate([
             'sevice' => ['required', 'string'],
             'iddmd' => ['required'],
@@ -100,11 +121,31 @@ class AffectationController extends Controller
 
     public function update(Request $request, Affectation $affectation)
     {
-        //
+        $request->validate([
+            'sevice' => ['required', 'string'],
+            'iddmd' => ['required'],
+            'dateaff' => ['required', 'date', 'before_or_equal:today'],
+        ], [
+            'sevice.required' => "Veuillez sélectionner l'orientation (service).",
+            'iddmd.required' => 'Veuillez sélectionner la demande.',
+            'dateaff.required' => 'Veuillez entrer une date.',
+            'dateaff.before_or_equal' => "La date ne peut pas être dans le futur.",
+        ]);
+
+        $affectation->update([
+            'sevice' => $request->sevice,
+            'dateaff' => $request->dateaff,
+            'iddmd' => $request->iddmd,
+        ]);
+
+        return redirect()->route('affectation.index')->with('success', "Affectation #{$affectation->id} modifiée avec succès.");
     }
 
     public function destroy(Affectation $affectation)
     {
-        //
+        $id = $affectation->id;
+        $affectation->delete();
+
+        return redirect()->route('affectation.index')->with('success', "Affectation #{$id} supprimée avec succès.");
     }
 }

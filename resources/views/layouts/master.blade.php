@@ -40,13 +40,7 @@
                             <p>Dashboard</p>
                         </a>
                     </li>
-                    @if(auth()->check() && auth()->user()->isAdmin())
-                    <li>
-                        <a href="{{('orientation')}}">
-                            <i class="now-ui-icons education_atom"></i>
-                            <p>Orientation</p>
-                        </a>
-                    </li>
+                    @if(auth()->user()->isAdmin() || !empty(auth()->user()->service))
                     <li>
                         <a href="{{('affectation')}}">
                             <i class="now-ui-icons location_map-big"></i>
@@ -54,14 +48,16 @@
                         </a>
                     </li>
                     @endif
-                    
+                    @if(auth()->check() && auth()->user()->isAdmin())
                     <li>
-                        <a href="{{('')}}">
-                            <i class="now-ui-icons users_single-02"></i>
-                            <p>User Profile</p>
+                        <a href="{{('orientation')}}">
+                            <i class="now-ui-icons education_atom"></i>
+                            <p>Orientation</p>
                         </a>
                     </li>
-                    <li class="active">
+                    @endif
+                    
+<li class="active">
                         <a href="{{('depot')}}">
                             <i class="now-ui-icons design_bullet-list-67"></i>
                             <p>Dépôt des Demandes</p>
@@ -110,12 +106,12 @@
                         <span class="navbar-toggler-bar navbar-kebab"></span>
                     </button>
                     <div class="collapse navbar-collapse justify-content-end" id="navigation">
-                        <form  method="get" action="{{route('depot.index')}}">
+                        <form method="GET" action="{{ url()->current() }}">
                             <div class="input-group no-border">
-                                <input type="text" class="form-control"   name="search" value="{{ request('search') }}"  placeholder="Search...">
-                                <span class="input-group-addon">
+                                <input type="text" class="form-control"   name="search" value="{{ request('search') }}"  placeholder="Rechercher...">
+                                <button type="submit" class="input-group-addon" style="border:none; background:transparent;">
                                     <i class="now-ui-icons ui-1_zoom-bold"></i>
-                                </span>
+                                </button>
                             </div>
                         </form>
                         <ul class="navbar-nav">

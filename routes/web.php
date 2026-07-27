@@ -32,6 +32,12 @@ Route::middleware('auth')->group(function () {
     Route::get('/export-pdf', [TabdepotController::class, 'exportPDF1']);
     Route::get('invoice', [TabdepotController::class, 'exportPDF']);
     Route::get('depot/print_reçu/{idt}',[TabdepotController::class,'print_facture'])->name('depot.print_reçu');
+    Route::get('affectation', [AffectationController::class, 'index'])->name('affectation.index');
+    Route::post('affectation', [AffectationController::class, 'store'])->name('affectation.store');
+    Route::put('affectation/{affectation}', [AffectationController::class, 'update'])->name('affectation.update');
+    Route::delete('affectation/{affectation}', [AffectationController::class, 'destroy'])->name('affectation.destroy');
+    Route::put('depot/{tabdepot}', [TabdepotController::class, 'update'])->name('depot.update');
+    Route::delete('depot/{tabdepot}', [TabdepotController::class, 'destroy'])->name('depot.destroy');
 
 
     Route::get('notifications', [ServiceNotificationController::class, 'index'])->name('notifications.index');
@@ -40,8 +46,6 @@ Route::middleware('auth')->group(function () {
 
     // Réservé aux administrateurs (pages de configuration)
     Route::middleware('admin')->group(function () {
-        Route::get('affectation', [AffectationController::class, 'index'])->name('affectation.index');
-        Route::post('affectation', [AffectationController::class, 'store'])->name('affectation.store');
 
         Route::get('orientation', [OrientationController::class, 'index'])->name('orientation.index');
         Route::post('orientation', [OrientationController::class, 'store'])->name('orientation.store');
@@ -54,5 +58,7 @@ Route::middleware('auth')->group(function () {
         Route::get('utilisateurs', [UserController::class, 'index'])->name('users.index');
         Route::put('utilisateurs/{user}', [UserController::class, 'update'])->name('users.update');
         Route::delete('utilisateurs/{user}', [UserController::class, 'destroy'])->name('users.destroy');
+
+        
     });
 });

@@ -12,13 +12,15 @@ class TypedemController extends Controller
      * Display a listing of the resource.
      */
 
-      public function index(Request $request)
+    public function index(Request $request)
     {
-         
-      $data=$request->all();
-      $client['typedem']=Typedem::orderby('id','asc')->paginate(50);
-      return view('typedem.index', $client);
-    
+        $search = $request->input('search');
+        $query = Typedem::orderby('id', 'asc');
+        if ($search) {
+            $query->where('name', 'like', "%{$search}%");
+        }
+        $client['typedem'] = $query->paginate(50)->appends(['search' => $search]);
+        return view('typedem.index', $client)->with('search', $search);
     }
 
 

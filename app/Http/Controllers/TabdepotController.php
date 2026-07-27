@@ -1,7 +1,7 @@
 <?php
 
 namespace App\Http\Controllers;
-use App\Http\Requests\TabdepotRequest;
+
 use App\Models\Tabdepot;
 use App\Models\Typedem;
 use App\Http\Controllers\Controller;
@@ -18,65 +18,46 @@ class TabdepotController extends Controller
         $this->sms = $sms;
     }
 
-  public function index(Request $request)
+    public function index(Request $request)
     {
+        $search = $request->search;
+        $typedem = Typedem::all();
 
-      $search = $request->search;
+        $tabdepot = Tabdepot::query()
+            ->when($search, function ($query) use ($search) {
+                $query->where('nom', 'like', "%{$search}%")
+                      ->orWhere('nni', 'like', "%{$search}%")
+                      ->orWhere('tel', 'like', "%{$search}%")
+                      ->orWhere('adresse', 'like', "%{$search}%")
+                      ->orWhere('typdm', 'like', "%{$search}%");
+            })
+            ->orderby('id', 'asc')
+            ->paginate(5)
+            ->appends(['search' => $search]);
 
-    
-
-    $search = $request->search;
-
-    $tabdepots = Tabdepot::query()
-        ->when($search, function ($query) use ($search) {
-            $query->where('typdm', 'like', "%{$search}%")
-                  ->orWhere('typdm', 'like', "%{$search}%");
-        })
-        ->paginate(5);
-
-    //return view('tabdepot.index', compact('tabdepots'));
-        $tabdepot = Tabdepot::all();
-        //$tabdepot = Tabdepot::get();
-        $tabdepot = Tabdepot::paginate(5);
-      $typedem=Typedem::all();   
-      //$data=$request->all();
-      return view('depot.index', compact('tabdepot', 'typedem','tabdepots'));
-    
+        return view('depot.index', compact('tabdepot', 'typedem', 'search'));
     }
 
-    public function indexTest(Request $request)
+    public function print_facture($idt)
     {
-      $typedem=Typedem::all();   
-      $data=$request->all();
-      $client['tabdepot']=Tabdepot::orderby('id','asc')->paginate(5);
-      return view('depot.index', $client)->with('typedem',$typedem);
+        $detailf = Tabdepot::where('id', $idt)->firstOrFail();
+        return view('depot.print_reçu', compact('detailf'));
     }
 
- public function print_facture($idt)
+    public function exportPDF4()
     {
-        
-   $detailfac=Tabdepot::where('id',$idt)->get();
-   $detailf=Tabdepot::where('id',$idt)->first();
-    //$detailf=Tabdepot::where('idt',$idt)->first(s); 
-    //$detailsomme=Detailfacture::where('idFacture',$idFacture)->sum('montant');
-    //view()->share('facture',$facture);
-     return view('depot.print_reçu',compact('detailfac','detailf'));
-    }  
-
-
-     public function exportPDF4()
-    { 
-      $data =Tabdepot::all();
-      view()->share('data',$data);
-      $pdf = PDF::loadView('admin.show-pdf');
-      return $pdf->download('data.pdf');
+        $data = Tabdepot::all();
+        view()->share('data', $data);
+        $pdf = PDF::loadView('admin.show-pdf');
+        return $pdf->download('data.pdf');
     }
-   public function exportPDF()
-{
-    $data = Tabdepot::all();
-    $pdf = Pdf::loadView('invoice', ['data' => $data]);
-    return $pdf->download('invoice.pdf');
-}
+
+    public function exportPDF()
+    {
+        $data = Tabdepot::all();
+        $pdf = Pdf::loadView('invoice', ['data' => $data]);
+        return $pdf->download('invoice.pdf');
+    }
 
     public function exportPDF1()
     {
@@ -86,6 +67,7 @@ class TabdepotController extends Controller
         ]);
         return $pdf->download('report.pdf');
     }
+
     public function create()
     {
         //
@@ -94,24 +76,24 @@ class TabdepotController extends Controller
     public function store(Request $request)
     {
         $demande = Tabdepot::create([
-        'typdm'=>$request->typdm,
-         'nom'=>$request->nom,
-         'nni'=>$request->nni,
-         'tel'=>$request->tel,
-         'adresse'=>$request->adresse,
-          'daterecp'=>$request->daterecp,
-      ]);
+            'typdm' => $request->typdm,
+            'nom' => $request->nom,
+            'nni' => $request->nni,
+            'tel' => $request->tel,
+            'adresse' => $request->adresse,
+            'daterecp' => $request->daterecp,
+        ]);
 
-      if ($demande->tel) {
-          $this->sms->send(
-              $demande->tel,
-              "Bonjour {$demande->nom}, votre demande ({$demande->typdm}) a bien été enregistrée. Code: {$demande->id}. Commune de Tevragh Zeina."
-          );
-      }
+        if ($demande->tel) {
+            $this->sms->send(
+                $demande->tel,
+                "Bonjour {$demande->nom}, votre demande ({$demande->typdm}) a bien été enregistrée. Code: {$demande->id}. Commune de Tevragh Zeina."
+            );
+        }
 
-      session()->flash('success', 'les donnees successfully enregistre.');
-             
-     return redirect()->route('depot.index')->with('succes',' Demande saved');
+        session()->flash('success', 'les donnees successfully enregistre.');
+
+        return redirect()->route('depot.index')->with('succes', ' Demande saved');
     }
 
     public function show(Tabdepot $tabdepot)
@@ -125,12 +107,32 @@ class TabdepotController extends Controller
     }
 
     public function update(Request $request, Tabdepot $tabdepot)
-    {
-        //
-    }
+{
+    $request->validate([
+        'typdm' => ['required', 'string', 'max:255'],
+        'nom' => ['required', 'string', 'max:255', 'regex:/^[\pL\s]+$/u'],
+        'nni' => ['required', 'digits:10'],
+        'tel' => ['required', 'digits:8'],
+        'adresse' => ['nullable', 'string', 'max:255'],
+        'daterecp' => ['nullable', 'date', 'before_or_equal:today'],
+    ], [
+        'nom.regex' => 'Le nom ne doit contenir que des lettres.',
+        'nni.digits' => 'Le NNI doit contenir exactement 10 chiffres.',
+        'tel.digits' => 'Le téléphone doit contenir exactement 8 chiffres.',
+        'daterecp.before_or_equal' => 'La date ne peut pas être dans le futur.',
+    ]);
+
+    $tabdepot->update($request->only(['typdm', 'nom', 'nni', 'tel', 'adresse', 'daterecp']));
+
+    return redirect()->route('depot.index')->with('success', "Demande de {$tabdepot->nom} modifiée avec succès.");
+}
 
     public function destroy(Tabdepot $tabdepot)
-    {
-        //
-    }
+{
+    $nom = $tabdepot->nom;
+    $tabdepot->delete();
+
+    return redirect()->route('depot.index')->with('success', "Demande de {$nom} supprimée avec succès.");
+}
+    
 }

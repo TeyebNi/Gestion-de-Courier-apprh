@@ -9,38 +9,48 @@ use Illuminate\Http\Request;
 
 class UserController extends Controller
 {
-    public function index()
-    {
-        $users = User::orderBy('id', 'asc')->paginate(5);
-        $services = Orientation::pluck('name');
-        return view('users.index', compact('users', 'services'));
+    public function index(Request $request)
+{
+    $search = $request->input('search');
+    $query = User::orderBy('id', 'asc');
+    if ($search) {
+        $query->where(function ($q) use ($search) {
+            $q->where('name', 'like', "%{$search}%")
+              ->orWhere('email', 'like', "%{$search}%");
+        });
+    }
+    $users = $query->paginate(5)->appends(['search' => $search]);
+    $services = Orientation::pluck('name');
+    $adminCount = User::where('role', 'admin')->count();
+    return view('users.index', compact('users', 'services', 'adminCount', 'search'));
+}
+
+   public function update(Request $request, User $user)
+{
+    $request->validate([
+        'name' => ['required', 'string', 'max:255', 'regex:/^[\pL\s]+$/u'],
+        'role' => ['required', 'in:admin,user'],
+        'service' => ['nullable', 'string', 'max:255'],
+    ], [
+        'name.regex' => 'Le nom ne doit contenir que des lettres.',
+    ]);
+
+    if ($user->isAdmin() && $request->role === 'user' && User::where('role', 'admin')->count() <= 1) {
+        return redirect()->route('users.index')->with('error', 'Impossible de rétrograder le dernier administrateur.');
     }
 
-    public function update(Request $request, User $user)
-    {
-        $request->validate([
-            'name' => ['required', 'string', 'max:255', 'regex:/^[\pL\s]+$/u'],
-            'role' => ['required', 'in:admin,user'],
-            'service' => ['nullable', 'string', 'max:255'],
-        ], [
-            'name.regex' => 'Le nom ne doit contenir que des lettres.',
-        ]);
+    $service = $request->role === 'admin' ? null : $request->service;
 
-        if ($user->isAdmin() && $request->role === 'user' && User::where('role', 'admin')->count() <= 1) {
-            return redirect()->route('users.index')->with('error', 'Impossible de rétrograder le dernier administrateur.');
-        }
+    $user->update([
+        'name' => $request->name,
+        'role' => UserRole::from($request->role),
+        'service' => $service,
+    ]);
 
-        $user->update([
-            'name' => $request->name,
-            'role' => UserRole::from($request->role),
-            'service' => $request->service,
-        ]);
+    $roleLabel = $user->isAdmin() ? 'Administrateur' : 'Utilisateur';
 
-        $roleLabel = $user->isAdmin() ? 'Admin' : 'User';
-
-        return redirect()->route('users.index')->with('success', "Utilisateur {$user->name} mis à jour avec succès. Nouveau rôle : {$roleLabel}. Service : " . ($user->service ?: 'Aucun') . ".");
-    }
-
+    return redirect()->route('users.index')->with('success', "{$roleLabel} {$user->name} mis à jour avec succès. Nouveau rôle : " . ($user->isAdmin() ? 'Admin' : 'User') . ". Service : " . ($user->service ?: 'Aucun') . ".");
+}
     public function destroy(User $user)
     {
         if ($user->id === auth()->id()) {

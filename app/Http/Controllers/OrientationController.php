@@ -11,9 +11,13 @@ class OrientationController extends Controller
 {
     public function index(Request $request)
     {
-        $data = $request->all();
-        $client['orientation'] = Orientation::orderby('id', 'asc')->paginate(50);
-        return view('orientation.index', $client);
+        $search = $request->input('search');
+        $query = Orientation::orderby('id', 'asc');
+        if ($search) {
+            $query->where('name', 'like', "%{$search}%");
+        }
+        $client['orientation'] = $query->paginate(50)->appends(['search' => $search]);
+        return view('orientation.index', $client)->with('search', $search);
     }
 
     public function exportPDF4()

@@ -1,25 +1,22 @@
-
 @extends('layouts.master')
 
-
-
-
 @section('title')
-
-Dashboard Courier
+Affectation
 @endsection
 
 @section('content')
-
-<div class="content">
-                <div class="row">
-                    <div class="col-md-8 ml-auto mr-auto">
-                        <div class="card card-upgrade">
-                            <div class="card-header text-center">
-                                <h4 class="card-title">Affectation</h3>
-                                    <p class="card-category"></p>
-                            </div>
-                            <div class="card-body">
+<div class="row">
+    <div class="col-md-12">
+        <div class="card">
+            <div class="card-header">
+                <p class="category">
+                    Gestion des Affectations
+                    @if(auth()->user()->isAdmin() || !empty(auth()->user()->service))
+                    <button class="btn btn-primary btn-sm" data-toggle="modal" data-target="#exampleModal">Nouvelle Affectation</button>
+                    @endif
+                </p>
+            </div>
+            <div class="card-body">
 
                 @if ($errors->any())
                     <div class="alert alert-danger">
@@ -31,58 +28,41 @@ Dashboard Courier
                     </div>
                 @endif
 
-                                <div class="table-responsive table-upgrade">
-                                    <table class="table">
-                                        <thead>
-                                            <th></th>
-                                            <th class="text-center">Date</th>
-                                            <th class="text-center">Demande</th>
-                                            
-                                        </thead>
-                                        <tbody>
-                                            @foreach($affectation as $c)
-                                            <tr>
-                                               
-                                              <td>
-                                                  {{$c->sevice}}
-                                                </td>
-                                                <td>
-                                                   {{$c->dateaff}}
-                                                </td>
-                                                 <td>
-                                                   {{$c->iddmd}}
-                                                </td> 
-                                                <td>
-                                                 {{$c->id}}
-                                                </td>
-                                            </tr>
-                                            @endforeach
-                                            
-                                            
-                                            <tr>
-        <td class="text-center">
-                                                    <a href="#" class="btn btn-round btn-default disabled">Current Version</a>
-                                                </td>
-                                                <td class="text-center">
-                                                    <button class="btn btn-primary" data-toggle="modal" data-target="#exampleModal">Nouvelle Affectation</button>
-                                                </td>
-                                            </tr>
-                                        </tbody>
-                                    </table>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
+                <div class="table-responsive">
+                    <table class="table">
+                        <thead class="text-primary">
+                            <th>N°</th>
+                            <th>Service</th>
+                            <th>Date</th>
+                            <th>Demande</th>
+                            <th class="text-right">Action</th>
+                        </thead>
+                        <tbody>
+                            @foreach($affectation as $key => $c)
+                            <tr>
+                                <td>{{ $affectation->firstItem() + $key }}</td>
+                                <td>{{ $c->sevice }}</td>
+                                <td>{{ $c->dateaff }}</td>
+                                <td>{{ $c->iddmd }}</td>
+                                <td class="text-right">
+                                    <a data-id="{{ $c->id }}" data-sevice="{{ $c->sevice }}" data-dateaff="{{ $c->dateaff }}" data-iddmd="{{ $c->iddmd }}" data-toggle="modal" data-target="#exampleModal-edit" class="btn btn-success btn-sm" title="Modifier"><i class="now-ui-icons ui-2_settings-90"></i></a>
+                                    <a data-id="{{ $c->id }}" data-toggle="modal" data-target="#exampleModal-delete" class="btn btn-danger btn-sm" title="Supprimer"><svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"></polyline><path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"></path><path d="M10 11v6"></path><path d="M14 11v6"></path><path d="M9 6V4a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v2"></path></svg></a>
+                                </td>
+                            </tr>
+                            @endforeach
+                        </tbody>
+                    </table>
+                </div>
+                <div class="d-flex justify-content-center mt-3">
+                    {{ $affectation->links() }}
                 </div>
             </div>
+        </div>
+    </div>
+</div>
 @endsection
-
-
 @section('scripts')
-
-
 @endsection
-
 <!-- Modal -->
 <div class="modal fade" id="exampleModal" tabindex="-1" role="dialog" aria-labelledby="exampleModalLabel" aria-hidden="true">
   <div class="modal-dialog  modal-notify modal-lg modal-right modal-success" role="document">
@@ -145,8 +125,8 @@ Dashboard Courier
       <span class="text-danger" data-error-for="iddmd"></span>
       </div>
       <div class="modal-footer">
-        <button type="button" class="btn btn-secondary" data-dismiss="modal">Close</button>
-        <button type="submit" id="affectationBtn" class="btn btn-primary">Ajouter</button>
+        <button type="button" class="btn btn-secondary" data-dismiss="modal" title="Fermer"><i class="now-ui-icons ui-1_simple-remove"></i></button>
+        <button type="submit" id="affectationBtn" class="btn btn-primary" title="Ajouter"><i class="now-ui-icons ui-1_check"></i></button>
       </div>
       </form>
     </div>
@@ -158,57 +138,115 @@ Dashboard Courier
   <div class="modal-dialog  modal-notify modal-lg modal-right modal-success" role="document">
     <div class="modal-content">
       <div class="modal-header">
-        <h5 class="modal-title" id="exampleModalLabel">Modifier Sffectation</h5>
+        <h5 class="modal-title" id="exampleModalLabel">Modifier l'Affectation</h5>
         <button type="button" class="close" data-dismiss="modal" aria-label="Close">
           <span aria-hidden="true">&times;</span>
         </button>
       </div>
-      <div class="modal-body">
-
-        <form action="" method="post">
+      <form id="editAffectationForm" action="" method="post">
        @csrf
         @method('PUT')
-       <div class="input-group">
-        <div class="input-group-prepend">
-        <span class="input-group-text">Code</span>
-      </div>
-      <input type="text" class="form-control" name="id" placeholder="Entrer Code">
-     
-                    <span  class="text-danger"></span>
-                   
-    </div>
-    <br>
-      <div class="input-group">
-        <div class="input-group-prepend">
-        <span class="input-group-text">Service</span>
-      </div>
-      <input type="text" class="form-control" name="sevice" placeholder="Entrer Servicee">
-      
-                    <span  class="text-danger"></span>
-                    
-    </div>
-      <br>
-       <br>
-   <div class="input-group">
-        <div class="input-group-prepend">
-        <span class="input-group-text">Date </span>
-      </div>
-      <input type="date" class="form-control" name="dateaff" max="{{ date('Y-m-d') }}" placeholder="Entrer Date">
-     
-                    <span  class="text-danger"></span>
-                   
-    </div>
-    
-      </div>
-      <div class="modal-footer">
-        <button type="button" class="btn btn-secondary" data-dismiss="modal">Close</button>
-        <button type="submit" class="btn btn-primary">Modifier</button>
-      </div>
+        <div class="modal-body">
+          <div class="input-group">
+            <div class="input-group-prepend">
+              <span class="input-group-text">Service</span>
+            </div>
+            <select class="form-control" id="edit_aff_sevice" name="sevice">
+              <option value="">Sélectionner le service</option>
+              @foreach($orientation as $c)
+                <option value="{{ $c->name }}">{{ $c->name }}</option>
+              @endforeach
+            </select>
+          </div>
+          <br>
+          <div class="input-group">
+            <div class="input-group-prepend">
+              <span class="input-group-text">Demande</span>
+            </div>
+            <select class="form-control" id="edit_aff_iddmd" name="iddmd">
+              <option value="">Sélectionner le code demande</option>
+              @foreach($tabdepot as $c)
+                <option value="{{ $c->id }}">{{ $c->id }}</option>
+              @endforeach
+            </select>
+          </div>
+          <br>
+          <div class="input-group">
+            <div class="input-group-prepend">
+              <span class="input-group-text">Date</span>
+            </div>
+            <input type="date" class="form-control" id="edit_aff_dateaff" name="dateaff" max="{{ date('Y-m-d') }}">
+          </div>
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-secondary" data-dismiss="modal" title="Fermer"><i class="now-ui-icons ui-1_simple-remove"></i></button>
+          <button type="submit" class="btn btn-primary" title="Modifier"><i class="now-ui-icons ui-1_check"></i></button>
+        </div>
       </form>
     </div>
   </div>
 </div>
- </div>
+
+<!-- Modal delete-->
+<div class="modal fade left " id="exampleModal-delete" tabindex="-1" role="dialog" aria-labelledby="exampleModalLabel" aria-hidden="true">
+  <div class="modal-dialog notifi modal-lg modal-right modal-danger" role="document">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title" id="exampleModalLabel">Supprimer l'Affectation</h5>
+        <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+          <span aria-hidden="true">&times;</span>
+        </button>
+      </div>
+      <form id="deleteAffectationForm" action="" method="post">
+        @csrf
+        @method('DELETE')
+        <div class="modal-body">
+          <p>Voulez-vous vraiment supprimer cette affectation ?</p>
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-warning" data-dismiss="modal" title="Annuler"><i class="now-ui-icons ui-1_simple-remove"></i></button>
+          <button type="submit" class="btn btn-success" title="Oui, Supprimer"><i class="now-ui-icons ui-1_check"></i></button>
+        </div>
+      </form>
+    </div>
+  </div>
+</div>
+
+@if (session('success'))
+<div id="affectationEditSuccessOverlay" style="position:fixed; inset:0; background:rgba(0,0,0,0.5); z-index:2000; display:flex; align-items:center; justify-content:center;">
+    <div style="background:#fff; border-radius:12px; padding:32px; width:90%; max-width:380px; text-align:center; box-shadow:0 10px 30px rgba(0,0,0,0.2);">
+        <div style="margin:0 auto 16px; width:64px; height:64px; border-radius:50%; border:3px solid #28a745; display:flex; align-items:center; justify-content:center;">
+            <span style="color:#28a745; font-size:32px;">&#10003;</span>
+        </div>
+        <p style="color:#333; margin-bottom:20px;">{{ session('success') }}</p>
+        <button id="closeAffectationEditSuccess" class="btn btn-info" style="width:100%;">OK</button>
+    </div>
+</div>
+@endif
+
+<script>
+$('#exampleModal-edit').on('show.bs.modal', function (event) {
+    var button = $(event.relatedTarget);
+    var id = button.data('id');
+    $('#editAffectationForm').attr('action', '/affectation/' + id);
+    $('#edit_aff_sevice').val(button.data('sevice'));
+    $('#edit_aff_iddmd').val(button.data('iddmd'));
+    $('#edit_aff_dateaff').val(button.data('dateaff'));
+});
+
+$('#exampleModal-delete').on('show.bs.modal', function (event) {
+    var button = $(event.relatedTarget);
+    var id = button.data('id');
+    $('#deleteAffectationForm').attr('action', '/affectation/' + id);
+});
+
+var closeBtnAffEdit = document.getElementById('closeAffectationEditSuccess');
+if (closeBtnAffEdit) {
+    closeBtnAffEdit.addEventListener('click', function () {
+        document.getElementById('affectationEditSuccessOverlay').style.display = 'none';
+    });
+}
+</script>
  <!-- Modal Show-->
 <div class="modal fade" id="exampleModal-show" tabindex="-1" role="dialog" aria-labelledby="exampleModalLabel" aria-hidden="true">
   <div class="modal-dialog  modal-notify modal-lg modal-right modal-success" role="document">
@@ -306,88 +344,6 @@ Dashboard Courier
   </div>
 </div>
  </div>
-
-<!-- Modal Delete-->
-<div class="modal fade left " id="exampleModal-delete" tabindex="-1" role="dialog" aria-labelledby="exampleModalLabel" aria-hidden="true">
-  <div class="modal-dialog notifi modal-lg modal-right modal-danger" role="document">
-    <div class="modal-content">
-      <div class="modal-header">
-        <h5 class="modal-title" id="exampleModalLabel">Delete Demande</h5>
-        <button type="button" class="close" data-dismiss="modal" aria-label="Close">
-          <span aria-hidden="true">&times;</span>
-        </button>
-      </div>
-      <div class="modal-body">
-      <form action="{{}}" method="post">
-        @csrf
-        @method('DELETE')
-      <input type="hidden"  id="id" name="id" >
-      <p class ="text-centre" width="50px"> are you sure want to delete this Demande</p>
-      </div>
-   <div class="modal-footer">
-        <button type="button" class="btn btn-warning" data-dismiss="modal">No/delete</button>
-        <button type="submit" class="btn btn-success">Yes/DeleteDemande</button>
-      </div>
-      </form>
-       </div>
-  </div>
-</div>
- </div>
-
- <script>
-
-$('#exampleModal-show').on('show.bs.modal',function(event){
-  var button=$(event.relatedTarget)
-   var typdm=button.data('typdm')
-  var nom=button.data('nom')
-  var nni=button.data('nni')
-  var tel=button.data('tel')
-  var adresse=button.data('adresse')
-  var daterecp=button.data('daterecp')
-  var id= button.data('id')
-            
-  var modal=$(this)
-  modal.find('.modal-title').text('edit demande Information');
-  modal.find('.modal-body #typdm').val(typdm);
-  modal.find('.modal-body #nom').val(nom);
-  modal.find('.modal-body #adresse').val(nni);
-  modal.find('.modal-body #tel').val(tel);
-  modal.find('.modal-body #adresse').val(adresse);
-  modal.find('.modal-body #daterecp').val(daterecp);
-  modal.find('.modal-body #id').val(id); 
-              
-  });
-  $('#exampleModal-edit').on('show.bs.modal',function(event){
-  var button=$(event.relatedTarget)
-  var typdm=button.data('typdm')
-  var nom=button.data('nom')
-  var nni=button.data('nni')
-  var tel=button.data('tel')
-  var adresse=button.data('adresse')
-  var daterecp=button.data('daterecp')
-  var id= button.data('id')
-            
-  var modal=$(this)
-  modal.find('.modal-title').text('edit demande Information');
-  modal.find('.modal-body #typdm').val(typdm);
-  modal.find('.modal-body #nom').val(nom);
-  modal.find('.modal-body #adresse').val(nni);
-  modal.find('.modal-body #tel').val(tel);
-  modal.find('.modal-body #adresse').val(adresse);
-  modal.find('.modal-body #daterecp').val(daterecp);
-  modal.find('.modal-body #id').val(id); 
-              
-  });
-  $('#exampleModal-delete').on('show.bs.modal',function(event){
-  var button=$(event.relatedTarget)
-  var fournisseur_id= button.data('id')
-            
-            var modal=$(this)
-            modal.find('.modal-title').text('delete demande Information');
-            modal.find('.modal-body #id').val(id);
-          }); 
-</script>
-
 
 <!-- Modale de succès Affectation -->
 <div id="affectationSuccessOverlay" style="display:none; position:fixed; inset:0; background:rgba(0,0,0,0.5); z-index:2000; align-items:center; justify-content:center;">
