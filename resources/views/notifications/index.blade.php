@@ -62,19 +62,6 @@ Notifications
                                         <button type="submit" class="btn btn-info btn-sm" title="Marquer lue"><i class="fa fa-eye"></i></button>
                                     </form>
                                     @endif
-
-                                    @if(!$n->response)
-                                    <form method="POST" action="{{ route('notifications.respond', $n->id) }}" style="display:inline;">
-                                        @csrf
-                                        <input type="hidden" name="response" value="accepted">
-                                        <button type="submit" class="btn btn-success btn-sm" title="Accepter" onclick="return confirm('Envoyer un SMS d\'acceptation au demandeur ?')"><i class="now-ui-icons ui-1_check"></i></button>
-                                    </form>
-                                    <form method="POST" action="{{ route('notifications.respond', $n->id) }}" style="display:inline;">
-                                        @csrf
-                                        <input type="hidden" name="response" value="rejected">
-                                        <button type="submit" class="btn btn-danger btn-sm" title="Refuser" onclick="return confirm('Envoyer un SMS de refus au demandeur ?')"><i class="now-ui-icons ui-1_simple-remove"></i></button>
-                                    </form>
-                                    @endif
                                 </td>
                             </tr>
                             @empty

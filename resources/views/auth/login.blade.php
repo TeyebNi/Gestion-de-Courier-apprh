@@ -3,24 +3,8 @@
 @section('content')
 <div class="d-flex flex-column align-items-center justify-content-center" style="min-height: 85vh;">
 
-    <div class="d-flex align-items-center justify-content-between mb-4" style="width: 100%; max-width: 700px; gap: 12px;">
-        <div style="text-align:left; font-size:12px; line-height:1.5; white-space:nowrap;">
-            <strong>Honneur - Fraternité - Justice</strong><br>
-            République Islamique de Mauritanie<br>
-            Wilaya de Nouakchott Ouest<br>
-            Mougataa de Tevragh Zeina<br>
-            Commune de Tevragh Zeina
-        </div>
-
+    <div class="d-flex align-items-center justify-content-center mb-4" style="width: 100%; max-width: 700px;">
         <img src="{{ asset('images/logo-tvz.png') }}" alt="Logo" style="width: 90px; height: 90px; object-fit: contain; flex-shrink: 0;">
-
-        <div dir="rtl" style="text-align:right; font-size:12px; line-height:1.5; white-space:nowrap;">
-            <strong>شرف - إخاء - عدل</strong><br>
-            الجمهورية الإسلامية الموريتانية<br>
-            ولاية انواكشوط الغربية<br>
-            مقاطعة تفرغ زينه<br>
-            بلدية تفرغ زينه
-        </div>
     </div>
 
     <div class="card shadow-sm" style="width: 100%; max-width: 380px;">
@@ -68,15 +52,6 @@
                     @error('password')
                         <span class="invalid-feedback d-block">{{ $message }}</span>
                     @enderror
-                </div>
-
-                <div class="d-flex align-items-center justify-content-between mb-3">
-                    <div class="form-check">
-                        <input class="form-check-input" type="checkbox" name="remember" id="remember" {{ old('remember') ? 'checked' : '' }}>
-                        <label class="form-check-label" for="remember">
-                            Se souvenir de moi
-                        </label>
-                    </div>
                 </div>
 
                 <div class="d-grid">

@@ -57,7 +57,20 @@ class TabdepotController extends Controller
     public function print_facture($idt)
     {
         $detailf = Tabdepot::where('id', $idt)->firstOrFail();
-        return view('depot.print_reçu', compact('detailf'));
+
+        $html = view('depot.print_reçu', compact('detailf'))->render();
+
+        $mpdf = new \Mpdf\Mpdf([
+            'mode' => 'utf-8',
+            'format' => 'A4',
+            'default_font' => 'dejavusans',
+            'autoScriptToLang' => true,
+            'autoLangToFont' => true,
+        ]);
+        $mpdf->WriteHTML($html);
+
+        return response($mpdf->Output('recu_depot_' . $detailf->id . '.pdf', \Mpdf\Output\Destination::DOWNLOAD), 200)
+            ->header('Content-Type', 'application/pdf');
     }
 
     public function exportPDF4()

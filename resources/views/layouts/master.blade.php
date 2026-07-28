@@ -19,16 +19,56 @@
     <link href="../assets/css/now-ui-dashboard.css?v=1.0.1" rel="stylesheet" />
     <!-- CSS Just for demo purpose, don't include it in your project -->
     <link href="../assets/demo/demo.css" rel="stylesheet" />
+    <style>
+        /* Sidebar personnalisé : dégradé bleu marine élégant, cohérent avec le reste de l'application */
+        .sidebar[data-color="blue"]:after {
+            background: #16233d;
+            background: linear-gradient(180deg, #0c2646 0%, #16233d 55%, #1d3457 100%);
+        }
+        .sidebar .logo {
+            border-bottom: 1px solid rgba(255,255,255,0.15);
+        }
+        .sidebar[data-color="blue"] .nav li.active > a,
+        .sidebar[data-color="blue"] .nav li.active > a i {
+            color: #e8862c;
+        }
+        .sidebar .nav li > a {
+            transition: all 0.2s ease-in-out;
+        }
+        .sidebar .nav li:not(.active) > a:hover {
+            color: #ffffff !important;
+            opacity: 0.85;
+        }
+
+        /* Bordures verticales entre les colonnes de tous les tableaux de l'application */
+        .table th,
+        .table td {
+            border-right: 2px solid #adb5bd;
+            border-top: 2px solid #adb5bd;
+        }
+        .table th:last-child,
+        .table td:last-child {
+            border-right: none;
+        }
+        .table thead th {
+            border-top: 2px solid #adb5bd !important;
+            border-bottom: 2px solid #adb5bd !important;
+            border-right: 2px solid #adb5bd !important;
+        }
+        .table thead th:last-child {
+            border-right: none !important;
+        }
+    </style>
 </head>
 
 <body class="">
     <div class="wrapper ">
         <div class="sidebar" data-color="blue"><!-- Tip 1: You can change the color sidebar using: data-color="blue | green | orange | red | yellow"-->
             <div class="logo">
-                <a href="http://www.creative-tim.com" class="simple-text logo-mini">
+                <a href="{{ route('dashboard') }}" class="simple-text logo-mini">
                     Gt
                 </a>
-                <a href="http://www.creative-tim.com" class="simple-text logo-normal">
+                <a href="{{ route('dashboard') }}" class="simple-text logo-normal">
                     Courier
                 </a>
             </div>
@@ -92,7 +132,7 @@
                                 <span class="navbar-toggler-bar bar3"></span>
                             </button>
                         </div>
-                        <a class="navbar-brand" href="#pablo">Gestion de Courier</a>
+                        <a class="navbar-brand" href="{{ route('dashboard') }}">Gestion de Courier</a>
                     </div>
                     <button class="navbar-toggler" type="button" data-toggle="collapse" data-target="#navigation" aria-controls="navigation-index" aria-expanded="false" aria-label="Toggle navigation">
                         <span class="navbar-toggler-bar navbar-kebab"></span>

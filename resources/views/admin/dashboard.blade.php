@@ -8,6 +8,7 @@ Tableau de bord
 
 <!-- KPI cards -->
 <div class="row">
+    @if($isAdmin)
     <div class="col-lg-3 col-md-6">
         <div class="card card-stats">
             <div class="card-body">
@@ -28,11 +29,12 @@ Tableau de bord
             <div class="card-footer">
                 <hr>
                 <div class="stats">
-                    <i class="now-ui-icons files_box"></i> Total déposé au guichet
+                    <i class="now-ui-icons files_box"></i> {{ $isAdmin ? 'Total déposé au guichet' : 'Concernant votre service' }}
                 </div>
             </div>
         </div>
     </div>
+    @endif
 
     <div class="col-lg-3 col-md-6">
         <div class="card card-stats">
@@ -61,6 +63,7 @@ Tableau de bord
         </div>
     </div>
 
+    @if($isAdmin)
     <div class="col-lg-3 col-md-6">
         <div class="card card-stats">
             <div class="card-body">
@@ -81,11 +84,38 @@ Tableau de bord
             <div class="card-footer">
                 <hr>
                 <div class="stats">
-                    <i class="now-ui-icons ui-1_settings-gear-63"></i> Catégories actives
+                    <i class="now-ui-icons ui-1_settings-gear-63"></i> {{ $isAdmin ? 'Catégories actives' : 'Types reçus par votre service' }}
                 </div>
             </div>
         </div>
     </div>
+    @else
+    <div class="col-lg-3 col-md-6">
+        <div class="card card-stats">
+            <div class="card-body">
+                <div class="row">
+                    <div class="col-5 col-md-4">
+                        <div class="icon-big text-center icon-warning">
+                            <i class="now-ui-icons ui-1_bell-53 text-danger"></i>
+                        </div>
+                    </div>
+                    <div class="col-7 col-md-8">
+                        <div class="numbers">
+                            <p class="card-category">Notifications Non Lues</p>
+                            <h4 class="card-title">{{ $totalUnread }}</h4>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="card-footer">
+                <hr>
+                <div class="stats">
+                    <i class="now-ui-icons ui-1_email-85"></i> À traiter pour votre service
+                </div>
+            </div>
+        </div>
+    </div>
+    @endif
 
     <div class="col-lg-3 col-md-6">
         <div class="card card-stats">
@@ -181,10 +211,11 @@ Tableau de bord
         <div class="card card-tasks">
             <div class="card-header">
                 <h5 class="card-category">Activité récente</h5>
-                <h4 class="card-title">Dernières Demandes Déposées</h4>
+                <h4 class="card-title">{{ $isAdmin ? 'Dernières Demandes Déposées' : 'Dernières Notifications de votre Service' }}</h4>
             </div>
             <div class="card-body">
                 <div class="table-full-width table-responsive">
+                    @if($isAdmin)
                     <table class="table">
                         <thead class="text-primary">
                             <th>Nom</th>
@@ -205,6 +236,36 @@ Tableau de bord
                             @endforelse
                         </tbody>
                     </table>
+                    @else
+                    <table class="table">
+                        <thead class="text-primary">
+                            <th>Message</th>
+                            <th>Statut</th>
+                            <th>Date</th>
+                        </thead>
+                        <tbody>
+                            @forelse($recentNotifications as $n)
+                            <tr>
+                                <td>{{ $n->message }}</td>
+                                <td>
+                                    @if($n->response === 'accepted')
+                                        <span class="badge badge-success">Acceptée</span>
+                                    @elseif($n->response === 'rejected')
+                                        <span class="badge badge-danger">Refusée</span>
+                                    @else
+                                        <span class="badge badge-warning">En attente</span>
+                                    @endif
+                                </td>
+                                <td>{{ $n->created_at->format('Y-m-d H:i') }}</td>
+                            </tr>
+                            @empty
+                            <tr>
+                                <td colspan="3" class="text-center text-muted">Aucune notification pour le moment.</td>
+                            </tr>
+                            @endforelse
+                        </tbody>
+                    </table>
+                    @endif
                 </div>
             </div>
             <div class="card-footer">
