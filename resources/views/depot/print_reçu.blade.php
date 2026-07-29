@@ -7,10 +7,10 @@
         body { font-family: sans-serif; padding: 20px; color: #000; }
         .header-table { width: 100%; border-collapse: collapse; margin-bottom: 6px; }
         .header-table td { border: none; padding: 0; vertical-align: middle; }
-        .header-table .fr { text-align: left; font-size: 13px; line-height: 1.6; color: #000; font-weight: 600; }
-        .header-table .ar { text-align: right; font-size: 14px; line-height: 1.8; direction: rtl; color: #000; font-weight: 600; }
-        .header-table .logo { text-align: center; width: 110px; }
-        .header-table img { width: 90px; height: 90px; }
+        .header-table .fr { text-align: left; font-size: 10px; line-height: 1.5; color: #000; font-weight: 600; width: 38%; padding-right: 10px; }
+        .header-table .ar { text-align: right; font-size: 11px; line-height: 1.7; direction: rtl; color: #000; font-weight: 600; width: 38%; padding-left: 10px; }
+        .header-table .logo { text-align: center; width: 24%; }
+        .header-table img { width: 35px; height: 35px; }
         hr { border: none; border-top: 1px solid #000; margin: 8px 0 0 0; }
         .datetime { text-align: left; font-size: 12px; font-weight: 600; color: #000; margin: 6px 0 20px 0; }
         h1.title { text-align: center; margin: 15px 0 30px 0; font-size: 22px; color: #000; }
@@ -25,10 +25,10 @@
         }
         table.data th { background: #f2f2f2; text-align: left; font-weight: 700; font-size: 15px; }
         table.data td { font-size: 15px; }
+        .signature { margin-top: 60px; font-size: 14px; font-weight: 600; color: #000; text-align: left; }
     </style>
 </head>
 <body>
-
     <table class="header-table">
         <tr>
             <td class="fr">
@@ -39,7 +39,7 @@
                 Commune de Tevragh Zeina
             </td>
             <td class="logo">
-                <img src="{{ public_path('images/logo-tvz.png') }}" alt="Logo">
+                <img src="{{ public_path('images/logo-tvz.png') }}" alt="Logo" width="55" height="55" style="width:55px; height:55px;">
             </td>
             <td class="ar">
                 <strong>شرف - إخاء - عدل</strong><br>
@@ -52,9 +52,7 @@
     </table>
     <hr>
     <div class="datetime">{{ now()->format('d/m/Y') }}, {{ now()->format('H:i') }}</div>
-
     <h1 class="title">Reçu de Dépôt <span class="num">N° {{ $detailf->id }}</span></h1>
-
     <table class="data">
         <colgroup>
             <col style="width: 14%;">
@@ -81,6 +79,6 @@
             <td>{{ $detailf->daterecp }}</td>
         </tr>
     </table>
-
+    <div class="signature">Signature: </div>
 </body>
 </html>

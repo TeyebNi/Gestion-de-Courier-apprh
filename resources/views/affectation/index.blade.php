@@ -44,7 +44,13 @@ Affectation
                                 <td>{{ $affectation->firstItem() + $key }}</td>
                                 <td>{{ $c->sevice }}</td>
                                 <td>{{ $c->dateaff }}</td>
-                                <td>{{ $c->iddmd }}</td>
+                                <td>
+                                    @if($c->demande)
+                                        {{ $c->demande->typdm }}
+                                    @else
+                                        <span class="text-muted">—</span>
+                                    @endif
+                                </td>
                                 <td class="text-right">
                                     <a data-id="{{ $c->id }}" data-sevice="{{ $c->sevice }}" data-dateaff="{{ $c->dateaff }}" data-iddmd="{{ $c->iddmd }}" data-toggle="modal" data-target="#exampleModal-edit" class="btn btn-success btn-sm" title="Modifier"><i class="now-ui-icons ui-2_settings-90"></i></a>
                                     <a data-id="{{ $c->id }}" data-toggle="modal" data-target="#exampleModal-delete" class="btn btn-danger btn-sm" title="Supprimer"><svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"></polyline><path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"></path><path d="M10 11v6"></path><path d="M14 11v6"></path><path d="M9 6V4a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v2"></path></svg></a>
@@ -119,7 +125,7 @@ Affectation
      <select   class="form-control" id="aff_iddmd" name="iddmd">
       <option value="">Select Code Demande</option>
       @foreach($tabdepot as $c)      
-        <option value="{{$c->id}}">{{$c->id}}</option>
+        <option value="{{$c->id}}">#{{$c->id}} - {{ $c->typdm }}</option>
     @endforeach
     </select>
       </div>
@@ -152,12 +158,17 @@ Affectation
             <div class="input-group-prepend">
               <span class="input-group-text">Service</span>
             </div>
+            @if(auth()->user()->isAdmin())
             <select class="form-control" id="edit_aff_sevice" name="sevice">
               <option value="">Sélectionner le service</option>
               @foreach($orientation as $c)
                 <option value="{{ $c->name }}">{{ $c->name }}</option>
               @endforeach
             </select>
+            @else
+            <input type="text" class="form-control" id="edit_aff_sevice_display" disabled>
+            <input type="hidden" id="edit_aff_sevice" name="sevice">
+            @endif
           </div>
           <br>
           <div class="input-group">
@@ -167,7 +178,7 @@ Affectation
             <select class="form-control" id="edit_aff_iddmd" name="iddmd">
               <option value="">Sélectionner le code demande</option>
               @foreach($tabdepot as $c)
-                <option value="{{ $c->id }}">{{ $c->id }}</option>
+                <option value="{{ $c->id }}">#{{ $c->id }} - {{ $c->typdm }}</option>
               @endforeach
             </select>
           </div>
@@ -232,6 +243,7 @@ document.addEventListener('DOMContentLoaded', function () {
         var id = button.data('id');
         $('#editAffectationForm').attr('action', '/affectation/' + id);
         $('#edit_aff_sevice').val(button.data('sevice'));
+        $('#edit_aff_sevice_display').val(button.data('sevice'));
         $('#edit_aff_iddmd').val(button.data('iddmd'));
         $('#edit_aff_dateaff').val(button.data('dateaff'));
     });

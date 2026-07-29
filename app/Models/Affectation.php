@@ -11,4 +11,9 @@ class Affectation extends Model
     protected $fillable = [
         'sevice', 'dateaff','iddmd','created_at','updated_at'];
     protected $hidden=['created_at' ,'updated_at'];
+
+    public function demande()
+    {
+        return $this->belongsTo(Tabdepot::class, 'iddmd', 'id');
+    }
 }

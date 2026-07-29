@@ -26,7 +26,7 @@ class AffectationController extends Controller
         $orientation = Orientation::all();
         $tabdepot = Tabdepot::all();
 
-        $query = Affectation::orderby('id', 'asc');
+        $query = Affectation::with("demande")->orderby('id', 'asc');
 
         if (!auth()->user()->isAdmin()) {
             $query->where('sevice', auth()->user()->service);
@@ -48,7 +48,7 @@ class AffectationController extends Controller
             abort(403, "Cette page est réservée aux administrateurs et aux utilisateurs rattachés à un service.");
         }
 
-        $query = Affectation::orderby('id', 'asc');
+        $query = Affectation::with('demande')->orderby('id', 'asc');
 
         if (!auth()->user()->isAdmin()) {
             $query->where('sevice', auth()->user()->service);
@@ -63,7 +63,7 @@ class AffectationController extends Controller
         return $this->streamCsv(
             $affectations,
             ['N°', 'Service', 'Date', 'Demande'],
-            fn ($a, $i) => [$i + 1, $a->sevice, $a->dateaff, $a->iddmd],
+            fn ($a, $i) => [$i + 1, $a->sevice, $a->dateaff, $a->demande ? $a->demande->typdm : '—'],
             $prefix
         );
     }
@@ -162,8 +162,12 @@ class AffectationController extends Controller
             'dateaff.before_or_equal' => "La date ne peut pas être dans le futur.",
         ]);
 
+        // Seul un administrateur peut changer le service d'une affectation.
+        // Un utilisateur de service ne peut modifier que la demande/date, pas transférer l'affectation ailleurs.
+        $sevice = auth()->user()->isAdmin() ? $request->sevice : $affectation->sevice;
+
         $affectation->update([
-            'sevice' => $request->sevice,
+            'sevice' => $sevice,
             'dateaff' => $request->dateaff,
             'iddmd' => $request->iddmd,
         ]);
