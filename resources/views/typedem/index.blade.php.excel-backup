@@ -1,7 +1,7 @@
 @extends('layouts.master')
 
 @section('title')
-Orientation
+Type Demande
 @endsection
 
 @section('content')
@@ -10,9 +10,9 @@ Orientation
         <div class="card">
             <div class="card-header">
                 <p class="category">
-                    Gestion des Orientations
-                    <button class="btn btn-primary btn-sm" data-toggle="modal" data-target="#exampleModal">Nouvelle Orientation</button>
-                    <a href="{{ route('orientation.export') }}" class="btn btn-success btn-sm" title="Exporter en Excel"><i class="fas fa-file-excel"></i></a>
+                    Gestion des Types de Demande
+                    <button class="btn btn-primary btn-sm" data-toggle="modal" data-target="#exampleModal">Nouveau Type de Demande</button>
+                    <a href="{{ route('typedem.export') }}" class="btn btn-success btn-sm" title="Exporter en Excel"><i class="fas fa-file-excel"></i></a>
                 </p>
             </div>
             <div class="card-body">
@@ -31,13 +31,13 @@ Orientation
                     <table class="table">
                         <thead class="text-primary">
                             <th>N°</th>
-                            <th>Orientation</th>
+                            <th>Type de Demande</th>
                             <th class="text-right">Action</th>
                         </thead>
                         <tbody>
-                            @foreach($orientation as $key => $c)
+                            @foreach($typedem as $key => $c)
                             <tr>
-                                <td>{{ $orientation->firstItem() + $key }}</td>
+                                <td>{{ $typedem->firstItem() + $key }}</td>
                                 <td>{{ $c->name }}</td>
                                 <td class="text-right">
                                     <a data-id="{{ $c->id }}" data-name="{{ $c->name }}" data-toggle="modal" data-target="#exampleModal-edit" class="btn btn-success btn-sm" title="Modifier"><i class="now-ui-icons ui-2_settings-90"></i></a>
@@ -49,7 +49,7 @@ Orientation
                     </table>
                 </div>
                 <div class="d-flex justify-content-center mt-3">
-                    {{ $orientation->links() }}
+                    {{ $typedem->links() }}
                 </div>
             </div>
         </div>
@@ -64,29 +64,29 @@ Orientation
   <div class="modal-dialog  modal-notify modal-lg modal-right modal-success" role="document">
     <div class="modal-content">
       <div class="modal-header">
-        <h5 class="modal-title" id="exampleModalLabel">Ajouter Orientation</h5>
+        <h5 class="modal-title" id="exampleModalLabel">Ajouter Type de Demande</h5>
         <button type="button" class="close" data-dismiss="modal" aria-label="Close">
           <span aria-hidden="true">&times;</span>
         </button>
       </div>
       <div class="modal-body">
 
-         <div id="orientation-ajax-errors"></div>
-         <form id="orientationForm" action="{{ route('orientation.store') }}" method="post">
+         <div id="typedem-ajax-errors"></div>
+         <form id="typedemForm" action="{{ route('typedem.store') }}" method="post">
         @csrf
 
         <div class="input-group">
           <div class="input-group-prepend">
-            <span class="input-group-text">Orientation</span>
+            <span class="input-group-text">Type</span>
           </div>
-          <input type="text" class="form-control" id="orientation_name" name="name" placeholder="Entrer Nom">
+          <input type="text" class="form-control" id="typedem_name" name="name" placeholder="Entrer Nom">
           <span class="text-danger" data-error-for="name"></span>
         </div>
 
       </div>
       <div class="modal-footer">
         <button type="button" class="btn btn-warning" data-dismiss="modal" title="Fermer"><i class="now-ui-icons ui-1_simple-remove"></i></button>
-        <button type="submit" id="orientationBtn" class="btn btn-success" title="Ajouter"><i class="now-ui-icons ui-1_check"></i></button>
+        <button type="submit" id="typedemBtn" class="btn btn-success" title="Ajouter"><i class="now-ui-icons ui-1_check"></i></button>
       </div>
       </form>
     </div>
@@ -98,20 +98,20 @@ Orientation
   <div class="modal-dialog  modal-notify modal-lg modal-right modal-success" role="document">
     <div class="modal-content">
       <div class="modal-header">
-        <h5 class="modal-title" id="exampleModalLabel">Modifier l'Orientation</h5>
+        <h5 class="modal-title" id="exampleModalLabel">Modifier le Type de Demande</h5>
         <button type="button" class="close" data-dismiss="modal" aria-label="Close">
           <span aria-hidden="true">&times;</span>
         </button>
       </div>
-      <form id="editOrientationForm" action="" method="post">
+      <form id="editTypedemForm" action="" method="post">
        @csrf
         @method('PUT')
         <div class="modal-body">
           <div class="input-group">
             <div class="input-group-prepend">
-              <span class="input-group-text">Orientation</span>
+              <span class="input-group-text">Type</span>
             </div>
-            <input type="text" class="form-control" id="edit_orientation_name" name="name" placeholder="Entrer Nom">
+            <input type="text" class="form-control" id="edit_typedem_name" name="name" placeholder="Entrer Nom">
           </div>
         </div>
         <div class="modal-footer">
@@ -128,16 +128,16 @@ Orientation
   <div class="modal-dialog notifi modal-lg modal-right modal-danger" role="document">
     <div class="modal-content">
       <div class="modal-header">
-        <h5 class="modal-title" id="exampleModalLabel">Supprimer l'Orientation</h5>
+        <h5 class="modal-title" id="exampleModalLabel">Supprimer le Type de Demande</h5>
         <button type="button" class="close" data-dismiss="modal" aria-label="Close">
           <span aria-hidden="true">&times;</span>
         </button>
       </div>
-      <form id="deleteOrientationForm" action="" method="post">
+      <form id="deleteTypedemForm" action="" method="post">
         @csrf
         @method('DELETE')
         <div class="modal-body">
-          <p>Voulez-vous vraiment supprimer cette orientation ?</p>
+          <p>Voulez-vous vraiment supprimer ce type de demande ?</p>
         </div>
         <div class="modal-footer">
           <button type="button" class="btn btn-warning" data-dismiss="modal" title="Annuler"><i class="now-ui-icons ui-1_simple-remove"></i></button>
@@ -149,13 +149,13 @@ Orientation
 </div>
 
 @if (session('success'))
-<div id="orientationEditSuccessOverlay" style="position:fixed; inset:0; background:rgba(0,0,0,0.5); z-index:2000; display:flex; align-items:center; justify-content:center;">
+<div id="typedemEditSuccessOverlay" style="position:fixed; inset:0; background:rgba(0,0,0,0.5); z-index:2000; display:flex; align-items:center; justify-content:center;">
     <div style="background:#fff; border-radius:12px; padding:32px; width:90%; max-width:380px; text-align:center; box-shadow:0 10px 30px rgba(0,0,0,0.2);">
         <div style="margin:0 auto 16px; width:64px; height:64px; border-radius:50%; border:3px solid #28a745; display:flex; align-items:center; justify-content:center;">
             <span style="color:#28a745; font-size:32px;">&#10003;</span>
         </div>
         <p style="color:#333; margin-bottom:20px;">{{ session('success') }}</p>
-        <button id="closeOrientationEditSuccess" class="btn btn-info" style="width:100%;">OK</button>
+        <button id="closeTypedemEditSuccess" class="btn btn-info" style="width:100%;">OK</button>
     </div>
 </div>
 @endif
@@ -165,44 +165,44 @@ document.addEventListener('DOMContentLoaded', function () {
     $('#exampleModal-edit').on('show.bs.modal', function (event) {
         var button = $(event.relatedTarget);
         var id = button.data('id');
-        $('#editOrientationForm').attr('action', '/orientation/' + id);
-        $('#edit_orientation_name').val(button.data('name'));
+        $('#editTypedemForm').attr('action', '/typedem/' + id);
+        $('#edit_typedem_name').val(button.data('name'));
     });
 
     $('#exampleModal-delete').on('show.bs.modal', function (event) {
         var button = $(event.relatedTarget);
         var id = button.data('id');
-        $('#deleteOrientationForm').attr('action', '/orientation/' + id);
+        $('#deleteTypedemForm').attr('action', '/typedem/' + id);
     });
 
-    var closeBtnOrientationEdit = document.getElementById('closeOrientationEditSuccess');
-    if (closeBtnOrientationEdit) {
-        closeBtnOrientationEdit.addEventListener('click', function () {
-            document.getElementById('orientationEditSuccessOverlay').style.display = 'none';
+    var closeBtnTypedemEdit = document.getElementById('closeTypedemEditSuccess');
+    if (closeBtnTypedemEdit) {
+        closeBtnTypedemEdit.addEventListener('click', function () {
+            document.getElementById('typedemEditSuccessOverlay').style.display = 'none';
         });
     }
 });
 </script>
 
-<!-- Modale de succès Orientation -->
-<div id="orientationSuccessOverlay" style="display:none; position:fixed; inset:0; background:rgba(0,0,0,0.5); z-index:2000; align-items:center; justify-content:center;">
+<!-- Modale de succès Type Demande -->
+<div id="typedemSuccessOverlay" style="display:none; position:fixed; inset:0; background:rgba(0,0,0,0.5); z-index:2000; align-items:center; justify-content:center;">
     <div style="background:#fff; border-radius:12px; padding:32px; width:90%; max-width:380px; text-align:center; box-shadow:0 10px 30px rgba(0,0,0,0.2);">
         <div style="margin:0 auto 16px; width:64px; height:64px; border-radius:50%; border:3px solid #28a745; display:flex; align-items:center; justify-content:center;">
             <span style="color:#28a745; font-size:32px;">&#10003;</span>
         </div>
         <h5 style="margin-bottom:8px;">Succès !</h5>
-        <p id="orientationSuccessDetails" style="color:#666; margin-bottom:20px;"></p>
-        <button id="closeOrientationSuccess" class="btn btn-info" style="width:100%;">OK</button>
+        <p id="typedemSuccessDetails" style="color:#666; margin-bottom:20px;"></p>
+        <button id="closeTypedemSuccess" class="btn btn-info" style="width:100%;">OK</button>
     </div>
 </div>
 
 <script>
-document.getElementById('orientationForm').addEventListener('submit', function (e) {
+document.getElementById('typedemForm').addEventListener('submit', function (e) {
     e.preventDefault();
 
     var form = e.target;
-    var btn = document.getElementById('orientationBtn');
-    var errorsBox = document.getElementById('orientation-ajax-errors');
+    var btn = document.getElementById('typedemBtn');
+    var errorsBox = document.getElementById('typedem-ajax-errors');
 
     errorsBox.innerHTML = '';
     document.querySelectorAll('[data-error-for]').forEach(function (el) { el.textContent = ''; });
@@ -228,14 +228,14 @@ document.getElementById('orientationForm').addEventListener('submit', function (
         btn.disabled = false;
 
         if (result.status === 200 && result.data.success) {
-            document.getElementById('orientationSuccessDetails').textContent = result.data.message;
-            document.getElementById('orientationSuccessOverlay').style.display = 'flex';
+            document.getElementById('typedemSuccessDetails').textContent = result.data.message;
+            document.getElementById('typedemSuccessOverlay').style.display = 'flex';
             form.reset();
         } else if (result.status === 422) {
             var errors = result.data.errors || {};
             Object.keys(errors).forEach(function (field) {
                 var span = document.querySelector('[data-error-for="' + field + '"]');
-                var input = document.getElementById('orientation_' + field);
+                var input = document.getElementById('typedem_' + field);
                 if (span) span.textContent = errors[field][0];
                 if (input) input.classList.add('is-invalid');
             });
@@ -249,137 +249,8 @@ document.getElementById('orientationForm').addEventListener('submit', function (
     });
 });
 
-document.getElementById('closeOrientationSuccess').addEventListener('click', function () {
-    document.getElementById('orientationSuccessOverlay').style.display = 'none';
+document.getElementById('closeTypedemSuccess').addEventListener('click', function () {
+    document.getElementById('typedemSuccessOverlay').style.display = 'none';
     window.location.reload();
 });
 </script>
-
-
-<!-- BEGIN EXCEL BUTTON POSITION -->
-<style>
-    /*
-     * نفس السطر لزر الإضافة وأيقونة Excel
-     */
-    .page-actions-aligned {
-        width: 100%;
-        display: flex !important;
-        align-items: center !important;
-        gap: 10px;
-        min-height: 42px;
-    }
-
-    /*
-     * دفع أيقونة Excel إلى أقصى اليمين
-     */
-    .page-actions-aligned .excel-export-toolbar {
-        margin: 0 0 0 auto !important;
-        padding: 0 !important;
-        width: auto !important;
-        display: flex !important;
-        align-items: center !important;
-        justify-content: flex-end !important;
-    }
-
-    .page-actions-aligned .excel-export-button {
-        margin: 0 !important;
-        float: none !important;
-        position: static !important;
-    }
-
-    /*
-     * منع وجود مساحة كبيرة بين الأزرار والجدول
-     */
-    .excel-export-toolbar {
-        margin-top: 0 !important;
-        margin-bottom: 12px !important;
-    }
-</style>
-
-<script>
-document.addEventListener('DOMContentLoaded', function () {
-    const toolbar = document.querySelector('.excel-export-toolbar');
-
-    if (!toolbar) {
-        return;
-    }
-
-    const excelButton = toolbar.querySelector(
-        '.excel-export-button, a, button'
-    );
-
-    if (!excelButton) {
-        return;
-    }
-
-    /*
-     * البحث عن زر الإضافة الموجود أعلى كل صفحة:
-     * Nouvelle Demande
-     * Nouvelle Affectation
-     * Nouvelle Orientation
-     * Nouveau Type de Demande
-     */
-    const buttons = Array.from(
-        document.querySelectorAll('a, button')
-    );
-
-    const actionButton = buttons.find(function (element) {
-        if (element === excelButton) {
-            return false;
-        }
-
-        const text = String(
-            element.textContent || ''
-        ).trim().toLowerCase();
-
-        return (
-            text.includes('nouveau') ||
-            text.includes('nouvelle') ||
-            text.includes('ajouter')
-        );
-    });
-
-    if (!actionButton) {
-        /*
-         * في الصفحات التي لا تحتوي على زر Ajouter،
-         * وضع Excel في أعلى اليمين داخل البطاقة.
-         */
-        const card =
-            toolbar.closest('.card-body') ||
-            toolbar.closest('.card') ||
-            document.querySelector('.card-body') ||
-            document.querySelector('.card');
-
-        if (card) {
-            card.style.position = 'relative';
-            toolbar.style.display = 'flex';
-            toolbar.style.justifyContent = 'flex-end';
-            toolbar.style.marginTop = '0';
-        }
-
-        return;
-    }
-
-    /*
-     * استعمال الحاوية الأصلية التي يوجد فيها زر Nouveau/Nouvelle،
-     * حتى يبقى النص الموجود بجانبه في نفس السطر.
-     */
-    const actionContainer = actionButton.parentElement;
-
-    if (!actionContainer) {
-        return;
-    }
-
-    actionContainer.classList.add('page-actions-aligned');
-
-    /*
-     * نقل شريط Excel إلى نفس حاوية زر الإضافة.
-     */
-    actionContainer.appendChild(toolbar);
-
-    toolbar.style.display = 'flex';
-    toolbar.style.marginLeft = 'auto';
-});
-</script>
-<!-- END EXCEL BUTTON POSITION -->
-
