@@ -8,14 +8,14 @@ Affectation
 <div class="row">
     <div class="col-md-12">
         <div class="card">
-            <div class="card-header">
-                <p class="category">
+            <div class="card-header d-flex justify-content-between align-items-center flex-wrap">
+                <h4 class="card-title mb-0" style="font-weight: 700; color: #212529;">
                     Gestion des Affectations
                     @if(auth()->user()->isAdmin())
-                    <button class="btn btn-primary btn-sm" data-toggle="modal" data-target="#exampleModal">Nouvelle Affectation</button>
+                    <button class="btn btn-primary btn-sm ml-2" data-toggle="modal" data-target="#exampleModal">Nouvelle Affectation</button>
                     @endif
-                    <a href="{{ route('affectation.export') }}" class="btn btn-success btn-sm" title="Exporter en Excel"><i class="fas fa-file-excel"></i></a>
-                </p>
+                </h4>
+                <a href="{{ route('affectation.export') }}" class="btn btn-success btn-sm" title="Exporter en Excel"><i class="fas fa-file-excel"></i></a>
             </div>
             <div class="card-body">
 
@@ -241,7 +241,7 @@ document.addEventListener('DOMContentLoaded', function () {
     $('#exampleModal-edit').on('show.bs.modal', function (event) {
         var button = $(event.relatedTarget);
         var id = button.data('id');
-        $('#editAffectationForm').attr('action', '/affectation/' + id);
+        $('#editAffectationForm').attr('action', '{{ url('/affectation') }}/' + id);
         $('#edit_aff_sevice').val(button.data('sevice'));
         $('#edit_aff_sevice_display').val(button.data('sevice'));
         $('#edit_aff_iddmd').val(button.data('iddmd'));
@@ -251,7 +251,7 @@ document.addEventListener('DOMContentLoaded', function () {
     $('#exampleModal-delete').on('show.bs.modal', function (event) {
         var button = $(event.relatedTarget);
         var id = button.data('id');
-        $('#deleteAffectationForm').attr('action', '/affectation/' + id);
+        $('#deleteAffectationForm').attr('action', '{{ url('/affectation') }}/' + id);
     });
 
     var closeBtnAffEdit = document.getElementById('closeAffectationEditSuccess');

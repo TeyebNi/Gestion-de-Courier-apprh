@@ -6,7 +6,138 @@ Tableau de bord
 
 @section('content')
 
+@if($isPlainUser)
+
 <!-- KPI cards -->
+<div class="row">
+    <div class="col-lg-4 col-md-6">
+        <div class="card card-stats">
+            <div class="card-body">
+                <div class="row">
+                    <div class="col-5 col-md-4">
+                        <div class="icon-big text-center icon-warning">
+                            <i class="now-ui-icons ui-1_calendar-60 text-info"></i>
+                        </div>
+                    </div>
+                    <div class="col-7 col-md-8">
+                        <div class="numbers">
+                            <p class="card-category">Aujourd'hui</p>
+                            <h4 class="card-title">{{ $totalDemandesToday }}</h4>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="card-footer">
+                <hr>
+                <div class="stats">
+                    <i class="now-ui-icons files_box"></i> Demandes déposées aujourd'hui
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-lg-4 col-md-6">
+        <div class="card card-stats">
+            <div class="card-body">
+                <div class="row">
+                    <div class="col-5 col-md-4">
+                        <div class="icon-big text-center icon-warning">
+                            <i class="now-ui-icons files_single-copy-04 text-primary"></i>
+                        </div>
+                    </div>
+                    <div class="col-7 col-md-8">
+                        <div class="numbers">
+                            <p class="card-category">Cette semaine</p>
+                            <h4 class="card-title">{{ $totalDemandesWeek }}</h4>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="card-footer">
+                <hr>
+                <div class="stats">
+                    <i class="now-ui-icons ui-1_calendar-60"></i> Du lundi à aujourd'hui
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-lg-4 col-md-6">
+        <div class="card card-stats">
+            <div class="card-body">
+                <div class="row">
+                    <div class="col-5 col-md-4">
+                        <div class="icon-big text-center icon-warning">
+                            <i class="now-ui-icons files_paper text-success"></i>
+                        </div>
+                    </div>
+                    <div class="col-7 col-md-8">
+                        <div class="numbers">
+                            <p class="card-category">Total Général</p>
+                            <h4 class="card-title">{{ $totalDemandesAll }}</h4>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="card-footer">
+                <hr>
+                <div class="stats">
+                    <i class="now-ui-icons arrows-1_refresh-69"></i> Depuis le début
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Dernières demandes -->
+<div class="row">
+    <div class="col-md-12">
+        <div class="card card-tasks">
+            <div class="card-header">
+                <h5 class="card-category">Guichet</h5>
+                <h4 class="card-title">Dernières Demandes Déposées</h4>
+            </div>
+            <div class="card-body">
+                <div class="table-full-width table-responsive">
+                    <table class="table">
+                        <thead class="text-primary">
+                            <th>Nom</th>
+                            <th>NNI</th>
+                            <th>Téléphone</th>
+                            <th>Type</th>
+                            <th>Date</th>
+                        </thead>
+                        <tbody>
+                            @forelse($recentDemandesUser as $d)
+                            <tr>
+                                <td>{{ $d->nom }}</td>
+                                <td>{{ $d->nni }}</td>
+                                <td>{{ $d->tel }}</td>
+                                <td>{{ $d->typdm }}</td>
+                                <td>{{ $d->daterecp }}</td>
+                            </tr>
+                            @empty
+                            <tr>
+                                <td colspan="5" class="text-center text-muted">Aucune demande pour le moment.</td>
+                            </tr>
+                            @endforelse
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+            <div class="card-footer">
+                <hr>
+                <div class="stats">
+                    <a href="{{ route('depot.index') }}">
+                        <i class="now-ui-icons files_box"></i> Voir toutes les demandes
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+@else
 <div class="row">
     @if($isAdmin)
     <div class="col-lg-3 col-md-6">
@@ -296,10 +427,13 @@ Tableau de bord
 </div>
 @endif
 
+@endif
+
 @endsection
 
 @section('scripts')
-<script src="../assets/js/plugins/chartjs.min.js"></script>
+@if(!$isPlainUser)
+<script src="{{ asset('assets/js/plugins/chartjs.min.js') }}"></script>
 <script>
 document.addEventListener('DOMContentLoaded', function () {
     var months = @json($months);
@@ -396,4 +530,5 @@ document.addEventListener('DOMContentLoaded', function () {
     @endif
 });
 </script>
+@endif
 @endsection

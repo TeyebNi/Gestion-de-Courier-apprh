@@ -8,12 +8,12 @@ Orientation
 <div class="row">
     <div class="col-md-12">
         <div class="card">
-            <div class="card-header">
-                <p class="category">
+            <div class="card-header d-flex justify-content-between align-items-center flex-wrap">
+                <h4 class="card-title mb-0" style="font-weight: 700; color: #212529;">
                     Gestion des Orientations
-                    <button class="btn btn-primary btn-sm" data-toggle="modal" data-target="#exampleModal">Nouvelle Orientation</button>
-                    <a href="{{ route('orientation.export') }}" class="btn btn-success btn-sm" title="Exporter en Excel"><i class="fas fa-file-excel"></i></a>
-                </p>
+                    <button class="btn btn-primary btn-sm ml-2" data-toggle="modal" data-target="#exampleModal">Nouvelle Orientation</button>
+                </h4>
+                <a href="{{ route('orientation.export') }}" class="btn btn-success btn-sm" title="Exporter en Excel"><i class="fas fa-file-excel"></i></a>
             </div>
             <div class="card-body">
 
@@ -165,14 +165,14 @@ document.addEventListener('DOMContentLoaded', function () {
     $('#exampleModal-edit').on('show.bs.modal', function (event) {
         var button = $(event.relatedTarget);
         var id = button.data('id');
-        $('#editOrientationForm').attr('action', '/orientation/' + id);
+        $('#editOrientationForm').attr('action', '{{ url('/orientation') }}/' + id);
         $('#edit_orientation_name').val(button.data('name'));
     });
 
     $('#exampleModal-delete').on('show.bs.modal', function (event) {
         var button = $(event.relatedTarget);
         var id = button.data('id');
-        $('#deleteOrientationForm').attr('action', '/orientation/' + id);
+        $('#deleteOrientationForm').attr('action', '{{ url('/orientation') }}/' + id);
     });
 
     var closeBtnOrientationEdit = document.getElementById('closeOrientationEditSuccess');

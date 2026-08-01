@@ -31,11 +31,13 @@ Route::middleware('auth')->group(function () {
     Route::get('/export-pdf', [TabdepotController::class, 'exportPDF1']);
     Route::get('invoice', [TabdepotController::class, 'exportPDF']);
     Route::get('depot/print_reçu/{idt}',[TabdepotController::class,'print_facture'])->name('depot.print_reçu');
-    Route::get('affectation', [AffectationController::class, 'index'])->name('affectation.index');
-    Route::get('affectation/export', [AffectationController::class, 'exportExcel'])->name('affectation.export');
-    Route::post('affectation', [AffectationController::class, 'store'])->name('affectation.store');
-    Route::put('affectation/{affectation}', [AffectationController::class, 'update'])->name('affectation.update');
-    Route::delete('affectation/{affectation}', [AffectationController::class, 'destroy'])->name('affectation.destroy');
+    Route::middleware('affectation.access')->group(function () {
+        Route::get('affectation', [AffectationController::class, 'index'])->name('affectation.index');
+        Route::get('affectation/export', [AffectationController::class, 'exportExcel'])->name('affectation.export');
+        Route::post('affectation', [AffectationController::class, 'store'])->name('affectation.store');
+        Route::put('affectation/{affectation}', [AffectationController::class, 'update'])->name('affectation.update');
+        Route::delete('affectation/{affectation}', [AffectationController::class, 'destroy'])->name('affectation.destroy');
+    });
     Route::put('depot/{tabdepot}', [TabdepotController::class, 'update'])->name('depot.update');
     Route::delete('depot/{tabdepot}', [TabdepotController::class, 'destroy'])->name('depot.destroy');
 

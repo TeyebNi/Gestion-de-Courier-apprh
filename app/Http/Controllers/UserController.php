@@ -6,6 +6,7 @@ use App\Enums\UserRole;
 use App\Models\User;
 use App\Models\Orientation;
 use Illuminate\Http\Request;
+use Illuminate\Validation\Rule;
 
 use App\Traits\ExportsCsv;
 
@@ -45,10 +46,12 @@ class UserController extends Controller
 {
     $request->validate([
         'name' => ['required', 'string', 'max:255', 'regex:/^[\pL\s]+$/u'],
+        'email' => ['required', 'email', 'max:255', Rule::unique('users', 'email')->ignore($user->id)],
         'role' => ['required', 'in:admin,user'],
         'service' => ['nullable', 'string', 'max:255'],
     ], [
         'name.regex' => 'Le nom ne doit contenir que des lettres.',
+        'email.unique' => 'Cet email est déjà utilisé par un autre utilisateur.',
     ]);
 
     if ($user->isAdmin() && $request->role === 'user' && User::where('role', 'admin')->count() <= 1) {
@@ -59,6 +62,7 @@ class UserController extends Controller
 
     $user->update([
         'name' => $request->name,
+        'email' => $request->email,
         'role' => UserRole::from($request->role),
         'service' => $service,
     ]);

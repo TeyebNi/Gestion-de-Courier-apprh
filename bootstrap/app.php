@@ -14,6 +14,7 @@ return Application::configure(basePath: dirname(__DIR__))
     ->withMiddleware(function (Middleware $middleware): void {
         $middleware->alias([
             'admin' => \App\Http\Middleware\EnsureUserIsAdmin::class,
+            'affectation.access' => \App\Http\Middleware\EnsureUserCanAccessAffectation::class,
         ]);
     })
     ->withExceptions(function (Exceptions $exceptions): void {

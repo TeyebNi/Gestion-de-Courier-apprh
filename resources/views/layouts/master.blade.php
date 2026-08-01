@@ -4,23 +4,23 @@
 <head>
     <meta charset="utf-8" />
     <meta name="csrf-token" content="{{ csrf_token() }}">
-    <link rel="apple-touch-icon" sizes="76x76" href="../assets/img/apple-icon.png">
-    <link rel="icon" type="image/png" href="../assets/img/favicon.png">
+    <link rel="apple-touch-icon" sizes="76x76" href="{{ asset('assets/img/apple-icon.png') }}">
+    <link rel="icon" type="image/png" href="{{ asset('assets/img/favicon.png') }}">
     <meta http-equiv="X-UA-Compatible" content="IE=edge,chrome=1" />
     <title>
 @yield('title')
     </title>
     <meta content='width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=0, shrink-to-fit=no' name='viewport' />
     <!--     Fonts and icons     -->
-    <link href="../assets/fonts/montserrat/200.css" rel="stylesheet" />
-    <link href="../assets/fonts/montserrat/400.css" rel="stylesheet" />
-    <link href="../assets/fonts/montserrat/700.css" rel="stylesheet" />
-    <link href="../assets/fontawesome/css/all.min.css" rel="stylesheet">
+    <link href="{{ asset('assets/fonts/montserrat/200.css') }}" rel="stylesheet" />
+    <link href="{{ asset('assets/fonts/montserrat/400.css') }}" rel="stylesheet" />
+    <link href="{{ asset('assets/fonts/montserrat/700.css') }}" rel="stylesheet" />
+    <link href="{{ asset('assets/fontawesome/css/all.min.css') }}" rel="stylesheet">
     <!-- CSS Files -->
-    <link href="../assets/css/bootstrap.min.css" rel="stylesheet" />
-    <link href="../assets/css/now-ui-dashboard.css?v=1.0.1" rel="stylesheet" />
+    <link href="{{ asset('assets/css/bootstrap.min.css') }}" rel="stylesheet" />
+    <link href="{{ asset('assets/css/now-ui-dashboard.css?v=1.0.1') }}" rel="stylesheet" />
     <!-- CSS Just for demo purpose, don't include it in your project -->
-    <link href="../assets/demo/demo.css" rel="stylesheet" />
+    <link href="{{ asset('assets/demo/demo.css') }}" rel="stylesheet" />
     <style>
         /* Sidebar personnalisé : dégradé bleu marine élégant, cohérent avec le reste de l'application */
         .sidebar[data-color="blue"]:after {
@@ -82,7 +82,7 @@
                             <p>Dashboard</p>
                         </a>
                     </li>
-                    @if(auth()->user()->isAdmin() || !empty(auth()->user()->service))
+                    @if(auth()->user()->canAccessAffectation())
                     <li class="{{ request()->is('affectation*') ? 'active' : '' }}">
                         <a href="{{('affectation')}}">
                             <i class="now-ui-icons shopping_delivery-fast"></i>
@@ -134,7 +134,7 @@
                                 <span class="navbar-toggler-bar bar3"></span>
                             </button>
                         </div>
-                        <a class="navbar-brand" href="{{ route('dashboard') }}">Gestion de Courier</a>
+                        <a class="navbar-brand" href="{{ route('dashboard') }}" style="font-size: 1.5rem; font-weight: 700; color: #2c3e50;">Gestion de Courier</a>
                     </div>
                     <button class="navbar-toggler" type="button" data-toggle="collapse" data-target="#navigation" aria-controls="navigation-index" aria-expanded="false" aria-label="Toggle navigation">
                         <span class="navbar-toggler-bar navbar-kebab"></span>
@@ -151,6 +151,7 @@
                             </div>
                         </form>
                         <ul class="navbar-nav">
+                            @if(!empty(auth()->user()->service))
                             <li class="nav-item" style="position:relative;">
                                 <a class="nav-link" href="{{('notifications')}}" style="position:relative; display:inline-block;">
                                     <i class="now-ui-icons ui-1_bell-53"></i>
@@ -160,6 +161,7 @@
                                     @endif
                                 </a>
                             </li>
+                            @endif
                             <li class="nav-item dropdown">
                                 <a class="nav-link dropdown-toggle" href="#" id="userAccountDropdown" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
                                     <i class="now-ui-icons users_single-02"></i>
@@ -199,11 +201,6 @@
                     <nav>
                         <ul>
                             <li>
-                                <a href="https://www.creative-tim.com">
-                                    Courier
-                                </a>
-                            </li>
-                            <li>
                                 <a href="http://presentation.creative-tim.com">
                                     
                                 </a>
@@ -219,9 +216,8 @@
                         &copy;
                         <script>
                             document.write(new Date().getFullYear())
-                        </script>, Designed by
-                        <a href="https://www.invisionapp.com" target="_blank">Invision</a>. Coded by
-                        <a href="https://www.creative-tim.com" target="_blank">Creative Tim</a>.
+                        </script>
+                        Commune de Tevragh Zeina
                     </div>
                 </div>
             </footer>
@@ -229,19 +225,19 @@
     </div>
 </body>
 <!--   Core JS Files   -->
-<script src="../assets/js/core/jquery.min.js"></script>
-<script src="../assets/js/core/popper.min.js"></script>
-<script src="../assets/js/core/bootstrap.min.js"></script>
-<script src="../assets/js/plugins/perfect-scrollbar.jquery.min.js"></script>
+<script src="{{ asset('assets/js/core/jquery.min.js') }}"></script>
+<script src="{{ asset('assets/js/core/popper.min.js') }}"></script>
+<script src="{{ asset('assets/js/core/bootstrap.min.js') }}"></script>
+<script src="{{ asset('assets/js/plugins/perfect-scrollbar.jquery.min.js') }}"></script>
 <!--  Google Maps Plugin    -->
 <!-- Chart JS -->
-<script src="../assets/js/plugins/chartjs.min.js"></script>
+<script src="{{ asset('assets/js/plugins/chartjs.min.js') }}"></script>
 <!--  Notifications Plugin    -->
-<script src="../assets/js/plugins/bootstrap-notify.js"></script>
+<script src="{{ asset('assets/js/plugins/bootstrap-notify.js') }}"></script>
 <!-- Control Center for Now Ui Dashboard: parallax effects, scripts for the example pages etc -->
-<script src="../assets/js/now-ui-dashboard.js?v=1.0.1"></script>
+<script src="{{ asset('assets/js/now-ui-dashboard.js?v=1.0.1') }}"></script>
 <!-- Now Ui Dashboard DEMO methods, don't include it in your project! -->
-<script src="../assets/demo/demo.js"></script>
+<script src="{{ asset('assets/demo/demo.js') }}"></script>
 
 <style>
 /* Corrections responsive - mobile et tablette */
@@ -306,9 +302,6 @@
 
     function showWarning() {
         if (confirm("Vous allez être déconnecté dans " + warningBeforeMinutes + " minute(s) pour cause d'inactivité. Cliquez sur OK pour rester connecté.")) {
-            // Vérifie que la session est encore vraiment valide côté serveur
-            // avant de relancer les minuteurs (le temps de répondre au message
-            // peut avoir suffi à faire expirer la session pendant ce temps).
             fetch(keepAliveUrl, { credentials: 'same-origin', redirect: 'manual' })
                 .then(function (response) {
                     if (response.type === 'opaqueredirect' || response.status === 0 || response.status === 401 || response.status === 419) {
@@ -334,4 +327,3 @@
     resetTimers();
 })();
 </script>
-</html>

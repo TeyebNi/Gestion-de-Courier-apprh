@@ -9,11 +9,12 @@ Dashboard Courier
 <div class="row">
     <div class="col-md-12">
         <div class="card">
-            <div class="card-header">
-               <p class="category">
-                <button class="btn btn-primary" data-toggle="modal" data-target="#exampleModal">Nouvelle Demande</button>
-                 <a href="{{ route('depot.export') }}" class="btn btn-success btn-sm" title="Exporter en Excel"><i class="fas fa-file-excel"></i></a>
-                </p>
+            <div class="card-header d-flex justify-content-between align-items-center flex-wrap">
+                <h4 class="card-title mb-0" style="font-weight: 700; color: #212529;">
+                    Gestion des Demandes
+                    <button class="btn btn-primary btn-sm ml-2" data-toggle="modal" data-target="#exampleModal">Nouvelle Demande</button>
+                </h4>
+                <a href="{{ route('depot.export') }}" class="btn btn-success btn-sm" title="Exporter en Excel"><i class="fas fa-file-excel"></i></a>
             </div>
             <div class="card-body">
 
@@ -521,7 +522,7 @@ document.addEventListener('DOMContentLoaded', function () {
 $('#exampleModal-edit').on('show.bs.modal', function (event) {
     var button = $(event.relatedTarget);
     var id = button.data('id');
-    $('#editDepotForm').attr('action', '/depot/' + id);
+    $('#editDepotForm').attr('action', '{{ url('/depot') }}/' + id);
     $('#edit_typdm').val(button.data('typdm'));
     $('#edit_nni').val(button.data('nni'));
     $('#edit_nom').val(button.data('nom'));
@@ -533,7 +534,7 @@ $('#exampleModal-edit').on('show.bs.modal', function (event) {
 $('#exampleModal-delete').on('show.bs.modal', function (event) {
     var button = $(event.relatedTarget);
     var id = button.data('id');
-    $('#deleteDepotForm').attr('action', '/depot/' + id);
+    $('#deleteDepotForm').attr('action', '{{ url('/depot') }}/' + id);
     $('#delete_depot_nom').text(button.data('nom'));
 });
 

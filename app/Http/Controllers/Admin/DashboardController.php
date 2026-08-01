@@ -16,6 +16,58 @@ class DashboardController extends Controller
     {
         $user = auth()->user();
         $isAdmin = $user->isAdmin();
+        $isPlainUser = !$isAdmin && empty($user->service);
+
+        // ----- Utilisateur simple (pas de service) : dashboard minimal -----
+        if ($isPlainUser) {
+            // Cas particulier : pas de service, mais acces Affectation accorde manuellement
+            // (case "Acces au module Affectation" cochee sur sa fiche utilisateur).
+            $hasAffectationAccess = (bool) $user->can_affectation;
+            $totalAffectationsGlobal = $hasAffectationAccess ? Affectation::count() : 0;
+
+            $totalDemandesToday = Tabdepot::whereDate('daterecp', Carbon::today())->count();
+            $totalDemandesWeek = Tabdepot::whereBetween('daterecp', [
+                Carbon::now()->startOfWeek(), Carbon::now()->endOfWeek(),
+            ])->count();
+            $totalDemandesAll = Tabdepot::count();
+            $recentDemandesUser = Tabdepot::orderByDesc('id')->limit(8)->get();
+
+            $moisFr = ['Jan', 'Fév', 'Mar', 'Avr', 'Mai', 'Juin', 'Juil', 'Août', 'Sep', 'Oct', 'Nov', 'Déc'];
+            $months = [];
+            $monthCounts = [];
+            for ($i = 5; $i >= 0; $i--) {
+                $date = Carbon::now()->subMonths($i);
+                $months[] = $moisFr[$date->month - 1] . ' ' . $date->format('Y');
+                $monthCounts[] = Tabdepot::whereYear('daterecp', $date->year)
+                    ->whereMonth('daterecp', $date->month)
+                    ->count();
+            }
+
+            $typeStats = Tabdepot::select('typdm')
+                ->selectRaw('count(*) as total')
+                ->whereNotNull('typdm')
+                ->groupBy('typdm')
+                ->orderByDesc('total')
+                ->limit(8)
+                ->get();
+            $typeLabels = $typeStats->pluck('typdm');
+            $typeCounts = $typeStats->pluck('total');
+
+            return view('admin.dashboard', compact(
+                'isAdmin',
+                'isPlainUser',
+                'hasAffectationAccess',
+                'totalAffectationsGlobal',
+                'totalDemandesToday',
+                'totalDemandesWeek',
+                'totalDemandesAll',
+                'recentDemandesUser',
+                'months',
+                'monthCounts',
+                'typeLabels',
+                'typeCounts'
+            ));
+        }
 
         // ----- KPI cards -----
         $affectationQuery = Affectation::query();
@@ -120,6 +172,7 @@ class DashboardController extends Controller
 
         return view('admin.dashboard', compact(
             'isAdmin',
+            'isPlainUser',
             'totalDemandes',
             'totalAffectations',
             'totalTypes',

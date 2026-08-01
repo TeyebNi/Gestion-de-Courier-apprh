@@ -8,12 +8,12 @@ Type Demande
 <div class="row">
     <div class="col-md-12">
         <div class="card">
-            <div class="card-header">
-                <p class="category">
+            <div class="card-header d-flex justify-content-between align-items-center flex-wrap">
+                <h4 class="card-title mb-0" style="font-weight: 700; color: #212529;">
                     Gestion des Types de Demande
-                    <button class="btn btn-primary btn-sm" data-toggle="modal" data-target="#exampleModal">Nouveau Type de Demande</button>
-                    <a href="{{ route('typedem.export') }}" class="btn btn-success btn-sm" title="Exporter en Excel"><i class="fas fa-file-excel"></i></a>
-                </p>
+                    <button class="btn btn-primary btn-sm ml-2" data-toggle="modal" data-target="#exampleModal">Nouveau Type de Demande</button>
+                </h4>
+                <a href="{{ route('typedem.export') }}" class="btn btn-success btn-sm" title="Exporter en Excel"><i class="fas fa-file-excel"></i></a>
             </div>
             <div class="card-body">
 
@@ -165,14 +165,14 @@ document.addEventListener('DOMContentLoaded', function () {
     $('#exampleModal-edit').on('show.bs.modal', function (event) {
         var button = $(event.relatedTarget);
         var id = button.data('id');
-        $('#editTypedemForm').attr('action', '/typedem/' + id);
+        $('#editTypedemForm').attr('action', '{{ url('/typedem') }}/' + id);
         $('#edit_typedem_name').val(button.data('name'));
     });
 
     $('#exampleModal-delete').on('show.bs.modal', function (event) {
         var button = $(event.relatedTarget);
         var id = button.data('id');
-        $('#deleteTypedemForm').attr('action', '/typedem/' + id);
+        $('#deleteTypedemForm').attr('action', '{{ url('/typedem') }}/' + id);
     });
 
     var closeBtnTypedemEdit = document.getElementById('closeTypedemEditSuccess');

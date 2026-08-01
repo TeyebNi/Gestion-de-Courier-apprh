@@ -8,11 +8,11 @@ Les Utilisateurs
 <div class="row">
     <div class="col-md-12">
         <div class="card">
-            <div class="card-header">
-                <p class="category">
-                    Gestion des comptes utilisateurs
-                    <a href="{{ route('users.export') }}" class="btn btn-success btn-sm" title="Exporter en Excel"><i class="fas fa-file-excel"></i></a>
-                </p>
+            <div class="card-header d-flex justify-content-between align-items-center flex-wrap">
+                <h4 class="card-title mb-0" style="font-weight: 700; color: #212529;">
+                    Gestion des Comptes Utilisateurs
+                </h4>
+                <a href="{{ route('users.export') }}" class="btn btn-success btn-sm" title="Exporter en Excel"><i class="fas fa-file-excel"></i></a>
             </div>
             <div class="card-body">
 
@@ -47,6 +47,7 @@ Les Utilisateurs
                                 <td class="text-right">
                                     <a data-id="{{ $u->id }}"
                                        data-name="{{ $u->name }}"
+                                       data-email="{{ $u->email }}"
                                        data-role="{{ $u->role->value }}"
                                        data-service="{{ $u->service }}"
                                        data-toggle="modal" data-target="#editUserModal"
@@ -96,6 +97,12 @@ Les Utilisateurs
                     </div>
                     <div class="input-group mb-3">
                         <div class="input-group-prepend">
+                            <span class="input-group-text">Email</span>
+                        </div>
+                        <input type="email" class="form-control" name="email" id="edit_email" required>
+                    </div>
+                    <div class="input-group mb-3">
+                        <div class="input-group-prepend">
                             <span class="input-group-text">Rôle</span>
                         </div>
                         <select class="form-control" name="role" id="edit_role">
@@ -116,8 +123,8 @@ Les Utilisateurs
                     </div>
                 </div>
                 <div class="modal-footer">
-                    <button type="button" class="btn btn-secondary" data-dismiss="modal">Close</button>
-                    <button type="submit" class="btn btn-info">Enregistrer</button>
+                    <button type="button" class="btn btn-warning" data-dismiss="modal" title="Fermer"><svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg></button>
+                    <button type="submit" class="btn btn-success" title="Enregistrer"><svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"></polyline></svg></button>
                 </div>
             </form>
         </div>
@@ -141,8 +148,8 @@ Les Utilisateurs
                     <p>Voulez-vous vraiment supprimer <strong id="delete_user_name"></strong> ?</p>
                 </div>
                 <div class="modal-footer">
-                    <button type="button" class="btn btn-secondary" data-dismiss="modal">Annuler</button>
-                    <button type="submit" class="btn btn-danger">Supprimer</button>
+                    <button type="button" class="btn btn-warning" data-dismiss="modal" title="Annuler"><svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg></button>
+                    <button type="submit" class="btn btn-danger" title="Supprimer"><svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"></polyline><path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"></path><path d="M10 11v6"></path><path d="M14 11v6"></path><path d="M9 6V4a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v2"></path></svg></button>
                 </div>
             </form>
         </div>
@@ -171,8 +178,9 @@ $('#editUserModal').on('show.bs.modal', function (event) {
     var id = button.data('id');
     var role = button.data('role');
 
-    $('#editUserForm').attr('action', '/utilisateurs/' + id);
+    $('#editUserForm').attr('action', '{{ url('/utilisateurs') }}/' + id);
     $('#edit_name').val(button.data('name'));
+    $('#edit_email').val(button.data('email'));
     $('#edit_role').val(role);
     $('#edit_service').val(button.data('service'));
 
@@ -198,7 +206,7 @@ function toggleServiceField(role) {
 $('#deleteUserModal').on('show.bs.modal', function (event) {
     var button = $(event.relatedTarget);
     var id = button.data('id');
-    $('#deleteUserForm').attr('action', '/utilisateurs/' + id);
+    $('#deleteUserForm').attr('action', '{{ url('/utilisateurs') }}/' + id);
     $('#delete_user_name').text(button.data('name'));
 });
 
