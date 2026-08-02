@@ -18,8 +18,8 @@ class AffectationController extends Controller
 
     public function index(Request $request)
     {
-        if (!auth()->user()->isAdmin() && empty(auth()->user()->service)) {
-            abort(403, "Cette page est réservée aux administrateurs et aux utilisateurs rattachés à un service.");
+        if (!auth()->user()->canAccessAffectation()) {
+            abort(403, "Cette page est réservée aux administrateurs et aux utilisateurs ayant accès au module Affectation.");
         }
 
         $search = $request->input('search');
@@ -28,7 +28,7 @@ class AffectationController extends Controller
 
         $query = Affectation::with("demande")->orderby('id', 'asc');
 
-        if (!auth()->user()->isAdmin()) {
+        if (!auth()->user()->isAdmin() && !empty(auth()->user()->service)) {
             $query->where('sevice', auth()->user()->service);
         }
 
@@ -44,13 +44,13 @@ class AffectationController extends Controller
 
     public function exportExcel(Request $request)
     {
-        if (!auth()->user()->isAdmin() && empty(auth()->user()->service)) {
-            abort(403, "Cette page est réservée aux administrateurs et aux utilisateurs rattachés à un service.");
+        if (!auth()->user()->canAccessAffectation()) {
+            abort(403, "Cette page est réservée aux administrateurs et aux utilisateurs ayant accès au module Affectation.");
         }
 
         $query = Affectation::with('demande')->orderby('id', 'asc');
 
-        if (!auth()->user()->isAdmin()) {
+        if (!auth()->user()->isAdmin() && !empty(auth()->user()->service)) {
             $query->where('sevice', auth()->user()->service);
         }
 

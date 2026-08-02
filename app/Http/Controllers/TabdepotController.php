@@ -5,7 +5,6 @@ namespace App\Http\Controllers;
 use App\Models\Tabdepot;
 use App\Models\Typedem;
 use App\Http\Controllers\Controller;
-use App\Services\SmsService;
 use Illuminate\Http\Request;
 use Barryvdh\DomPDF\Facade\Pdf;
 
@@ -14,13 +13,6 @@ use App\Traits\ExportsCsv;
 class TabdepotController extends Controller
 {
     use ExportsCsv;
-
-    protected SmsService $sms;
-
-    public function __construct(SmsService $sms)
-    {
-        $this->sms = $sms;
-    }
 
     public function index(Request $request)
     {
@@ -113,13 +105,6 @@ class TabdepotController extends Controller
             'daterecp' => $request->daterecp,
         ]);
 
-        if ($demande->tel) {
-            $this->sms->send(
-                $demande->tel,
-                "Bonjour {$demande->nom}, votre demande ({$demande->typdm}) a bien été enregistrée. Code: {$demande->id}. Commune de Tevragh Zeina."
-            );
-        }
-
         session()->flash('success', 'les donnees successfully enregistre.');
 
         return redirect()->route('depot.index')->with('succes', ' Demande saved');
@@ -163,5 +148,4 @@ class TabdepotController extends Controller
 
     return redirect()->route('depot.index')->with('success', "Demande de {$nom} supprimée avec succès.");
 }
-    
 }
