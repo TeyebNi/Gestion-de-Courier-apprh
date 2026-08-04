@@ -6,6 +6,12 @@ Tableau de bord
 
 @section('content')
 
+<div class="row">
+    <div class="col-md-12">
+        <h3 style="font-weight: 700; color: #2c3e50; margin: 0 0 20px;">Gestion de Dashboard</h3>
+    </div>
+</div>
+
 @if($isPlainUser)
 
 <!-- KPI cards -->

@@ -32,7 +32,10 @@
                         <div class="row mb-3">
                             <label for="password" class="col-md-4 col-form-label text-md-end">Mot de passe</label>
                             <div class="col-md-6">
-                                <input id="password" type="password" class="form-control" name="password" required autocomplete="new-password">
+                                <div class="input-group">
+                                    <input id="password" type="password" class="form-control" name="password" required autocomplete="new-password">
+                                    <button type="button" class="btn btn-outline-secondary toggle-password" data-target="password" tabindex="-1" style="border-color:#ced4da;">👁️</button>
+                                </div>
                                 <span class="invalid-feedback d-block" data-error-for="password"></span>
                             </div>
                         </div>
@@ -40,7 +43,10 @@
                         <div class="row mb-3">
                             <label for="password-confirm" class="col-md-4 col-form-label text-md-end">Confirmer le mot de passe</label>
                             <div class="col-md-6">
-                                <input id="password-confirm" type="password" class="form-control" name="password_confirmation" required autocomplete="new-password">
+                                <div class="input-group">
+                                    <input id="password-confirm" type="password" class="form-control" name="password_confirmation" required autocomplete="new-password">
+                                    <button type="button" class="btn btn-outline-secondary toggle-password" data-target="password-confirm" tabindex="-1" style="border-color:#ced4da;">👁️</button>
+                                </div>
                             </div>
                         </div>
 
@@ -135,6 +141,19 @@ document.getElementById('registerForm').addEventListener('submit', function (e) 
 
 document.getElementById('closeSuccess').addEventListener('click', function () {
     window.location.href = "{{ route('login') }}";
+});
+
+document.querySelectorAll('.toggle-password').forEach(function (btn) {
+    btn.addEventListener('click', function () {
+        var input = document.getElementById(btn.getAttribute('data-target'));
+        if (input.type === 'password') {
+            input.type = 'text';
+            btn.textContent = '🙈';
+        } else {
+            input.type = 'password';
+            btn.textContent = '👁️';
+        }
+    });
 });
 </script>
 @endsection
