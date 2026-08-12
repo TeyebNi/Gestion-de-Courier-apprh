@@ -1,7 +1,7 @@
 @extends('layouts.master')
 
 @section('title')
-Type Demande
+Gestion de Demande
 @endsection
 
 @section('content')
@@ -10,7 +10,7 @@ Type Demande
         <div class="card">
             <div class="card-header d-flex justify-content-between align-items-center flex-wrap">
                 <h4 class="card-title mb-0" style="font-weight: 700; color: #212529;">
-                    Gestion des Types de Demande
+                    Gestion de Demande
                     <button class="btn btn-primary btn-sm ml-2" data-toggle="modal" data-target="#exampleModal">Nouveau Type de Demande</button>
                 </h4>
                 <a href="{{ route('typedem.export') }}" class="btn btn-success btn-sm" title="Exporter en Excel"><i class="fas fa-file-excel"></i></a>

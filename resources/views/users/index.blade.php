@@ -108,6 +108,8 @@ Les Utilisateurs
                         <select class="form-control" name="role" id="edit_role">
                             <option value="user">User</option>
                             <option value="admin">Admin</option>
+                            <option value="fatou">Fatou (Coordination)</option>
+                            <option value="maire">Maire</option>
                         </select>
                     </div>
                     <div class="input-group" id="edit_service_group">

@@ -3,7 +3,7 @@
   
 @section('content')
 <div class="card-footer">
-<a href="{{('exportpdf')}}" class="btn btn-primary">Export PDF</a>
+<a href="{{ route('exportpdf') }}" class="btn btn-primary">Export PDF</a>
       </div>
 <div class="row">
         <div class="col-12">

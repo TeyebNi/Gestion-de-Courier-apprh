@@ -25,7 +25,6 @@ class User extends Authenticatable
         'password',
         'role',
         'service',
-        'can_affectation',
     ];
 
     /**
@@ -49,7 +48,6 @@ class User extends Authenticatable
             'email_verified_at' => 'datetime',
             'password' => 'hashed',
             'role' => UserRole::class,
-            'can_affectation' => 'boolean',
         ];
     }
 
@@ -62,11 +60,18 @@ class User extends Authenticatable
     }
 
     /**
-     * Whether this user is allowed to access the Affectation module.
-     * True for admins, users with a service, or users explicitly granted this permission.
+     * Whether this user has the 'fatou' (coordination) role.
      */
-    public function canAccessAffectation(): bool
+    public function isFatou(): bool
     {
-        return $this->isAdmin() || ! empty($this->service) || (bool) $this->can_affectation;
+        return $this->role === UserRole::Fatou;
+    }
+
+    /**
+     * Whether this user has the 'maire' role.
+     */
+    public function isMaire(): bool
+    {
+        return $this->role === UserRole::Maire;
     }
 }

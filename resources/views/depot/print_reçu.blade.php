@@ -136,6 +136,17 @@
             font-weight: 700;
             color: #000;
         }
+
+        .qr-block {
+            text-align: center;
+            margin-top: 15px;
+        }
+
+        .qr-block .qr-number {
+            font-size: 14px;
+            font-weight: 700;
+            margin-top: 2px;
+        }
     </style>
 </head>
 <body>
@@ -217,6 +228,11 @@
         <div class="signature-user">
             {{ auth()->check() ? auth()->user()->name : '' }}
         </div>
+    </div>
+
+    <div class="qr-block">
+        <barcode code="{{ str_pad($detailf->id, 6, '0', STR_PAD_LEFT) }}" type="C128B" size="1" height="2.2" text="0" />
+        <div class="qr-number">N° {{ $detailf->id }}</div>
     </div>
 
 </body>

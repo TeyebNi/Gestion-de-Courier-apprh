@@ -24,6 +24,7 @@ Dashboard Courier
                            <th>N°</th>
                             <th>Code</th>
                             <th>Type de Demande</th>
+                            <th>Origine</th>
                             <th>Nom</th>
                             <th class="text-right">NNI</th>
                             <th class="text-right">Tel</th>
@@ -37,14 +38,44 @@ Dashboard Courier
                                 <td>{{++$key}}</td>
                                 <td>{{$item->id}}</td>
                                 <td>{{$item->typdm}}</td>
+                                <td>
+                                    @if($item->origine === 'interne')
+                                        <span class="badge badge-info">Interne</span>
+                                        @if($item->origine_detail)
+                                            <br><small class="text-muted">{{ $item->origine_detail }}</small>
+                                        @endif
+                                    @elseif($item->origine === 'externe')
+                                        <span class="badge badge-secondary">Externe</span>
+                                        @if($item->origine_detail)
+                                            <br><small class="text-muted">{{ $item->origine_detail }}</small>
+                                        @endif
+                                    @else
+                                        <span class="text-muted">—</span>
+                                    @endif
+                                </td>
                                 <td class="text-right">{{$item->nom}}</td>
-                                  <td class="text-right">{{$item->nni}}</td>
+                                  <td class="text-right">{{ $item->nni ?: ($item->type_expediteur === 'institution' ? '— (institution)' : '') }}</td>
                                 <td class="text-right">{{$item->tel}}</td>
                                   <td class="text-right">{{$item->adresse}}</td>
                                   <td class="text-right">{{$item->daterecp}}</td>
                                 <td class="text-right">
                                     <a href="{{ route('depot.print_reçu', $item->id) }}" target="_blank" class="btn btn-success btn-sm" title="Imprimer"><svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 6 2 18 2 18 9"></polyline><path d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2"></path><rect x="6" y="14" width="12" height="8"></rect></svg></a>
-                                    <a data-id="{{$item->id}}" data-typdm="{{$item->typdm}}" data-nom="{{$item->nom}}" data-nni="{{$item->nni}}" data-adresse="{{$item->adresse}}" data-tel="{{$item->tel}}" data-daterecp="{{$item->daterecp}}" data-toggle="modal" data-target="#exampleModal-edit" type="button" class="btn btn-info btn-sm" title="Modifier"><svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"></path><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"></path></svg></a>
+                                    @if($item->piece_jointe)
+                                    <a href="{{ asset('storage/' . $item->piece_jointe) }}" target="_blank" class="btn btn-outline-info btn-sm" title="Voir la pièce jointe"><i class="fas fa-paperclip"></i></a>
+                                    @endif
+                                    @if(($item->statut_circuit ?? 'accueil') === 'accueil')
+                                    <form action="{{ route('circuit.envoyer-fatou', $item) }}" method="post" style="display:inline;">
+                                        @csrf
+                                        <button type="submit" class="btn btn-info btn-sm" title="Envoyer à Fatou">
+                                            <i class="fas fa-paper-plane"></i>
+                                        </button>
+                                    </form>
+                                    @else
+                                    <a href="{{ route('circuit.historique', $item) }}" class="btn btn-secondary btn-sm" title="{{ $item->statutLabel() }}">
+                                        <i class="fas fa-route"></i>
+                                    </a>
+                                    @endif
+                                    <a data-id="{{$item->id}}" data-typdm="{{$item->typdm}}" data-origine="{{$item->origine}}" data-origine-detail="{{$item->origine_detail}}" data-type-expediteur="{{$item->type_expediteur}}" data-piece-jointe="{{ $item->piece_jointe ? asset('storage/' . $item->piece_jointe) : '' }}" data-nom="{{$item->nom}}" data-nni="{{$item->nni}}" data-adresse="{{$item->adresse}}" data-tel="{{$item->tel}}" data-daterecp="{{$item->daterecp}}" data-toggle="modal" data-target="#exampleModal-edit" type="button" class="btn btn-info btn-sm" title="Modifier"><svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"></path><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"></path></svg></a>
                                     <a data-id="{{$item->id}}" data-nom="{{$item->nom}}" data-toggle="modal" data-target="#exampleModal-delete" type="button" class="btn btn-danger btn-sm" title="Supprimer"><svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"></polyline><path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"></path><path d="M10 11v6"></path><path d="M14 11v6"></path><path d="M9 6V4a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v2"></path></svg></a>
                                 </td>
                             </tr>
@@ -76,25 +107,64 @@ Dashboard Courier
     </button>
       </div>
       <div class="modal-body">
-         <form action="{{route('depot.store')}}" method="post">
+         <form action="{{route('depot.store')}}" method="post" enctype="multipart/form-data">
         @csrf
       <div class="input-group">
         <div class="input-group-prepend">
-        <span class="input-group-text">Type de Demande</span>
+        <span class="input-group-text" id="create_typdm_label">Type de Demande</span>
       </div>
-     <select   class="form-control" name="typdm" required>
+     <select   class="form-control" name="typdm" id="create_typdm">
       <option value="">Sélectionner le type de demande</option>
       @foreach($typedem as $c)
         <option value="{{$c->name}}">{{$c->name}}</option>
     @endforeach
     </select>
+    </div>
+     <br>
+     <div class="input-group">
+        <div class="input-group-prepend">
+        <span class="input-group-text">Origine</span>
+      </div>
+     <select id="create_origine" class="form-control" name="origine" onchange="toggleOrigineDetail(this, 'create')">
+      <option value="">Sélectionner l'origine</option>
+      <option value="interne">Interne (agents de la commune)</option>
+      <option value="externe">Externe (ministère, citoyen...)</option>
+    </select>
       </div>
       <br>
-      <div class="input-group">
+      <div class="input-group" id="create_origine_interne_wrap" style="display:none;">
         <div class="input-group-prepend">
-        <span class="input-group-text">NNI</span>
+        <span class="input-group-text">Service</span>
       </div>
-      <input type="text" class="form-control" name="nni" placeholder="Entrer NNI" oninput="this.value=this.value.replace(/[^0-9]/g,'').slice(0,10)" required pattern="[0-9]{10}" minlength="10" maxlength="10" inputmode="numeric">
+     <select class="form-control" name="origine_detail" id="create_origine_detail_select" disabled>
+      <option value="">Sélectionner le service</option>
+      @foreach($orientations as $o)
+        <option value="{{ $o->name }}">{{ $o->name }}</option>
+      @endforeach
+    </select>
+      </div>
+      <div class="input-group" id="create_origine_externe_wrap" style="display:none;">
+        <div class="input-group-prepend">
+        <span class="input-group-text">Détails</span>
+      </div>
+      <input type="text" class="form-control" name="origine_detail" id="create_origine_detail_text" placeholder="Ex: Ministère de l'Intérieur, citoyen..." disabled>
+    </div>
+      <br>
+      <div class="input-group" id="create_type_expediteur_wrap" style="display:none;">
+        <div class="input-group-prepend">
+        <span class="input-group-text">Type d'expéditeur</span>
+      </div>
+     <select class="form-control" name="type_expediteur" id="create_type_expediteur" disabled onchange="toggleNniRequirement('create')">
+      <option value="personne">Citoyen (personne physique)</option>
+      <option value="institution">Institution (ministère, organisme...)</option>
+    </select>
+      </div>
+      <br>
+      <div class="input-group" id="create_nni_wrap">
+        <div class="input-group-prepend">
+        <span class="input-group-text" id="create_nni_label">NNI</span>
+      </div>
+      <input type="text" class="form-control" name="nni" id="create_nni" placeholder="Entrer NNI" oninput="this.value=this.value.replace(/[^0-9]/g,'').slice(0,10)" pattern="[0-9]{10}" minlength="10" maxlength="10" inputmode="numeric">
     </div>
       <br>
       <div class="input-group">
@@ -123,6 +193,16 @@ Dashboard Courier
         <span class="input-group-text">Date</span>
       </div>
       <input type="date" class="form-control" name="daterecp" max="{{ date('Y-m-d') }}">
+    </div>
+     <br>
+   <div class="input-group">
+        <div class="input-group-prepend">
+        <span class="input-group-text">Pièce jointe</span>
+      </div>
+      <div class="custom-file">
+        <input type="file" class="custom-file-input" name="piece_jointe" id="create_piece_jointe" accept=".pdf,.jpg,.jpeg,.png">
+        <label class="custom-file-label" for="create_piece_jointe">Scan / photo du document (PDF, JPG, PNG — max 10 Mo)</label>
+      </div>
     </div>
       </div>
       <div class="modal-footer">
@@ -156,6 +236,87 @@ Dashboard Courier
 </style>
 
 <script>
+function toggleOrigineDetail(selectEl, prefix) {
+    var value = selectEl.value;
+    var interneWrap = document.getElementById(prefix + '_origine_interne_wrap');
+    var externeWrap = document.getElementById(prefix + '_origine_externe_wrap');
+    var interneSelect = document.getElementById(prefix + '_origine_detail_select');
+    var externeInput = document.getElementById(prefix + '_origine_detail_text');
+    var typeExpediteurWrap = document.getElementById(prefix + '_type_expediteur_wrap');
+    var typeExpediteurSelect = document.getElementById(prefix + '_type_expediteur');
+
+    if (value === 'interne') {
+        interneWrap.style.display = '';
+        externeWrap.style.display = 'none';
+        interneSelect.disabled = false;
+        externeInput.disabled = true;
+        externeInput.value = '';
+        if (typeExpediteurWrap) {
+            typeExpediteurWrap.style.display = 'none';
+            typeExpediteurSelect.disabled = true;
+            typeExpediteurSelect.value = 'personne';
+        }
+    } else if (value === 'externe') {
+        interneWrap.style.display = 'none';
+        externeWrap.style.display = '';
+        interneSelect.disabled = true;
+        externeInput.disabled = false;
+        interneSelect.value = '';
+        if (typeExpediteurWrap) {
+            typeExpediteurWrap.style.display = '';
+            typeExpediteurSelect.disabled = false;
+        }
+    } else {
+        interneWrap.style.display = 'none';
+        externeWrap.style.display = 'none';
+        interneSelect.disabled = true;
+        externeInput.disabled = true;
+        if (typeExpediteurWrap) {
+            typeExpediteurWrap.style.display = 'none';
+            typeExpediteurSelect.disabled = true;
+            typeExpediteurSelect.value = 'personne';
+        }
+    }
+
+    toggleNniRequirement(prefix);
+
+    var typdmLabel = document.getElementById(prefix + '_typdm_label');
+    if (typdmLabel) {
+        typdmLabel.textContent = (value === 'interne') ? 'Type de Demande *' : 'Type de Demande';
+    }
+}
+
+function toggleNniRequirement(prefix) {
+    var typeExpediteurSelect = document.getElementById(prefix + '_type_expediteur');
+    var nniInput = document.getElementById(prefix + '_nni');
+    var nniLabel = document.getElementById(prefix + '_nni_label');
+    if (!nniInput) { return; }
+
+    var isInstitution = typeExpediteurSelect && !typeExpediteurSelect.disabled && typeExpediteurSelect.value === 'institution';
+
+    nniInput.removeAttribute('required');
+
+    if (isInstitution) {
+        nniInput.value = '';
+        if (nniLabel) { nniLabel.textContent = 'NNI (non applicable)'; }
+    } else {
+        if (nniLabel) { nniLabel.textContent = 'NNI (optionnel)'; }
+    }
+}
+
+document.addEventListener('DOMContentLoaded', function () {
+    document.querySelectorAll('.custom-file-input').forEach(function (input) {
+        input.addEventListener('change', function () {
+            var label = input.nextElementSibling;
+            if (label && input.files && input.files.length > 0) {
+                label.textContent = input.files[0].name;
+            }
+        });
+    });
+});
+</script>
+
+<script>
 document.addEventListener('DOMContentLoaded', function () {
     const allForms = Array.from(document.querySelectorAll('form'));
 
@@ -183,7 +344,12 @@ document.addEventListener('DOMContentLoaded', function () {
             element: form.querySelector('[name="typdm"]'),
             emptyMessage: 'Veuillez sélectionner un type de demande.',
             isValid: function (value) {
-                return value !== '';
+                var origineEl = document.getElementById('create_origine');
+                var isInterne = origineEl && origineEl.value === 'interne';
+                if (isInterne) {
+                    return value !== '';
+                }
+                return true;
             }
         },
         {
@@ -193,6 +359,9 @@ document.addEventListener('DOMContentLoaded', function () {
             numeric: true,
             maxLength: 10,
             isValid: function (value) {
+                if (value === '') {
+                    return true;
+                }
                 return /^\d{10}$/.test(value);
             }
         },
@@ -201,7 +370,25 @@ document.addEventListener('DOMContentLoaded', function () {
             emptyMessage: 'Veuillez saisir le nom et le prénom.',
             invalidMessage: 'Le nom et le prénom sont obligatoires.',
             isValid: function (value) {
+                var typeExpediteurEl = document.getElementById('create_type_expediteur');
+                var isInstitution = typeExpediteurEl && !typeExpediteurEl.disabled && typeExpediteurEl.value === 'institution';
+                if (isInstitution) {
+                    return true;
+                }
                 return value.length >= 2;
+            }
+        },
+        {
+            element: form.querySelector('[name="piece_jointe"]'),
+            emptyMessage: 'Veuillez joindre le document (obligatoire pour une institution).',
+            isValid: function () {
+                var typeExpediteurEl = document.getElementById('create_type_expediteur');
+                var isInstitution = typeExpediteurEl && !typeExpediteurEl.disabled && typeExpediteurEl.value === 'institution';
+                if (!isInstitution) {
+                    return true;
+                }
+                var fileInput = document.getElementById('create_piece_jointe');
+                return fileInput && fileInput.files && fileInput.files.length > 0;
             }
         },
         {
@@ -219,8 +406,8 @@ document.addEventListener('DOMContentLoaded', function () {
             element: form.querySelector('[name="adresse"]'),
             emptyMessage: 'Veuillez saisir l’adresse.',
             invalidMessage: 'L’adresse est obligatoire.',
-            isValid: function (value) {
-                return value !== '';
+            isValid: function () {
+                return true;
             }
         },
         {
@@ -421,13 +608,13 @@ document.addEventListener('DOMContentLoaded', function () {
           <span aria-hidden="true">&times;</span>
         </button>
       </div>
-      <form id="editDepotForm" action="" method="post">
+      <form id="editDepotForm" action="" method="post" enctype="multipart/form-data">
        @csrf
         @method('PUT')
         <div class="modal-body">
         <div class="input-group">
         <div class="input-group-prepend">
-        <span class="input-group-text">Type de Demande</span>
+        <span class="input-group-text" id="edit_typdm_label">Type de Demande</span>
       </div>
      <select id="edit_typdm" class="form-control" name="typdm">
       <option value="">Sélectionner le type de demande</option>
@@ -439,16 +626,55 @@ document.addEventListener('DOMContentLoaded', function () {
       <br>
       <div class="input-group">
         <div class="input-group-prepend">
-        <span class="input-group-text">NNI</span>
+        <span class="input-group-text">Origine</span>
       </div>
-      <input id="edit_nni" type="text" class="form-control" name="nni" placeholder="Entrer NNI" maxlength="10" inputmode="numeric" pattern="[0-9]{10}" oninput="this.value=this.value.replace(/[^0-9]/g,'').slice(0,10)" required>
+     <select id="edit_origine" class="form-control" name="origine" onchange="toggleOrigineDetail(this, 'edit')">
+      <option value="">Sélectionner l'origine</option>
+      <option value="interne">Interne (agents de la commune)</option>
+      <option value="externe">Externe (ministère, citoyen...)</option>
+    </select>
+      </div>
+      <br>
+      <div class="input-group" id="edit_origine_interne_wrap" style="display:none;">
+        <div class="input-group-prepend">
+        <span class="input-group-text">Service</span>
+      </div>
+     <select class="form-control" name="origine_detail" id="edit_origine_detail_select" disabled>
+      <option value="">Sélectionner le service</option>
+      @foreach($orientations as $o)
+        <option value="{{ $o->name }}">{{ $o->name }}</option>
+      @endforeach
+    </select>
+      </div>
+      <div class="input-group" id="edit_origine_externe_wrap" style="display:none;">
+        <div class="input-group-prepend">
+        <span class="input-group-text">Détails</span>
+      </div>
+      <input type="text" class="form-control" name="origine_detail" id="edit_origine_detail_text" placeholder="Ex: Ministère de l'Intérieur, citoyen..." disabled>
+    </div>
+      <br>
+      <div class="input-group" id="edit_type_expediteur_wrap" style="display:none;">
+        <div class="input-group-prepend">
+        <span class="input-group-text">Type d'expéditeur</span>
+      </div>
+     <select class="form-control" name="type_expediteur" id="edit_type_expediteur" disabled onchange="toggleNniRequirement('edit')">
+      <option value="personne">Citoyen (personne physique)</option>
+      <option value="institution">Institution (ministère, organisme...)</option>
+    </select>
+      </div>
+      <br>
+      <div class="input-group" id="edit_nni_wrap">
+        <div class="input-group-prepend">
+        <span class="input-group-text" id="edit_nni_label">NNI</span>
+      </div>
+      <input id="edit_nni" type="text" class="form-control" name="nni" placeholder="Entrer NNI" maxlength="10" inputmode="numeric" pattern="[0-9]{10}" oninput="this.value=this.value.replace(/[^0-9]/g,'').slice(0,10)">
     </div>
       <br>
       <div class="input-group">
         <div class="input-group-prepend">
         <span class="input-group-text">Nom</span>
       </div>
-      <input id="edit_nom" type="text" class="form-control" name="nom" placeholder="Entrer Nom" oninput="this.value=this.value.replace(/[0-9]/g,'')" required>
+      <input id="edit_nom" type="text" class="form-control" name="nom" placeholder="Entrer Nom" oninput="this.value=this.value.replace(/[0-9]/g,'')">
     </div>
       <br>
       <div class="input-group">
@@ -471,6 +697,17 @@ document.addEventListener('DOMContentLoaded', function () {
       </div>
       <input id="edit_daterecp" type="date" class="form-control" name="daterecp" max="{{ date('Y-m-d') }}">
     </div>
+     <br>
+   <div class="input-group">
+        <div class="input-group-prepend">
+        <span class="input-group-text">Pièce jointe</span>
+      </div>
+      <div class="custom-file">
+        <input type="file" class="custom-file-input" name="piece_jointe" id="edit_piece_jointe" accept=".pdf,.jpg,.jpeg,.png">
+        <label class="custom-file-label" for="edit_piece_jointe">Remplacer le scan / photo (optionnel)</label>
+      </div>
+    </div>
+    <div id="edit_piece_jointe_current" class="mt-2"></div>
         </div>
         <div class="modal-footer">
           <button type="button" class="btn btn-warning" data-dismiss="modal" title="Fermer"><svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg></button>
@@ -524,11 +761,29 @@ $('#exampleModal-edit').on('show.bs.modal', function (event) {
     var id = button.data('id');
     $('#editDepotForm').attr('action', '{{ url('/depot') }}/' + id);
     $('#edit_typdm').val(button.data('typdm'));
+    $('#edit_origine').val(button.data('origine'));
+    toggleOrigineDetail(document.getElementById('edit_origine'), 'edit');
+    var origineDetail = button.data('origine-detail');
+    if (button.data('origine') === 'interne') {
+        $('#edit_origine_detail_select').val(origineDetail);
+    } else if (button.data('origine') === 'externe') {
+        $('#edit_origine_detail_text').val(origineDetail);
+    }
+    if (button.data('origine') === 'externe') {
+        $('#edit_type_expediteur').val(button.data('type-expediteur') || 'personne');
+    }
+    toggleNniRequirement('edit');
     $('#edit_nni').val(button.data('nni'));
     $('#edit_nom').val(button.data('nom'));
     $('#edit_tel').val(button.data('tel'));
     $('#edit_adresse').val(button.data('adresse'));
     $('#edit_daterecp').val(button.data('daterecp'));
+    var pieceJointe = button.data('piece-jointe');
+    if (pieceJointe) {
+        $('#edit_piece_jointe_current').html('<a href="' + pieceJointe + '" target="_blank" class="btn btn-outline-info btn-sm"><i class="fas fa-paperclip"></i> Voir le document actuel</a>');
+    } else {
+        $('#edit_piece_jointe_current').html('<small class="text-muted">Aucune pièce jointe actuellement.</small>');
+    }
 });
 
 $('#exampleModal-delete').on('show.bs.modal', function (event) {

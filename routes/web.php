@@ -9,6 +9,7 @@ use App\Http\Controllers\RemarqueController;
 use App\Http\Controllers\AdminController;
 use App\Http\Controllers\UserController;
 use App\Http\Controllers\ServiceNotificationController;
+use App\Http\Controllers\CircuitController;
 
 // Routes d'authentification (login, register, mot de passe oublié...)
 Auth::routes();
@@ -31,13 +32,11 @@ Route::middleware('auth')->group(function () {
     Route::get('/export-pdf', [TabdepotController::class, 'exportPDF1']);
     Route::get('invoice', [TabdepotController::class, 'exportPDF']);
     Route::get('depot/print_reçu/{idt}',[TabdepotController::class,'print_facture'])->name('depot.print_reçu');
-    Route::middleware('affectation.access')->group(function () {
-        Route::get('affectation', [AffectationController::class, 'index'])->name('affectation.index');
-        Route::get('affectation/export', [AffectationController::class, 'exportExcel'])->name('affectation.export');
-        Route::post('affectation', [AffectationController::class, 'store'])->name('affectation.store');
-        Route::put('affectation/{affectation}', [AffectationController::class, 'update'])->name('affectation.update');
-        Route::delete('affectation/{affectation}', [AffectationController::class, 'destroy'])->name('affectation.destroy');
-    });
+    Route::get('affectation', [AffectationController::class, 'index'])->name('affectation.index');
+    Route::get('affectation/export', [AffectationController::class, 'exportExcel'])->name('affectation.export');
+    Route::post('affectation', [AffectationController::class, 'store'])->name('affectation.store');
+    Route::put('affectation/{affectation}', [AffectationController::class, 'update'])->name('affectation.update');
+    Route::delete('affectation/{affectation}', [AffectationController::class, 'destroy'])->name('affectation.destroy');
     Route::put('depot/{tabdepot}', [TabdepotController::class, 'update'])->name('depot.update');
     Route::delete('depot/{tabdepot}', [TabdepotController::class, 'destroy'])->name('depot.destroy');
 
@@ -45,6 +44,29 @@ Route::middleware('auth')->group(function () {
     Route::get('notifications', [ServiceNotificationController::class, 'index'])->name('notifications.index');
     Route::patch('notifications/{notification}/read', [ServiceNotificationController::class, 'markRead'])->name('notifications.read');
     Route::post('notifications/{notification}/respond', [ServiceNotificationController::class, 'respond'])->name('notifications.respond');
+
+    // Circuit de la demande : Accueil -> Fatou -> Maire -> Fatou -> (Accueil ou Service)
+    Route::post('circuit/{tabdepot}/envoyer-fatou', [CircuitController::class, 'sendToFatou'])->name('circuit.envoyer-fatou');
+    Route::get('circuit/suivi', [CircuitController::class, 'suiviIndex'])->name('circuit.suivi');
+
+    Route::middleware('fatou')->group(function () {
+        Route::get('circuit/fatou', [CircuitController::class, 'fatouIndex'])->name('circuit.fatou.index');
+        Route::post('circuit/{tabdepot}/envoyer-maire', [CircuitController::class, 'sendToMaire'])->name('circuit.envoyer-maire');
+        Route::post('circuit/{tabdepot}/router', [CircuitController::class, 'routeAfterMaire'])->name('circuit.router');
+    });
+
+    Route::middleware('maire')->group(function () {
+        Route::get('circuit/maire', [CircuitController::class, 'maireIndex'])->name('circuit.maire.index');
+        Route::get('circuit/maire/historique', [CircuitController::class, 'maireHistoriqueIndex'])->name('circuit.maire.historique');
+        Route::post('circuit/{tabdepot}/decider', [CircuitController::class, 'decide'])->name('circuit.decider');
+    });
+
+    Route::get('circuit/service', [CircuitController::class, 'serviceIndex'])->name('circuit.service.index');
+
+    // Cette route générique doit rester APRÈS toutes les routes littérales ci-dessus
+    // (circuit/suivi, circuit/fatou, circuit/maire, circuit/maire/historique, circuit/service),
+    // sinon Laravel essaierait de les faire correspondre à {tabdepot} en premier.
+    Route::get('circuit/{tabdepot}/historique', [CircuitController::class, 'historique'])->name('circuit.historique');
 
     // Réservé aux administrateurs (pages de configuration)
     Route::middleware('admin')->group(function () {

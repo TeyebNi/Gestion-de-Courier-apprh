@@ -47,7 +47,7 @@ class UserController extends Controller
     $request->validate([
         'name' => ['required', 'string', 'max:255', 'regex:/^[\pL\s]+$/u'],
         'email' => ['required', 'email', 'max:255', Rule::unique('users', 'email')->ignore($user->id)],
-        'role' => ['required', 'in:admin,user'],
+        'role' => ['required', 'in:admin,user,fatou,maire'],
         'service' => ['nullable', 'string', 'max:255'],
     ], [
         'name.regex' => 'Le nom ne doit contenir que des lettres.',
@@ -58,7 +58,7 @@ class UserController extends Controller
         return redirect()->route('users.index')->with('error', 'Impossible de rétrograder le dernier administrateur.');
     }
 
-    $service = $request->role === 'admin' ? null : $request->service;
+    $service = in_array($request->role, ['admin', 'fatou', 'maire']) ? null : $request->service;
 
     $user->update([
         'name' => $request->name,

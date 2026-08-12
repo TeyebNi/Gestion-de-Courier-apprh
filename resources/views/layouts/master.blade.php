@@ -82,17 +82,9 @@
                             <p>Dashboard</p>
                         </a>
                     </li>
-                    @if(auth()->user()->canAccessAffectation())
-                    <li class="{{ request()->is('affectation*') ? 'active' : '' }}">
-                        <a href="{{('affectation')}}">
-                            <i class="now-ui-icons shopping_delivery-fast"></i>
-                            <p>Affectation</p>
-                        </a>
-                    </li>
-                    @endif
                     @if(auth()->check() && auth()->user()->isAdmin())
                     <li class="{{ request()->is('orientation*') ? 'active' : '' }}">
-                        <a href="{{('orientation')}}">
+                        <a href="{{ route('orientation.index') }}">
                             <i class="now-ui-icons location_compass-05"></i>
                             <p>Orientation</p>
                         </a>
@@ -100,20 +92,52 @@
                     @endif
 
                     <li class="{{ request()->is('depot*') ? 'active' : '' }}">
-                        <a href="{{('depot')}}">
+                        <a href="{{ route('depot.index') }}">
                             <i class="now-ui-icons files_box"></i>
                             <p>Dépôt des Demandes</p>
                         </a>
                     </li>
+                    @if(auth()->user()->isFatou() || auth()->user()->isAdmin())
+                    <li class="{{ request()->is('circuit/fatou*') ? 'active' : '' }}">
+                        <a href="{{ route('circuit.fatou.index') }}">
+                            <i class="now-ui-icons arrows-1_share-66"></i>
+                            <p>Circuit - Fatou</p>
+                        </a>
+                    </li>
+                    @endif
+                    @if(auth()->user()->isMaire() || auth()->user()->isAdmin())
+                    <li class="{{ request()->is('circuit/maire*') ? 'active' : '' }}">
+                        <a href="{{ route('circuit.maire.index') }}">
+                            <i class="now-ui-icons business_briefcase-24"></i>
+                            <p>Circuit - Maire</p>
+                        </a>
+                    </li>
+                    @endif
+                    @if(!empty(auth()->user()->service) || auth()->user()->isAdmin())
+                    <li class="{{ request()->is('circuit/service*') ? 'active' : '' }}">
+                        <a href="{{ route('circuit.service.index') }}">
+                            <i class="now-ui-icons business_briefcase-24"></i>
+                            <p>Demandes du Circuit</p>
+                        </a>
+                    </li>
+                    @endif
+                    @if(auth()->user()->isAdmin() || (empty(auth()->user()->service) && !auth()->user()->isFatou() && !auth()->user()->isMaire()))
+                    <li class="{{ request()->is('circuit/suivi*') ? 'active' : '' }}">
+                        <a href="{{ route('circuit.suivi') }}">
+                            <i class="now-ui-icons ui-1_zoom-bold"></i>
+                            <p>Suivi des Demandes</p>
+                        </a>
+                    </li>
+                    @endif
                     @if(auth()->check() && auth()->user()->isAdmin())
                     <li class="{{ request()->is('typedem*') ? 'active' : '' }}">
-                        <a href="{{('typedem')}}">
+                        <a href="{{ route('typedem.index') }}">
                             <i class="now-ui-icons design_bullet-list-67"></i>
-                            <p>Type Demande</p>
+                            <p>Gestion de Demande</p>
                         </a>
                     </li>
                     <li class="{{ request()->is('utilisateurs*') ? 'active' : '' }}">
-                        <a href="{{('utilisateurs')}}">
+                        <a href="{{ route('users.index') }}">
                             <i class="now-ui-icons users_single-02"></i>
                             <p>Les Utilisateurs</p>
                         </a>
@@ -134,7 +158,7 @@
                                 <span class="navbar-toggler-bar bar3"></span>
                             </button>
                         </div>
-                        <a class="navbar-brand" href="{{ route('dashboard') }}"></a>
+                        <a class="navbar-brand" style="font-weight: 700; color: #212529; font-size: 1.15em;" href="{{ route('dashboard') }}">{{ request()->routeIs('dashboard') ? 'Gestion de Courier' : '' }}</a>
                     </div>
                     <button class="navbar-toggler" type="button" data-toggle="collapse" data-target="#navigation" aria-controls="navigation-index" aria-expanded="false" aria-label="Toggle navigation">
                         <span class="navbar-toggler-bar navbar-kebab"></span>
@@ -151,17 +175,6 @@
                             </div>
                         </form>
                         <ul class="navbar-nav">
-                            @if(!empty(auth()->user()->service))
-                            <li class="nav-item" style="position:relative;">
-                                <a class="nav-link" href="{{('notifications')}}" style="position:relative; display:inline-block;">
-                                    <i class="now-ui-icons ui-1_bell-53"></i>
-                                    @php $unread = \App\Models\ServiceNotification::where('is_read', false)->where('service', auth()->user()->service)->count(); @endphp
-                                    @if($unread > 0)
-                                        <span class="badge badge-danger" style="position:absolute; top:-2px; right:-2px; font-size:10px; padding:2px 5px;">{{ $unread }}</span>
-                                    @endif
-                                </a>
-                            </li>
-                            @endif
                             <li class="nav-item dropdown">
                                 <a class="nav-link dropdown-toggle" href="#" id="userAccountDropdown" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
                                     <i class="now-ui-icons users_single-02"></i>
@@ -201,6 +214,11 @@
                     <nav>
                         <ul>
                             <li>
+                                <a href="https://www.creative-tim.com">
+                                    Courier
+                                </a>
+                            </li>
+                            <li>
                                 <a href="http://presentation.creative-tim.com">
                                     
                                 </a>
@@ -216,8 +234,9 @@
                         &copy;
                         <script>
                             document.write(new Date().getFullYear())
-                        </script>
-                        Commune de Tevragh Zeina
+                        </script>, Designed by
+                        <a href="https://www.invisionapp.com" target="_blank">Invision</a>. Coded by
+                        <a href="https://www.creative-tim.com" target="_blank">Creative Tim</a>.
                     </div>
                 </div>
             </footer>
@@ -302,6 +321,9 @@
 
     function showWarning() {
         if (confirm("Vous allez être déconnecté dans " + warningBeforeMinutes + " minute(s) pour cause d'inactivité. Cliquez sur OK pour rester connecté.")) {
+            // Vérifie que la session est encore vraiment valide côté serveur
+            // avant de relancer les minuteurs (le temps de répondre au message
+            // peut avoir suffi à faire expirer la session pendant ce temps).
             fetch(keepAliveUrl, { credentials: 'same-origin', redirect: 'manual' })
                 .then(function (response) {
                     if (response.type === 'opaqueredirect' || response.status === 0 || response.status === 401 || response.status === 419) {
@@ -327,3 +349,4 @@
     resetTimers();
 })();
 </script>
+</html>
