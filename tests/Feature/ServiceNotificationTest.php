@@ -50,4 +50,31 @@ class ServiceNotificationTest extends TestCase
         $this->assertSame('accepted', $notification->response);
         $this->assertNotNull($notification->responded_at);
     }
+
+    public function test_admin_sees_notifications_from_every_service(): void
+    {
+        $admin = User::factory()->create(['role' => UserRole::Admin]);
+        ServiceNotification::create(['service' => 'Etat Civil', 'message' => 'Message A']);
+        ServiceNotification::create(['service' => 'Urbanisme', 'message' => 'Message B']);
+
+        $response = $this->actingAs($admin)->get('/notifications');
+
+        $response->assertOk();
+        $response->assertSee('Message A');
+        $response->assertSee('Message B');
+    }
+
+    public function test_sidebar_shows_unread_notification_count_for_service_user(): void
+    {
+        $user = User::factory()->create(['role' => UserRole::User, 'service' => 'Etat Civil']);
+        ServiceNotification::create(['service' => 'Etat Civil', 'message' => 'Non lue', 'is_read' => false]);
+        ServiceNotification::create(['service' => 'Etat Civil', 'message' => 'Déjà lue', 'is_read' => true]);
+
+        $response = $this->actingAs($user)->get('/circuit/service');
+
+        $response->assertOk();
+        $response->assertSee(route('notifications.index'), false);
+        $response->assertSee('badge-danger');
+        $response->assertSee('>1<', false);
+    }
 }

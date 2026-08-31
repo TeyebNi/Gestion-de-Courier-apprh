@@ -16,7 +16,42 @@ class DashboardController extends Controller
     {
         $user = auth()->user();
         $isAdmin = $user->isAdmin();
-        $isPlainUser = !$isAdmin && empty($user->service);
+        $isCabinet = !$isAdmin && $user->isFatou();
+        $isMaireUser = !$isAdmin && $user->isMaire();
+        $isPlainUser = !$isAdmin && !$isCabinet && !$isMaireUser && empty($user->service);
+
+        // ----- Cabinet / Maire : dashboard minimal centré sur leur file d'attente -----
+        if ($isCabinet || $isMaireUser) {
+            if ($isCabinet) {
+                $pendingCount = Tabdepot::where('statut_circuit', 'fatou')->whereNull('decision_maire')->count();
+                $recentQueue = Tabdepot::where('statut_circuit', 'fatou')
+                    ->whereNull('decision_maire')
+                    ->orderByDesc('id')
+                    ->limit(8)
+                    ->get();
+                $queueRoute = route('circuit.fatou.index');
+                $queueLabel = 'En attente au Cabinet';
+            } else {
+                $pendingCount = Tabdepot::where('statut_circuit', 'maire')->count();
+                $recentQueue = Tabdepot::where('statut_circuit', 'maire')
+                    ->orderByDesc('id')
+                    ->limit(8)
+                    ->get();
+                $queueRoute = route('circuit.maire.index');
+                $queueLabel = 'En attente de décision';
+            }
+
+            return view('admin.dashboard', compact(
+                'isAdmin',
+                'isPlainUser',
+                'isCabinet',
+                'isMaireUser',
+                'pendingCount',
+                'recentQueue',
+                'queueRoute',
+                'queueLabel'
+            ));
+        }
 
         // ----- Utilisateur simple (pas de service) : dashboard minimal -----
         if ($isPlainUser) {
@@ -56,6 +91,8 @@ class DashboardController extends Controller
             return view('admin.dashboard', compact(
                 'isAdmin',
                 'isPlainUser',
+                'isCabinet',
+                'isMaireUser',
                 'hasAffectationAccess',
                 'totalAffectationsGlobal',
                 'totalDemandesToday',
@@ -173,6 +210,8 @@ class DashboardController extends Controller
         return view('admin.dashboard', compact(
             'isAdmin',
             'isPlainUser',
+            'isCabinet',
+            'isMaireUser',
             'totalDemandes',
             'totalAffectations',
             'totalTypes',

@@ -4,10 +4,11 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\SoftDeletes;
 
 class Tabdepot extends Model
 {
-     use HasFactory;
+     use HasFactory, SoftDeletes;
     protected $table ='tabdepot';
     protected $fillable = [
         'typdm', 'origine', 'origine_detail', 'type_expediteur', 'piece_jointe', 'nom', 'nni','tel','adresse', 'daterecp',

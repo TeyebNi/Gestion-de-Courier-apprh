@@ -5,10 +5,18 @@ namespace App\Http\Controllers;
 use App\Models\DemandeHistorique;
 use App\Models\Orientation;
 use App\Models\Tabdepot;
+use App\Services\SmsService;
 use Illuminate\Http\Request;
 
 class CircuitController extends Controller
 {
+    protected SmsService $sms;
+
+    public function __construct(SmsService $sms)
+    {
+        $this->sms = $sms;
+    }
+
     /**
      * Enregistre une étape dans l'historique de la demande.
      */
@@ -132,6 +140,14 @@ class CircuitController extends Controller
                 . ' — Envoyée vers ' . $request->service_destination
         );
 
+        if ($tabdepot->tel) {
+            $decisionLabel = $request->decision_maire === 'accepte' ? 'acceptée' : 'refusée';
+            $this->sms->send(
+                $tabdepot->tel,
+                "Bonjour {$tabdepot->nom}, votre demande N°{$tabdepot->id} a été {$decisionLabel} et transmise au service {$request->service_destination}. Commune de Tevragh Zeina."
+            );
+        }
+
         return back()->with('success', 'La décision a été enregistrée et la demande envoyée au service.');
     }
 
@@ -173,6 +189,13 @@ class CircuitController extends Controller
         $tabdepot->update(['statut_circuit' => 'cloture']);
 
         $this->logHistorique($tabdepot, 'service', 'cloture', 'Demande traitée par le service ' . $tabdepot->service_assigne);
+
+        if ($tabdepot->tel) {
+            $this->sms->send(
+                $tabdepot->tel,
+                "Bonjour {$tabdepot->nom}, votre demande N°{$tabdepot->id} a été traitée par le service {$tabdepot->service_assigne}. Vous pouvez la récupérer. Commune de Tevragh Zeina."
+            );
+        }
 
         return back()->with('success', 'La demande a été marquée comme traitée.');
     }

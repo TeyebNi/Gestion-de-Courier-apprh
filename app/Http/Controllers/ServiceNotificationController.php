@@ -8,14 +8,15 @@ class ServiceNotificationController extends Controller
     public function index(Request $request)
     {
         $userService = auth()->user()->service;
-        $notifications = ServiceNotification::where('service', $userService)
+        $notifications = ServiceNotification::query()
+            ->when(! auth()->user()->isAdmin(), fn ($q) => $q->where('service', $userService))
             ->orderBy('created_at', 'desc')
             ->paginate(10);
         return view('notifications.index', compact('notifications', 'userService'));
     }
     public function markRead(ServiceNotification $notification)
     {
-        if ($notification->service !== auth()->user()->service) {
+        if (! auth()->user()->isAdmin() && $notification->service !== auth()->user()->service) {
             abort(403);
         }
         $notification->update(['is_read' => true]);
@@ -23,7 +24,7 @@ class ServiceNotificationController extends Controller
     }
     public function respond(Request $request, ServiceNotification $notification)
     {
-        if ($notification->service !== auth()->user()->service) {
+        if (! auth()->user()->isAdmin() && $notification->service !== auth()->user()->service) {
             abort(403);
         }
         $request->validate([

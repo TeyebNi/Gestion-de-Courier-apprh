@@ -63,4 +63,21 @@ class RolePermissionsTest extends TestCase
         $this->assertFalse($plainUser->canAccessAffectation());
         $this->assertTrue($grantedUser->canAccessAffectation());
     }
+
+    public function test_dashboard_does_not_leak_raw_demande_list_to_cabinet_or_maire(): void
+    {
+        $cabinet = User::factory()->create(['role' => UserRole::Fatou]);
+        $maire = User::factory()->create(['role' => UserRole::Maire]);
+
+        $cabinetResponse = $this->actingAs($cabinet)->get('/');
+        $cabinetResponse->assertOk();
+        $cabinetResponse->assertSee('En attente au Cabinet');
+        $cabinetResponse->assertDontSee('Dernières Demandes Déposées');
+        $cabinetResponse->assertDontSee(route('depot.index'), false);
+
+        $maireResponse = $this->actingAs($maire)->get('/');
+        $maireResponse->assertOk();
+        $maireResponse->assertSee('En attente de décision');
+        $maireResponse->assertDontSee('Dernières Demandes Déposées');
+    }
 }

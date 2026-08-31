@@ -143,6 +143,75 @@ Tableau de bord
     </div>
 </div>
 
+@elseif($isCabinet || $isMaireUser)
+
+<!-- Dashboard minimal Cabinet / Maire -->
+<div class="row">
+    <div class="col-lg-4 col-md-6">
+        <div class="card card-stats">
+            <div class="card-body">
+                <div class="row">
+                    <div class="col-5 col-md-4">
+                        <div class="icon-big text-center icon-warning">
+                            <i class="now-ui-icons ui-1_bell-53 text-danger"></i>
+                        </div>
+                    </div>
+                    <div class="col-7 col-md-8">
+                        <div class="numbers">
+                            <p class="card-category">{{ $queueLabel }}</p>
+                            <h4 class="card-title">{{ $pendingCount }}</h4>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="card-footer">
+                <hr>
+                <div class="stats">
+                    <a href="{{ $queueRoute }}">
+                        <i class="now-ui-icons arrows-1_share-66"></i>
+                        {{ $isCabinet ? 'Aller au Cabinet' : 'Aller aux décisions' }}
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="row">
+    <div class="col-md-12">
+        <div class="card card-tasks">
+            <div class="card-header">
+                <h5 class="card-category">{{ $isCabinet ? 'Cabinet' : 'Maire' }}</h5>
+                <h4 class="card-title">Demandes en attente</h4>
+            </div>
+            <div class="card-body">
+                <div class="table-full-width table-responsive">
+                    <table class="table">
+                        <thead class="text-primary">
+                            <th>Nom</th>
+                            <th>Type</th>
+                            <th>Date</th>
+                        </thead>
+                        <tbody>
+                            @forelse($recentQueue as $d)
+                            <tr>
+                                <td>{{ $d->nom }}</td>
+                                <td>{{ $d->typdm }}</td>
+                                <td>{{ $d->daterecp }}</td>
+                            </tr>
+                            @empty
+                            <tr>
+                                <td colspan="3" class="text-center text-muted">Aucune demande en attente.</td>
+                            </tr>
+                            @endforelse
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
 @else
 <div class="row">
     @if($isAdmin)
@@ -438,7 +507,7 @@ Tableau de bord
 @endsection
 
 @section('scripts')
-@if(!$isPlainUser)
+@if(!$isPlainUser && !$isCabinet && !$isMaireUser)
 <script src="{{ asset('assets/js/plugins/chartjs.min.js') }}"></script>
 <script>
 document.addEventListener('DOMContentLoaded', function () {

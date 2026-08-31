@@ -68,7 +68,7 @@ class DepotTest extends TestCase
         $this->assertSame('22334455', $demande->fresh()->tel);
     }
 
-    public function test_destroy_removes_the_demande(): void
+    public function test_destroy_soft_deletes_the_demande(): void
     {
         $user = User::factory()->create(['role' => UserRole::User]);
         $demande = Tabdepot::create(['nom' => 'Ahmed', 'tel' => '22334455', 'daterecp' => now()->format('Y-m-d')]);
@@ -76,7 +76,9 @@ class DepotTest extends TestCase
         $response = $this->actingAs($user)->delete("/depot/{$demande->id}");
 
         $response->assertRedirect(route('depot.index'));
-        $this->assertDatabaseMissing('tabdepot', ['id' => $demande->id]);
+        // Soft delete : la ligne reste en base (récupérable) mais disparaît des listes normales.
+        $this->assertSoftDeleted('tabdepot', ['id' => $demande->id]);
+        $this->assertDatabaseHas('tabdepot', ['id' => $demande->id]);
     }
 
     public function test_index_search_filters_by_name(): void
