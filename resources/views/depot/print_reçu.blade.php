@@ -231,7 +231,7 @@
     </div>
 
     <div class="qr-block">
-        <barcode code="{{ str_pad($detailf->id, 6, '0', STR_PAD_LEFT) }}" type="C128B" size="1" height="2.2" text="0" />
+        <barcode code="{{ str_pad($detailf->id, 6, '0', STR_PAD_LEFT) }}" type="QR" size="1" error="M" />
         <div class="qr-number">N° {{ $detailf->id }}</div>
     </div>
 

@@ -11,8 +11,11 @@ return new class extends Migration
      */
     public function up(): void
     {
-        Schema::create('affectations', function (Blueprint $table) {
+        Schema::create('affectation', function (Blueprint $table) {
             $table->id();
+            $table->string('sevice');
+            $table->string('dateaff', 100);
+            $table->string('iddmd', 11)->nullable();
             $table->timestamps();
         });
     }
@@ -22,6 +25,6 @@ return new class extends Migration
      */
     public function down(): void
     {
-        Schema::dropIfExists('affectations');
+        Schema::dropIfExists('affectation');
     }
 };

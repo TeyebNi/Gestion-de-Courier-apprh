@@ -75,14 +75,6 @@ class TabdepotController extends Controller
             ->header('Content-Type', 'application/pdf');
     }
 
-    public function exportPDF4()
-    {
-        $data = Tabdepot::all();
-        view()->share('data', $data);
-        $pdf = PDF::loadView('admin.show-pdf');
-        return $pdf->download('data.pdf');
-    }
-
     public function exportPDF()
     {
         $data = Tabdepot::all();
@@ -109,10 +101,17 @@ class TabdepotController extends Controller
         $request->validate([
             'typdm' => [$request->origine === 'interne' ? 'required' : 'nullable', 'string', 'max:255'],
             'nom' => [$request->type_expediteur === 'institution' ? 'nullable' : 'required', 'string', 'max:255'],
+            'nni' => ['nullable', 'digits:10'],
+            'tel' => ['required', 'digits:8'],
+            'adresse' => ['nullable', 'string', 'max:255'],
+            'daterecp' => ['nullable', 'date', 'before_or_equal:today'],
             'piece_jointe' => [$request->type_expediteur === 'institution' ? 'required' : 'nullable', 'file', 'mimes:pdf,jpg,jpeg,png', 'max:10240'],
         ], [
             'typdm.required' => 'Le type de demande est obligatoire pour une demande interne.',
             'nom.required' => 'Le nom est obligatoire.',
+            'nni.digits' => 'Le NNI doit contenir exactement 10 chiffres.',
+            'tel.digits' => 'Le téléphone doit contenir exactement 8 chiffres.',
+            'daterecp.before_or_equal' => 'La date ne peut pas être dans le futur.',
             'piece_jointe.required' => 'La pièce jointe (scan du document) est obligatoire pour une institution.',
             'piece_jointe.mimes' => 'La pièce jointe doit être un PDF, JPG ou PNG.',
             'piece_jointe.max' => 'La pièce jointe ne doit pas dépasser 10 Mo.',
@@ -133,7 +132,7 @@ class TabdepotController extends Controller
             'nni' => $request->nni,
             'tel' => $request->tel,
             'adresse' => $request->adresse,
-            'daterecp' => $request->daterecp,
+            'daterecp' => $request->daterecp ?: now()->format('Y-m-d'),
         ]);
 
         if ($demande->tel) {

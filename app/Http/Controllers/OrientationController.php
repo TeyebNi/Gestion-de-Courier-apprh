@@ -5,7 +5,6 @@ namespace App\Http\Controllers;
 use App\Models\Orientation;
 use App\Http\Controllers\Controller;
 use Illuminate\Http\Request;
-use Barryvdh\DomPDF\Facade\Pdf;
 
 use App\Traits\ExportsCsv;
 
@@ -34,30 +33,6 @@ class OrientationController extends Controller
             fn ($o, $i) => [$i + 1, $o->name],
             'orientations'
         );
-    }
-
-    public function exportPDF4()
-    {
-        $data = Orientation::all();
-        view()->share('data', $data);
-        $pdf = PDF::loadView('admin.show-pdf');
-        return $pdf->download('data.pdf');
-    }
-
-    public function exportPDF()
-    {
-        $data = Orientation::all();
-        $pdf = Pdf::loadView('invoice', ['data' => $data]);
-        return $pdf->download('invoice.pdf');
-    }
-
-    public function exportPDF1()
-    {
-        $pdf = Pdf::loadView('report', [
-            'title' => 'Rapport de Test',
-            'author' => 'Mohamed'
-        ]);
-        return $pdf->download('report.pdf');
     }
 
     public function store(Request $request)

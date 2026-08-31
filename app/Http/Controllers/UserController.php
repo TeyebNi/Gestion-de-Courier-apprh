@@ -49,6 +49,7 @@ class UserController extends Controller
         'email' => ['required', 'email', 'max:255', Rule::unique('users', 'email')->ignore($user->id)],
         'role' => ['required', 'in:admin,user,fatou,maire'],
         'service' => ['nullable', 'string', 'max:255'],
+        'can_affectation' => ['nullable', 'boolean'],
     ], [
         'name.regex' => 'Le nom ne doit contenir que des lettres.',
         'email.unique' => 'Cet email est déjà utilisé par un autre utilisateur.',
@@ -65,6 +66,7 @@ class UserController extends Controller
         'email' => $request->email,
         'role' => UserRole::from($request->role),
         'service' => $service,
+        'can_affectation' => $request->boolean('can_affectation'),
     ]);
 
     $roleLabel = $user->isAdmin() ? 'Administrateur' : 'Utilisateur';

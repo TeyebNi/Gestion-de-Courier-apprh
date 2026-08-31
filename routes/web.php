@@ -5,8 +5,6 @@ use App\Http\Controllers\TabdepotController;
 use App\Http\Controllers\AffectationController;
 use App\Http\Controllers\TypedemController;
 use App\Http\Controllers\OrientationController;
-use App\Http\Controllers\RemarqueController;
-use App\Http\Controllers\AdminController;
 use App\Http\Controllers\UserController;
 use App\Http\Controllers\ServiceNotificationController;
 use App\Http\Controllers\CircuitController;
@@ -82,8 +80,6 @@ Route::middleware('auth')->group(function () {
         Route::post('typedem', [TypedemController::class, 'store'])->name('typedem.store');
         Route::put('typedem/{typedem}', [TypedemController::class, 'update'])->name('typedem.update');
         Route::delete('typedem/{typedem}', [TypedemController::class, 'destroy'])->name('typedem.destroy');
-
-        Route::get('exportpdf', [AdminController::class, 'exportpdf'])->name('exportpdf');
 
         Route::get('utilisateurs', [UserController::class, 'index'])->name('users.index');
         Route::get('utilisateurs/export', [UserController::class, 'exportExcel'])->name('users.export');

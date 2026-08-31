@@ -25,5 +25,31 @@ class DatabaseSeeder extends Seeder
         } elseif (! $admin->isAdmin()) {
             $admin->update(['role' => UserRole::Admin]);
         }
+
+        $accueil = User::where('email', 'acceil@gmail.com')->first();
+
+        if (! $accueil) {
+            User::create([
+                'name' => 'Accueil',
+                'email' => 'acceil@gmail.com',
+                'password' => bcrypt('12345678'),
+                'role' => UserRole::Admin,
+            ]);
+        } elseif (! $accueil->isAdmin()) {
+            $accueil->update(['role' => UserRole::Admin]);
+        }
+
+        $cabinet = User::where('email', 'cabinet@gmail.com')->first();
+
+        if (! $cabinet) {
+            User::create([
+                'name' => 'Cabinet',
+                'email' => 'cabinet@gmail.com',
+                'password' => bcrypt('12345678'),
+                'role' => UserRole::Fatou,
+            ]);
+        } elseif (! $cabinet->isFatou()) {
+            $cabinet->update(['role' => UserRole::Fatou]);
+        }
     }
 }

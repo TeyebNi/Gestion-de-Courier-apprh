@@ -50,6 +50,7 @@ Les Utilisateurs
                                        data-email="{{ $u->email }}"
                                        data-role="{{ $u->role->value }}"
                                        data-service="{{ $u->service }}"
+                                       data-can-affectation="{{ $u->can_affectation ? '1' : '0' }}"
                                        data-toggle="modal" data-target="#editUserModal"
                                        type="button" class="btn btn-success btn-sm edit-user-btn" title="Modifier"><svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"></path><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"></path></svg></a>
 
@@ -123,6 +124,10 @@ Les Utilisateurs
                             @endforeach
                         </select>
                     </div>
+                    <div class="form-check mt-3" id="edit_can_affectation_group">
+                        <input type="checkbox" class="form-check-input" name="can_affectation" id="edit_can_affectation" value="1">
+                        <label class="form-check-label" for="edit_can_affectation">Accès au module Affectation</label>
+                    </div>
                 </div>
                 <div class="modal-footer">
                     <button type="button" class="btn btn-warning" data-dismiss="modal" title="Fermer"><svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg></button>
@@ -185,6 +190,7 @@ $('#editUserModal').on('show.bs.modal', function (event) {
     $('#edit_email').val(button.data('email'));
     $('#edit_role').val(role);
     $('#edit_service').val(button.data('service'));
+    $('#edit_can_affectation').prop('checked', button.data('can-affectation') == 1);
 
     var isLastAdmin = (role === 'admin' && {{ $adminCount }} <= 1);
     $('#edit_role option[value="user"]').prop('disabled', isLastAdmin);
@@ -200,8 +206,11 @@ function toggleServiceField(role) {
     if (role === 'admin') {
         $('#edit_service_group').hide();
         $('#edit_service').val('');
+        $('#edit_can_affectation_group').hide();
+        $('#edit_can_affectation').prop('checked', false);
     } else {
         $('#edit_service_group').show();
+        $('#edit_can_affectation_group').show();
     }
 }
 

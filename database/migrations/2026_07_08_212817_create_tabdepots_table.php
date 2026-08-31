@@ -11,8 +11,14 @@ return new class extends Migration
      */
     public function up(): void
     {
-        Schema::create('tabdepots', function (Blueprint $table) {
+        Schema::create('tabdepot', function (Blueprint $table) {
             $table->id();
+            $table->string('typdm');
+            $table->string('nom');
+            $table->string('nni');
+            $table->string('tel');
+            $table->string('adresse');
+            $table->string('daterecp');
             $table->timestamps();
         });
     }
@@ -22,6 +28,6 @@ return new class extends Migration
      */
     public function down(): void
     {
-        Schema::dropIfExists('tabdepots');
+        Schema::dropIfExists('tabdepot');
     }
 };

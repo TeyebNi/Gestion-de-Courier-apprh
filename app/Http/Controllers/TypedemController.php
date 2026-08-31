@@ -44,39 +44,6 @@ class TypedemController extends Controller
         );
     }
 
-     public function exportPDF4()
-    { 
-      $data =Typedem::all();
-      view()->share('data',$data);
-      $pdf = PDF::loadView('admin.show-pdf');
-      return $pdf->download('data.pdf');
-    }
-   public function exportPDF()
-{
-    // جلب البيانات من قاعدة البيانات
-    $data = Tabdepot::all();
-
-    // تمرير البيانات مباشرة إلى الـ view
-    $pdf = Pdf::loadView('invoice', ['data' => $data]);
-
-    // تنزيل الملف
-    return $pdf->download('invoice.pdf');
-}
-
-
-    public function exportPDF1()
-    {
-        // تحميل الـ view مع البيانات
-        $pdf = Pdf::loadView('report', [
-            'title' => 'Rapport de Test',
-            'author' => 'Mohamed'
-        ]);
-
-        // تنزيل الملف باسم report.pdf
-        return $pdf->download('report.pdf');
-    }
-   
-
     /**
      * Store a newly created resource in storage.
      */
@@ -120,7 +87,7 @@ class TypedemController extends Controller
     /**
      * Display the specified resource.
      */
-    public function show(typedem $typedem)
+    public function show(Typedem $typedem)
     {
         //
     }
@@ -128,7 +95,7 @@ class TypedemController extends Controller
     /**
      * Show the form for editing the specified resource.
      */
-    public function edit(typedem $typedem)
+    public function edit(Typedem $typedem)
     {
         //
     }

@@ -1,59 +1,65 @@
-<p align="center"><a href="https://laravel.com" target="_blank"><img src="https://raw.githubusercontent.com/laravel/art/master/logo-lockup/5%20SVG/2%20CMYK/1%20Full%20Color/laravel-logolockup-cmyk-red.svg" width="400" alt="Laravel Logo"></a></p>
+# Gestion de Courrier
 
-<p align="center">
-<a href="https://github.com/laravel/framework/actions"><img src="https://github.com/laravel/framework/workflows/tests/badge.svg" alt="Build Status"></a>
-<a href="https://packagist.org/packages/laravel/framework"><img src="https://img.shields.io/packagist/dt/laravel/framework" alt="Total Downloads"></a>
-<a href="https://packagist.org/packages/laravel/framework"><img src="https://img.shields.io/packagist/v/laravel/framework" alt="Latest Stable Version"></a>
-<a href="https://packagist.org/packages/laravel/framework"><img src="https://img.shields.io/packagist/l/laravel/framework" alt="License"></a>
-</p>
+Application Laravel de gestion et de suivi du courrier/des demandes administratives d'une commune (Mauritanie). Chaque demande déposée par un citoyen est suivie de l'accueil jusqu'à sa clôture à travers un circuit de validation impliquant plusieurs intervenants.
 
-## About Laravel
+## Circuit d'une demande
 
-Laravel is a web application framework with expressive, elegant syntax. We believe development must be an enjoyable and creative experience to be truly fulfilling. Laravel takes the pain out of development by easing common tasks used in many web projects, such as:
+```
+Accueil → Fatou (coordination) → Maire (décision) → Fatou → Service concerné (ou clôture)
+```
 
-- [Simple, fast routing engine](https://laravel.com/docs/routing).
-- [Powerful dependency injection container](https://laravel.com/docs/container).
-- Multiple back-ends for [session](https://laravel.com/docs/session) and [cache](https://laravel.com/docs/cache) storage.
-- Expressive, intuitive [database ORM](https://laravel.com/docs/eloquent).
-- Database agnostic [schema migrations](https://laravel.com/docs/migrations).
-- [Robust background job processing](https://laravel.com/docs/queues).
-- [Real-time event broadcasting](https://laravel.com/docs/broadcasting).
+- **Accueil** : enregistre la demande (`Tabdepot`), imprime un reçu, l'envoie à Fatou.
+- **Fatou** : réceptionne et transmet au Maire ; après décision, oriente vers un service ou clôture.
+- **Maire** : accepte ou refuse la demande, avec remarque éventuelle et service de destination.
+- **Service** : consulte les demandes qui lui sont assignées.
 
-Laravel is accessible, powerful, and provides tools required for large, robust applications.
+Chaque changement d'étape est journalisé dans `DemandeHistorique` (visible via `circuit/{id}/historique` et `circuit/suivi`).
 
-## Learning Laravel
+## Rôles
 
-Laravel has the most extensive and thorough [documentation](https://laravel.com/docs) and video tutorial library of all modern web application frameworks, making it a breeze to get started with the framework. You can also check out [Laravel Learn](https://laravel.com/learn), where you will be guided through building a modern Laravel application.
+Définis dans `App\Enums\UserRole` et appliqués via les middlewares `admin`, `fatou`, `maire` (`app/Http/Middleware`) :
 
-If you don't feel like reading, [Laracasts](https://laracasts.com) can help. Laracasts contains thousands of video tutorials on a range of topics including Laravel, modern PHP, unit testing, and JavaScript. Boost your skills by digging into our comprehensive video library.
+| Rôle | Accès |
+|---|---|
+| `admin` | Tout le système, y compris configuration (Orientation, Types de demande) et gestion des utilisateurs |
+| `user` | Dépôt, suivi, notifications ; accès au module Affectation seulement si `can_affectation = true` |
+| `fatou` | Pages de coordination (`circuit/fatou`) |
+| `maire` | Pages de décision (`circuit/maire`) |
 
-## Laravel Sponsors
+## Stack technique
 
-We would like to extend our thanks to the following sponsors for funding Laravel development. If you are interested in becoming a sponsor, please visit the [Laravel Partners program](https://partners.laravel.com).
+- Laravel 12 / PHP 8.2, MySQL
+- `laravel/ui` pour l'authentification
+- Export PDF : `barryvdh/laravel-dompdf` (rapports/factures) et `mpdf/mpdf` + `mpdf/qrcode` (reçu de dépôt avec QR code)
+- SMS : Twilio, via `App\Services\SmsService` (notifie le citoyen à l'enregistrement de sa demande)
 
-### Premium Partners
+## Installation
 
-- **[Vehikl](https://vehikl.com)**
-- **[Tighten Co.](https://tighten.co)**
-- **[Kirschbaum Development Group](https://kirschbaumdevelopment.com)**
-- **[64 Robots](https://64robots.com)**
-- **[Curotec](https://www.curotec.com/services/technologies/laravel)**
-- **[DevSquad](https://devsquad.com/hire-laravel-developers)**
-- **[Redberry](https://redberry.international/laravel-development)**
-- **[Active Logic](https://activelogic.com)**
+```bash
+composer install
+cp .env.example .env   # configurer DB_*, TWILIO_* si besoin
+php artisan key:generate
+php artisan migrate --seed
+php artisan serve
+```
 
-## Contributing
+Le seeder crée les comptes de démarrage suivants (mot de passe à changer après la première connexion) :
 
-Thank you for considering contributing to the Laravel framework! The contribution guide can be found in the [Laravel documentation](https://laravel.com/docs/contributions).
+| Email | Rôle |
+|---|---|
+| `admin@commune.mr` | admin |
+| `acceil@gmail.com` | admin (poste Accueil) |
+| `cabinet@gmail.com` | fatou |
 
-## Code of Conduct
+## Tests
 
-In order to ensure that the Laravel community is welcoming to all, please review and abide by the [Code of Conduct](https://laravel.com/docs/contributions#code-of-conduct).
+```bash
+php artisan test
+```
 
-## Security Vulnerabilities
+Les tests tournent sur SQLite en mémoire (`phpunit.xml`) et couvrent le circuit complet de la demande ainsi que les restrictions d'accès par rôle.
 
-If you discover a security vulnerability within Laravel, please send an e-mail to Taylor Otwell via [taylor@laravel.com](mailto:taylor@laravel.com). All security vulnerabilities will be promptly addressed.
+## Notes
 
-## License
-
-The Laravel framework is open-sourced software licensed under the [MIT license](https://opensource.org/licenses/MIT).
+- Les tables métier (`tabdepot`, `affectation`, `orientation`, `typedem`) utilisent des noms **singuliers**, contrairement à la convention Laravel — c'est voulu, ne pas renommer.
+- La table `servicecomm` existe en base sans modèle ni migration associés (héritage d'un système antérieur) ; à examiner avant toute suppression, elle contient des données.
