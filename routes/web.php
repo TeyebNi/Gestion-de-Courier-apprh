@@ -50,7 +50,6 @@ Route::middleware('auth')->group(function () {
     Route::middleware('fatou')->group(function () {
         Route::get('circuit/fatou', [CircuitController::class, 'fatouIndex'])->name('circuit.fatou.index');
         Route::post('circuit/{tabdepot}/envoyer-maire', [CircuitController::class, 'sendToMaire'])->name('circuit.envoyer-maire');
-        Route::post('circuit/{tabdepot}/router', [CircuitController::class, 'routeAfterMaire'])->name('circuit.router');
     });
 
     Route::middleware('maire')->group(function () {
@@ -60,6 +59,7 @@ Route::middleware('auth')->group(function () {
     });
 
     Route::get('circuit/service', [CircuitController::class, 'serviceIndex'])->name('circuit.service.index');
+    Route::post('circuit/{tabdepot}/cloturer', [CircuitController::class, 'closeDemande'])->name('circuit.cloturer');
 
     // Cette route générique doit rester APRÈS toutes les routes littérales ci-dessus
     // (circuit/suivi, circuit/fatou, circuit/maire, circuit/maire/historique, circuit/service),

@@ -62,8 +62,40 @@ class CircuitWorkflowTest extends TestCase
         $this->assertSame('accepte', $depot->decision_maire);
         $this->assertSame('Etat Civil', $depot->service_assigne);
 
+        // Le service clôture la demande : fin du circuit.
+        $serviceUser = User::factory()->create(['role' => UserRole::User, 'service' => 'Etat Civil']);
+        $this->actingAs($serviceUser)
+            ->post("/circuit/{$depot->id}/cloturer")
+            ->assertRedirect();
+
+        $this->assertSame('cloture', $depot->fresh()->statut_circuit);
+
         // Every transition must be logged in the history trail.
-        $this->assertGreaterThanOrEqual(3, $depot->historiques()->count());
+        $this->assertGreaterThanOrEqual(4, $depot->historiques()->count());
+    }
+
+    public function test_only_the_assigned_service_can_close_a_demande(): void
+    {
+        $depot = $this->makeDepot();
+        $depot->update(['statut_circuit' => 'service', 'service_assigne' => 'Etat Civil']);
+
+        $otherServiceUser = User::factory()->create(['role' => UserRole::User, 'service' => 'Urbanisme']);
+
+        $this->actingAs($otherServiceUser)
+            ->post("/circuit/{$depot->id}/cloturer")
+            ->assertForbidden();
+
+        $this->assertSame('service', $depot->fresh()->statut_circuit);
+    }
+
+    public function test_cannot_close_a_demande_that_is_not_at_the_service_step(): void
+    {
+        $depot = $this->makeDepot();
+        $serviceUser = User::factory()->create(['role' => UserRole::User, 'service' => 'Etat Civil']);
+
+        $this->actingAs($serviceUser)
+            ->post("/circuit/{$depot->id}/cloturer")
+            ->assertForbidden();
     }
 
     public function test_accueil_cannot_send_directly_to_maire(): void

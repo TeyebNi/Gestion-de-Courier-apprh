@@ -27,7 +27,7 @@ class Tabdepot extends Model
             'fatou' => $this->decision_maire ? 'Chez le Cabinet (retour du Maire)' : 'Chez le Cabinet',
             'maire' => 'Chez le Maire',
             'service' => 'Chez le service : ' . ($this->service_assigne ?? '—'),
-            'cloture' => 'Clôturée (retournée à l\'accueil)',
+            'cloture' => 'Clôturée (traitée par le service)',
             default => $this->statut_circuit ?? 'À l\'accueil',
         };
     }

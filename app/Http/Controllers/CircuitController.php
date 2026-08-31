@@ -43,7 +43,7 @@ class CircuitController extends Controller
     }
 
     /**
-     * Fatou : liste des demandes à traiter (venant de l'accueil, ou revenues du Maire).
+     * Fatou : liste des demandes à traiter (venant de l'accueil).
      */
     public function fatouIndex()
     {
@@ -52,14 +52,7 @@ class CircuitController extends Controller
             ->orderByDesc('id')
             ->get();
 
-        $revenuesDuMaire = Tabdepot::where('statut_circuit', 'fatou')
-            ->whereNotNull('decision_maire')
-            ->orderByDesc('id')
-            ->get();
-
-        $orientations = Orientation::orderBy('name')->get();
-
-        return view('circuit.fatou', compact('aEnvoyer', 'revenuesDuMaire', 'orientations'));
+        return view('circuit.fatou', compact('aEnvoyer'));
     }
 
     /**
@@ -72,36 +65,6 @@ class CircuitController extends Controller
         $tabdepot->update(['statut_circuit' => 'maire']);
 
         return back()->with('success', 'La demande a été transmise au Maire.');
-    }
-
-    /**
-     * Fatou : après décision du Maire, orienter vers l'accueil (si pas de remarque)
-     * ou vers un service précis (si remarque).
-     */
-    public function routeAfterMaire(Request $request, Tabdepot $tabdepot)
-    {
-        if (! empty($tabdepot->remarque_maire)) {
-            $request->validate([
-                'service_assigne' => ['required', 'string', 'max:255'],
-            ]);
-
-            $tabdepot->update([
-                'statut_circuit' => 'service',
-                'service_assigne' => $request->service_assigne,
-            ]);
-
-            $this->logHistorique($tabdepot, 'fatou', 'service', 'Orientée vers ' . $request->service_assigne);
-
-            return back()->with('success', 'La demande a été orientée vers le service.');
-        }
-
-        $tabdepot->update([
-            'statut_circuit' => 'cloture',
-        ]);
-
-        $this->logHistorique($tabdepot, 'fatou', 'cloture', 'Retournée à l\'accueil (aucune remarque)');
-
-        return back()->with('success', 'La demande a été retournée à l\'accueil.');
     }
 
     /**
@@ -185,6 +148,28 @@ class CircuitController extends Controller
             ->get();
 
         return view('circuit.service', compact('demandes'));
+    }
+
+    /**
+     * Service : marquer une demande comme traitée (fin du circuit).
+     */
+    public function closeDemande(Tabdepot $tabdepot)
+    {
+        $user = auth()->user();
+
+        if (! $user->isAdmin() && $tabdepot->service_assigne !== $user->service) {
+            abort(403, "Cette demande n'est pas assignée à votre service.");
+        }
+
+        if ($tabdepot->statut_circuit !== 'service') {
+            abort(403, "Cette demande n'est pas en attente de traitement par un service.");
+        }
+
+        $tabdepot->update(['statut_circuit' => 'cloture']);
+
+        $this->logHistorique($tabdepot, 'service', 'cloture', 'Demande traitée par le service ' . $tabdepot->service_assigne);
+
+        return back()->with('success', 'La demande a été marquée comme traitée.');
     }
 
     /**
