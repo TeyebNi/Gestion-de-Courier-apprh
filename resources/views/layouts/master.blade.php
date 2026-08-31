@@ -91,12 +91,14 @@
                     </li>
                     @endif
 
+                    @if(auth()->user()->canAccessDepot())
                     <li class="{{ request()->is('depot*') ? 'active' : '' }}">
                         <a href="{{ route('depot.index') }}">
                             <i class="now-ui-icons files_box"></i>
                             <p>Dépôt des Demandes</p>
                         </a>
                     </li>
+                    @endif
                     @if(auth()->user()->isFatou() || auth()->user()->isAdmin())
                     <li class="{{ request()->is('circuit/fatou*') ? 'active' : '' }}">
                         <a href="{{ route('circuit.fatou.index') }}">

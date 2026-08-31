@@ -84,4 +84,13 @@ class User extends Authenticatable
     {
         return $this->isAdmin() || (bool) $this->can_affectation;
     }
+
+    /**
+     * Whether this user can access the Dépôt des Demandes module (reception intake).
+     * Cabinet, Maire and service users have their own dedicated circuit pages instead.
+     */
+    public function canAccessDepot(): bool
+    {
+        return $this->isAdmin() || (! $this->isFatou() && ! $this->isMaire() && empty($this->service));
+    }
 }

@@ -25,6 +25,10 @@ class TabdepotController extends Controller
 
     public function index(Request $request)
     {
+        if (! auth()->user()->canAccessDepot()) {
+            abort(403, "Cette page est réservée à l'accueil et aux administrateurs.");
+        }
+
         $search = $request->search;
         $typedem = Typedem::all();
         $orientations = Orientation::orderBy('name')->get();
@@ -46,6 +50,10 @@ class TabdepotController extends Controller
 
     public function exportExcel(Request $request)
     {
+        if (! auth()->user()->canAccessDepot()) {
+            abort(403, "Cette page est réservée à l'accueil et aux administrateurs.");
+        }
+
         $tabdepots = Tabdepot::orderby('id', 'asc')->get();
 
         return $this->streamCsv(
@@ -98,6 +106,10 @@ class TabdepotController extends Controller
 
     public function store(Request $request)
     {
+        if (! auth()->user()->canAccessDepot()) {
+            abort(403, "Cette page est réservée à l'accueil et aux administrateurs.");
+        }
+
         $request->validate([
             'typdm' => [$request->origine === 'interne' ? 'required' : 'nullable', 'string', 'max:255'],
             'nom' => [$request->type_expediteur === 'institution' ? 'nullable' : 'required', 'string', 'max:255'],
@@ -159,6 +171,10 @@ class TabdepotController extends Controller
 
     public function update(Request $request, Tabdepot $tabdepot)
 {
+    if (! auth()->user()->canAccessDepot()) {
+        abort(403, "Cette page est réservée à l'accueil et aux administrateurs.");
+    }
+
     $request->validate([
         'typdm' => [$request->origine === 'interne' ? 'required' : 'nullable', 'string', 'max:255'],
         'origine' => ['nullable', 'in:interne,externe'],
@@ -200,6 +216,10 @@ class TabdepotController extends Controller
 
     public function destroy(Tabdepot $tabdepot)
 {
+    if (! auth()->user()->canAccessDepot()) {
+        abort(403, "Cette page est réservée à l'accueil et aux administrateurs.");
+    }
+
     $nom = $tabdepot->nom;
     $tabdepot->delete();
 
