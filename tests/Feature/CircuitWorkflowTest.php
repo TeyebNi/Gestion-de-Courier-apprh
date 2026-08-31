@@ -88,6 +88,26 @@ class CircuitWorkflowTest extends TestCase
         $this->assertSame('service', $depot->fresh()->statut_circuit);
     }
 
+    public function test_closed_demandes_remain_visible_to_the_service_that_closed_them(): void
+    {
+        $serviceUser = User::factory()->create(['role' => UserRole::User, 'service' => 'Etat Civil']);
+        $depot = $this->makeDepot();
+        $depot->update(['statut_circuit' => 'service', 'service_assigne' => 'Etat Civil']);
+
+        $this->actingAs($serviceUser)->post("/circuit/{$depot->id}/cloturer")->assertRedirect();
+
+        $response = $this->actingAs($serviceUser)->get('/circuit/service');
+
+        $response->assertOk();
+        $response->assertViewHas('demandesTraitees', function ($demandesTraitees) use ($depot) {
+            return $demandesTraitees->contains('id', $depot->id);
+        });
+        // Une fois clôturée, elle ne fait plus partie des demandes "à traiter".
+        $response->assertViewHas('demandes', function ($demandes) use ($depot) {
+            return ! $demandes->contains('id', $depot->id);
+        });
+    }
+
     public function test_cannot_close_a_demande_that_is_not_at_the_service_step(): void
     {
         $depot = $this->makeDepot();

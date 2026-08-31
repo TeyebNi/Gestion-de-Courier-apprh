@@ -31,7 +31,7 @@ class UserManagementTest extends TestCase
 
     public function test_cannot_demote_the_last_remaining_admin(): void
     {
-        $admin = User::factory()->create(['role' => UserRole::Admin]);
+        $admin = User::factory()->create(['role' => UserRole::Admin, 'name' => 'Jean Dupont']);
 
         $response = $this->actingAs($admin)->put("/utilisateurs/{$admin->id}", [
             'name' => $admin->name,

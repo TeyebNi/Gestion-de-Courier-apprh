@@ -147,7 +147,12 @@ class CircuitController extends Controller
             ->orderByDesc('id')
             ->get();
 
-        return view('circuit.service', compact('demandes'));
+        $demandesTraitees = Tabdepot::where('statut_circuit', 'cloture')
+            ->when(! $user->isAdmin(), fn ($q) => $q->where('service_assigne', $user->service))
+            ->orderByDesc('updated_at')
+            ->paginate(10, ['*'], 'traitees_page');
+
+        return view('circuit.service', compact('demandes', 'demandesTraitees'));
     }
 
     /**

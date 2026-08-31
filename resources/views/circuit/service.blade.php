@@ -85,4 +85,59 @@ document.addEventListener('DOMContentLoaded', function () {
     </div>
 </div>
 
+<div class="row">
+    <div class="col-md-12">
+        <div class="card">
+            <div class="card-header">
+                <h4 class="card-title mb-0" style="font-weight: 700; color: #212529;">
+                    Demandes traitées
+                </h4>
+            </div>
+            <div class="card-body">
+                <div class="table-responsive">
+                    <table class="table">
+                        <thead class="text-primary">
+                            <th>Nom</th>
+                            <th>Type</th>
+                            <th>Décision du Maire</th>
+                            <th>Date</th>
+                            <th>Action</th>
+                        </thead>
+                        <tbody>
+                            @forelse($demandesTraitees as $d)
+                            <tr>
+                                <td>{{ $d->nom }} @if($d->piece_jointe)<a href="{{ asset('storage/' . $d->piece_jointe) }}" target="_blank" title="Voir la pièce jointe"><i class="fas fa-paperclip text-info"></i></a>@endif</td>
+                                <td>{{ $d->typdm }}</td>
+                                <td>
+                                    @if($d->decision_maire === 'accepte')
+                                        <span class="badge badge-success">Acceptée</span>
+                                    @elseif($d->decision_maire === 'refuse')
+                                        <span class="badge badge-danger">Refusée</span>
+                                    @else
+                                        <span class="badge badge-secondary">Envoyée directement (sans décision)</span>
+                                    @endif
+                                </td>
+                                <td>{{ $d->daterecp }}</td>
+                                <td>
+                                    <a href="{{ route('circuit.historique', $d) }}" class="btn btn-info btn-sm" title="Voir l'historique complet">
+                                        <i class="fas fa-history"></i> Historique
+                                    </a>
+                                </td>
+                            </tr>
+                            @empty
+                            <tr>
+                                <td colspan="5" class="text-center text-muted">Aucune demande traitée pour le moment.</td>
+                            </tr>
+                            @endforelse
+                        </tbody>
+                    </table>
+                </div>
+                <div class="d-flex justify-content-center mt-3">
+                    {{ $demandesTraitees->links() }}
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
 @endsection
