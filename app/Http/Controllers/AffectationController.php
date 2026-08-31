@@ -126,6 +126,10 @@ class AffectationController extends Controller
 
     public function update(Request $request, Affectation $affectation)
     {
+        if (!auth()->user()->canAccessAffectation()) {
+            abort(403, "Cette page est réservée aux administrateurs et aux utilisateurs ayant accès au module Affectation.");
+        }
+
         $request->validate([
             'sevice' => ['required', 'string'],
             'iddmd' => ['required'],
@@ -152,6 +156,10 @@ class AffectationController extends Controller
 
     public function destroy(Affectation $affectation)
     {
+        if (!auth()->user()->canAccessAffectation()) {
+            abort(403, "Cette page est réservée aux administrateurs et aux utilisateurs ayant accès au module Affectation.");
+        }
+
         $id = $affectation->id;
         $affectation->delete();
 
