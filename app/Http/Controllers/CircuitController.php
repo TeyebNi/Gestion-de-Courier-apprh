@@ -39,7 +39,7 @@ class CircuitController extends Controller
 
         $this->logHistorique($tabdepot, $ancien, 'fatou');
 
-        return back()->with('success', 'La demande a été envoyée à Fatou.');
+        return back()->with('success', 'La demande a été envoyée au Cabinet.');
     }
 
     /**

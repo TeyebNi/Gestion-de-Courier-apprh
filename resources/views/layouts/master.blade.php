@@ -101,7 +101,7 @@
                     <li class="{{ request()->is('circuit/fatou*') ? 'active' : '' }}">
                         <a href="{{ route('circuit.fatou.index') }}">
                             <i class="now-ui-icons arrows-1_share-66"></i>
-                            <p>Circuit - Fatou</p>
+                            <p>Circuit - Cabinet</p>
                         </a>
                     </li>
                     @endif

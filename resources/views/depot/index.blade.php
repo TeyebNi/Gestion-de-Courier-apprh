@@ -66,7 +66,7 @@ Dashboard Courier
                                     @if(($item->statut_circuit ?? 'accueil') === 'accueil')
                                     <form action="{{ route('circuit.envoyer-fatou', $item) }}" method="post" style="display:inline;">
                                         @csrf
-                                        <button type="submit" class="btn btn-info btn-sm" title="Envoyer à Fatou">
+                                        <button type="submit" class="btn btn-info btn-sm" title="Envoyer au Cabinet">
                                             <i class="fas fa-paper-plane"></i>
                                         </button>
                                     </form>

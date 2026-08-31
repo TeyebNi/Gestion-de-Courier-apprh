@@ -24,7 +24,7 @@ class Tabdepot extends Model
     {
         return match ($this->statut_circuit) {
             'accueil' => 'À l\'accueil',
-            'fatou' => $this->decision_maire ? 'Chez Fatou (retour du Maire)' : 'Chez Fatou',
+            'fatou' => $this->decision_maire ? 'Chez le Cabinet (retour du Maire)' : 'Chez le Cabinet',
             'maire' => 'Chez le Maire',
             'service' => 'Chez le service : ' . ($this->service_assigne ?? '—'),
             'cloture' => 'Clôturée (retournée à l\'accueil)',

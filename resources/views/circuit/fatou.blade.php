@@ -1,7 +1,7 @@
 @extends('layouts.master')
 
 @section('title')
-Fatou - Circuit des Demandes
+Cabinet - Circuit des Demandes
 @endsection
 
 @section('content')
