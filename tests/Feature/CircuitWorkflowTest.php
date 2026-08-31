@@ -28,6 +28,20 @@ class CircuitWorkflowTest extends TestCase
         $this->assertSame('accueil', $depot->fresh()->statut_circuit);
     }
 
+    public function test_historique_view_shows_cabinet_instead_of_the_internal_fatou_label(): void
+    {
+        $accueil = User::factory()->create(['role' => UserRole::User]);
+        $depot = $this->makeDepot();
+
+        $this->actingAs($accueil)->post("/circuit/{$depot->id}/envoyer-fatou");
+
+        $response = $this->actingAs($accueil)->get("/circuit/{$depot->id}/historique");
+
+        $response->assertOk();
+        $response->assertSee('Cabinet');
+        $response->assertDontSee('Fatou');
+    }
+
     public function test_full_circuit_accueil_to_fatou_to_maire_to_service(): void
     {
         $accueil = User::factory()->create(['role' => UserRole::User]);

@@ -31,4 +31,20 @@ class Tabdepot extends Model
             default => $this->statut_circuit ?? 'À l\'accueil',
         };
     }
+
+    /**
+     * Libellé court d'une étape du circuit, pour l'affichage de l'historique
+     * des transferts (ex: "Fatou → Maire" doit s'afficher "Cabinet → Maire").
+     */
+    public static function circuitStepLabel(?string $step): string
+    {
+        return match ($step) {
+            'accueil' => 'Accueil',
+            'fatou' => 'Cabinet',
+            'maire' => 'Maire',
+            'service' => 'Service',
+            'cloture' => 'Clôturée',
+            default => $step ? ucfirst($step) : '',
+        };
+    }
 }

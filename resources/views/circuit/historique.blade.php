@@ -30,7 +30,7 @@ Historique de la Demande
                     @forelse($tabdepot->historiques as $h)
                     <li class="list-group-item">
                         <strong>{{ $h->created_at->format('d/m/Y H:i') }}</strong>
-                        — {{ $h->de_statut ? ucfirst($h->de_statut) . ' → ' : '' }}{{ ucfirst($h->vers_statut) }}
+                        — {{ $h->de_statut ? \App\Models\Tabdepot::circuitStepLabel($h->de_statut) . ' → ' : '' }}{{ \App\Models\Tabdepot::circuitStepLabel($h->vers_statut) }}
                         @if($h->user)
                             <span class="text-muted">(par {{ $h->user->name }})</span>
                         @endif
