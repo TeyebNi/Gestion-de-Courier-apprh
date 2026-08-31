@@ -25,7 +25,7 @@ class AffectationController extends Controller
         $orientation = Orientation::all();
         $tabdepot = Tabdepot::all();
 
-        $query = Affectation::with("demande")->orderby('id', 'asc');
+        $query = Affectation::with("demande")->orderby('id', 'desc');
 
         if (!auth()->user()->isAdmin() && !empty(auth()->user()->service)) {
             $query->where('sevice', auth()->user()->service);

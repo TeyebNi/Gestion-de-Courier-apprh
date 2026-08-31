@@ -37,7 +37,7 @@ class TabdepotController extends Controller
                       ->orWhere('adresse', 'like', "%{$search}%")
                       ->orWhere('typdm', 'like', "%{$search}%");
             })
-            ->orderby('id', 'asc')
+            ->orderby('id', 'desc')
             ->paginate(5)
             ->appends(['search' => $search]);
 

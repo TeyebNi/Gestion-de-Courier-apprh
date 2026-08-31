@@ -10,6 +10,7 @@ Accueil → Fatou (coordination) → Maire (décision) → Fatou → Service con
 
 - **Accueil** : enregistre la demande (`Tabdepot`), imprime un reçu, l'envoie à Fatou.
 - **Fatou** : réceptionne et transmet au Maire ; après décision, oriente vers un service ou clôture.
+  Affiché "Cabinet" dans l'interface (le rôle interne reste `fatou`, voir ci-dessous).
 - **Maire** : accepte ou refuse la demande, avec remarque éventuelle et service de destination.
 - **Service** : consulte les demandes qui lui sont assignées.
 
@@ -23,7 +24,7 @@ Définis dans `App\Enums\UserRole` et appliqués via les middlewares `admin`, `f
 |---|---|
 | `admin` | Tout le système, y compris configuration (Orientation, Types de demande) et gestion des utilisateurs |
 | `user` | Dépôt, suivi, notifications ; accès au module Affectation seulement si `can_affectation = true` |
-| `fatou` | Pages de coordination (`circuit/fatou`) |
+| `fatou` | Pages de coordination (`circuit/fatou`), affichées "Cabinet" dans l'interface |
 | `maire` | Pages de décision (`circuit/maire`) |
 
 ## Stack technique
@@ -40,6 +41,7 @@ composer install
 cp .env.example .env   # configurer DB_*, TWILIO_* si besoin
 php artisan key:generate
 php artisan migrate --seed
+php artisan storage:link   # requis pour que les pièces jointes soient accessibles
 php artisan serve
 ```
 
@@ -57,9 +59,9 @@ Le seeder crée les comptes de démarrage suivants (mot de passe à changer apr�
 php artisan test
 ```
 
-Les tests tournent sur SQLite en mémoire (`phpunit.xml`) et couvrent le circuit complet de la demande ainsi que les restrictions d'accès par rôle.
+Les tests tournent sur SQLite en mémoire (`phpunit.xml`) et couvrent le circuit complet de la demande, les permissions par rôle, le dépôt, les affectations, la configuration admin, la gestion des utilisateurs et les notifications de service.
 
 ## Notes
 
 - Les tables métier (`tabdepot`, `affectation`, `orientation`, `typedem`) utilisent des noms **singuliers**, contrairement à la convention Laravel — c'est voulu, ne pas renommer.
-- La table `servicecomm` existe en base sans modèle ni migration associés (héritage d'un système antérieur) ; à examiner avant toute suppression, elle contient des données.
+- Les listes de travail (Dépôt, Affectation) affichent les entrées les plus récentes en premier (tri par id décroissant).

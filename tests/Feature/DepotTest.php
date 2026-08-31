@@ -91,4 +91,18 @@ class DepotTest extends TestCase
         $response->assertSee('Fatimetou Mint Ely');
         $response->assertDontSee('Ahmed Ould Sidi');
     }
+
+    public function test_index_lists_the_most_recently_added_demande_first(): void
+    {
+        $user = User::factory()->create(['role' => UserRole::User]);
+        $older = Tabdepot::create(['nom' => 'Ahmed Ould Sidi', 'tel' => '22334455', 'daterecp' => now()->format('Y-m-d')]);
+        $newer = Tabdepot::create(['nom' => 'Fatimetou Mint Ely', 'tel' => '22334456', 'daterecp' => now()->format('Y-m-d')]);
+
+        $response = $this->actingAs($user)->get('/depot');
+
+        $response->assertViewHas('tabdepot', function ($tabdepot) use ($older, $newer) {
+            return $tabdepot->first()->id === $newer->id
+                && $tabdepot->last()->id === $older->id;
+        });
+    }
 }
