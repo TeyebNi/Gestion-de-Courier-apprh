@@ -51,5 +51,18 @@ class DatabaseSeeder extends Seeder
         } elseif (! $cabinet->isFatou()) {
             $cabinet->update(['role' => UserRole::Fatou]);
         }
+
+        $maire = User::where('email', 'maire@gmail.com')->first();
+
+        if (! $maire) {
+            User::create([
+                'name' => 'Maire',
+                'email' => 'maire@gmail.com',
+                'password' => bcrypt('12345678'),
+                'role' => UserRole::Maire,
+            ]);
+        } elseif (! $maire->isMaire()) {
+            $maire->update(['role' => UserRole::Maire]);
+        }
     }
 }
