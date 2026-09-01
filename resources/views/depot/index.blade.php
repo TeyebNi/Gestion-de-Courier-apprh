@@ -24,20 +24,31 @@ Dashboard Courier
                            <th>N°</th>
                             <th>Code</th>
                             <th>Type de Demande</th>
+                            <th>Objet</th>
                             <th>Origine</th>
                             <th>Nom</th>
                             <th class="text-right">NNI</th>
                             <th class="text-right">Tel</th>
-                             <th class="text-right">Adresse</th>
+                             <th>Statut</th>
                             <th class="text-right">Date</th>
                             <th class="text-right">Action</th>
                         </thead>
                         <tbody>
                           @foreach($tabdepot as $key=>$item)
+                            @php
+                                $depotBadgeClass = match($item->statut_circuit ?? 'accueil') {
+                                    'fatou' => 'badge-info',
+                                    'maire' => 'badge-warning',
+                                    'service' => 'badge-primary',
+                                    'cloture' => 'badge-success',
+                                    default => 'badge-secondary',
+                                };
+                            @endphp
                             <tr>
                                 <td>{{++$key}}</td>
                                 <td>{{$item->id}}</td>
                                 <td>{{$item->typdm}}</td>
+                                <td>{{ $item->objet ?: '—' }}</td>
                                 <td>
                                     @if($item->origine === 'interne')
                                         <span class="badge badge-info">Interne</span>
@@ -55,8 +66,8 @@ Dashboard Courier
                                 </td>
                                 <td class="text-right">{{$item->nom}}</td>
                                   <td class="text-right">{{ $item->nni ?: ($item->type_expediteur === 'institution' ? '— (institution)' : '') }}</td>
-                                <td class="text-right">{{$item->tel}}</td>
-                                  <td class="text-right">{{$item->adresse}}</td>
+                                <td class="text-right">{{ $item->tel ?: '—' }}</td>
+                                  <td><span class="badge {{ $depotBadgeClass }}">{{ $item->statutLabel() }}</span></td>
                                   <td class="text-right">{{$item->daterecp}}</td>
                                 <td class="text-right">
                                     <a href="{{ route('depot.print_reçu', $item->id) }}" target="_blank" class="btn btn-success btn-sm" title="Imprimer"><svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 6 2 18 2 18 9"></polyline><path d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2"></path><rect x="6" y="14" width="12" height="8"></rect></svg></a>
@@ -75,7 +86,7 @@ Dashboard Courier
                                         <i class="fas fa-route"></i>
                                     </a>
                                     @endif
-                                    <a data-id="{{$item->id}}" data-typdm="{{$item->typdm}}" data-origine="{{$item->origine}}" data-origine-detail="{{$item->origine_detail}}" data-type-expediteur="{{$item->type_expediteur}}" data-piece-jointe="{{ $item->piece_jointe ? asset('storage/' . $item->piece_jointe) : '' }}" data-nom="{{$item->nom}}" data-nni="{{$item->nni}}" data-adresse="{{$item->adresse}}" data-tel="{{$item->tel}}" data-daterecp="{{$item->daterecp}}" data-toggle="modal" data-target="#exampleModal-edit" type="button" class="btn btn-info btn-sm" title="Modifier"><svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"></path><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"></path></svg></a>
+                                    <a data-id="{{$item->id}}" data-typdm="{{$item->typdm}}" data-objet="{{$item->objet}}" data-reference="{{$item->reference}}" data-origine="{{$item->origine}}" data-origine-detail="{{$item->origine_detail}}" data-type-expediteur="{{$item->type_expediteur}}" data-piece-jointe="{{ $item->piece_jointe ? asset('storage/' . $item->piece_jointe) : '' }}" data-nom="{{$item->nom}}" data-nni="{{$item->nni}}" data-adresse="{{$item->adresse}}" data-tel="{{$item->tel}}" data-daterecp="{{$item->daterecp}}" data-toggle="modal" data-target="#exampleModal-edit" type="button" class="btn btn-info btn-sm" title="Modifier"><svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"></path><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"></path></svg></a>
                                     <a data-id="{{$item->id}}" data-nom="{{$item->nom}}" data-toggle="modal" data-target="#exampleModal-delete" type="button" class="btn btn-danger btn-sm" title="Supprimer"><svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"></polyline><path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"></path><path d="M10 11v6"></path><path d="M14 11v6"></path><path d="M9 6V4a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v2"></path></svg></a>
                                 </td>
                             </tr>
@@ -160,6 +171,20 @@ Dashboard Courier
     </select>
     </div>
      <br>
+      <div class="input-group">
+        <div class="input-group-prepend">
+        <span class="input-group-text">Objet</span>
+      </div>
+      <input type="text" class="form-control" name="objet" placeholder="Résumé de la demande (ex: Demande de raccordement eau)" maxlength="255">
+    </div>
+      <br>
+      <div class="input-group">
+        <div class="input-group-prepend">
+        <span class="input-group-text">N° référence</span>
+      </div>
+      <input type="text" class="form-control" name="reference" placeholder="Référence du courrier de l'expéditeur (optionnel)" maxlength="100">
+    </div>
+      <br>
       <div class="input-group" id="create_nni_wrap">
         <div class="input-group-prepend">
         <span class="input-group-text" id="create_nni_label">NNI</span>
@@ -176,16 +201,16 @@ Dashboard Courier
       <br>
       <div class="input-group">
         <div class="input-group-prepend">
-        <span class="input-group-text">Tel *</span>
+        <span class="input-group-text" id="create_tel_label">Tel *</span>
       </div>
-      <input type="text" class="form-control" name="tel" placeholder="Entrer Tel" oninput="this.value=this.value.replace(/[^0-9]/g,'').slice(0,8)" required pattern="[0-9]{8}" minlength="8" maxlength="8" inputmode="numeric">
+      <input type="text" class="form-control" name="tel" id="create_tel" placeholder="Entrer Tel" oninput="this.value=this.value.replace(/[^0-9]/g,'').slice(0,8)" required pattern="[0-9]{8}" minlength="8" maxlength="8" inputmode="numeric">
     </div>
      <br>
-     <div class="input-group">
+     <div class="input-group" id="create_adresse_wrap">
         <div class="input-group-prepend">
         <span class="input-group-text">Adresse (optionnel)</span>
       </div>
-      <input type="text" class="form-control" name="adresse" placeholder="Entrer Adresse">
+      <input type="text" class="form-control" name="adresse" id="create_adresse" placeholder="Entrer Adresse">
     </div>
      <br>
    <div class="input-group">
@@ -244,6 +269,28 @@ function toggleOrigineDetail(selectEl, prefix) {
     var externeInput = document.getElementById(prefix + '_origine_detail_text');
     var typeExpediteurWrap = document.getElementById(prefix + '_type_expediteur_wrap');
     var typeExpediteurSelect = document.getElementById(prefix + '_type_expediteur');
+    var nniWrap = document.getElementById(prefix + '_nni_wrap');
+    var nniInput = document.getElementById(prefix + '_nni');
+    var adresseWrap = document.getElementById(prefix + '_adresse_wrap');
+    var adresseInput = document.getElementById(prefix + '_adresse');
+    var isInterne = value === 'interne';
+
+    // NNI et adresse ne concernent qu'un expéditeur externe (citoyen/institution) :
+    // une demande interne entre agents municipaux n'en a pas besoin.
+    if (nniWrap) {
+        nniWrap.style.display = isInterne ? 'none' : '';
+        if (nniInput) {
+            nniInput.disabled = isInterne;
+            if (isInterne) { nniInput.value = ''; }
+        }
+    }
+    if (adresseWrap) {
+        adresseWrap.style.display = isInterne ? 'none' : '';
+        if (adresseInput) {
+            adresseInput.disabled = isInterne;
+            if (isInterne) { adresseInput.value = ''; }
+        }
+    }
 
     if (value === 'interne') {
         interneWrap.style.display = '';
@@ -291,6 +338,8 @@ function toggleNniRequirement(prefix) {
     var nniInput = document.getElementById(prefix + '_nni');
     var nniLabel = document.getElementById(prefix + '_nni_label');
     var nomLabel = document.getElementById(prefix + '_nom_label');
+    var telInput = document.getElementById(prefix + '_tel');
+    var telLabel = document.getElementById(prefix + '_tel_label');
     if (!nniInput) { return; }
 
     var isInstitution = typeExpediteurSelect && !typeExpediteurSelect.disabled && typeExpediteurSelect.value === 'institution';
@@ -301,9 +350,13 @@ function toggleNniRequirement(prefix) {
         nniInput.value = '';
         if (nniLabel) { nniLabel.textContent = 'NNI (non applicable)'; }
         if (nomLabel) { nomLabel.textContent = 'Nom (non applicable)'; }
+        if (telInput) { telInput.removeAttribute('required'); }
+        if (telLabel) { telLabel.textContent = 'Tel (optionnel)'; }
     } else {
         if (nniLabel) { nniLabel.textContent = 'NNI (optionnel)'; }
         if (nomLabel) { nomLabel.textContent = 'Nom *'; }
+        if (telInput) { telInput.setAttribute('required', 'required'); }
+        if (telLabel) { telLabel.textContent = 'Tel *'; }
     }
 }
 
@@ -402,6 +455,11 @@ document.addEventListener('DOMContentLoaded', function () {
             numeric: true,
             maxLength: 8,
             isValid: function (value) {
+                var typeExpediteurEl = document.getElementById('create_type_expediteur');
+                var isInstitution = typeExpediteurEl && !typeExpediteurEl.disabled && typeExpediteurEl.value === 'institution';
+                if (isInstitution) {
+                    return value === '' || /^\d{8}$/.test(value);
+                }
                 return /^\d{8}$/.test(value);
             }
         },
@@ -658,6 +716,20 @@ document.addEventListener('DOMContentLoaded', function () {
     </select>
       </div>
       <br>
+      <div class="input-group">
+        <div class="input-group-prepend">
+        <span class="input-group-text">Objet</span>
+      </div>
+      <input id="edit_objet" type="text" class="form-control" name="objet" placeholder="Résumé de la demande" maxlength="255">
+    </div>
+      <br>
+      <div class="input-group">
+        <div class="input-group-prepend">
+        <span class="input-group-text">N° référence</span>
+      </div>
+      <input id="edit_reference" type="text" class="form-control" name="reference" placeholder="Référence du courrier de l'expéditeur (optionnel)" maxlength="100">
+    </div>
+      <br>
       <div class="input-group" id="edit_nni_wrap">
         <div class="input-group-prepend">
         <span class="input-group-text" id="edit_nni_label">NNI</span>
@@ -674,12 +746,12 @@ document.addEventListener('DOMContentLoaded', function () {
       <br>
       <div class="input-group">
         <div class="input-group-prepend">
-        <span class="input-group-text">Tel *</span>
+        <span class="input-group-text" id="edit_tel_label">Tel *</span>
       </div>
       <input id="edit_tel" type="text" class="form-control" name="tel" placeholder="Entrer Tel" maxlength="8" inputmode="numeric" pattern="[0-9]{8}" oninput="this.value=this.value.replace(/[^0-9]/g,'').slice(0,8)" required>
     </div>
      <br>
-     <div class="input-group">
+     <div class="input-group" id="edit_adresse_wrap">
         <div class="input-group-prepend">
         <span class="input-group-text">Adresse (optionnel)</span>
       </div>
@@ -756,6 +828,8 @@ $('#exampleModal-edit').on('show.bs.modal', function (event) {
     var id = button.data('id');
     $('#editDepotForm').attr('action', '{{ url('/depot') }}/' + id);
     $('#edit_typdm').val(button.data('typdm'));
+    $('#edit_objet').val(button.data('objet'));
+    $('#edit_reference').val(button.data('reference'));
     $('#edit_origine').val(button.data('origine'));
     toggleOrigineDetail(document.getElementById('edit_origine'), 'edit');
     var origineDetail = button.data('origine-detail');

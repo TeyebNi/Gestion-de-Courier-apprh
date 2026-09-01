@@ -134,4 +134,68 @@ class DepotTest extends TestCase
         $this->actingAs($accueil)->get('/depot')->assertOk();
         $this->actingAs($admin)->get('/depot')->assertOk();
     }
+
+    public function test_store_saves_objet_and_reference(): void
+    {
+        $user = User::factory()->create(['role' => UserRole::User]);
+
+        $this->actingAs($user)->post('/depot', [
+            'nom' => 'Ahmed Ould Sidi',
+            'tel' => '22334455',
+            'objet' => 'Demande de raccordement eau',
+            'reference' => 'MI/2026/245',
+        ])->assertRedirect(route('depot.index'));
+
+        $demande = Tabdepot::firstOrFail();
+        $this->assertSame('Demande de raccordement eau', $demande->objet);
+        $this->assertSame('MI/2026/245', $demande->reference);
+    }
+
+    public function test_institution_sender_does_not_require_a_phone_number(): void
+    {
+        $user = User::factory()->create(['role' => UserRole::User]);
+
+        $response = $this->actingAs($user)->post('/depot', [
+            'origine' => 'externe',
+            'type_expediteur' => 'institution',
+            'piece_jointe' => \Illuminate\Http\UploadedFile::fake()->create('lettre.pdf', 100, 'application/pdf'),
+        ]);
+
+        $response->assertSessionDoesntHaveErrors('tel');
+        $this->assertDatabaseCount('tabdepot', 1);
+        $this->assertNull(Tabdepot::first()->tel);
+    }
+
+    public function test_internal_demande_never_stores_nni_or_adresse(): void
+    {
+        $user = User::factory()->create(['role' => UserRole::User]);
+
+        $this->actingAs($user)->post('/depot', [
+            'nom' => 'Ahmed Ould Sidi',
+            'tel' => '22334455',
+            'origine' => 'interne',
+            'typdm' => 'Note de service',
+            // NNI/adresse ne devraient jamais être enregistrés pour une demande interne,
+            // même si un client contournant le JS les envoie quand même.
+            'nni' => '1234567890',
+            'adresse' => 'Nouakchott',
+        ]);
+
+        $demande = Tabdepot::firstOrFail();
+        $this->assertNull($demande->nni);
+        $this->assertNull($demande->adresse);
+    }
+
+    public function test_index_search_matches_objet(): void
+    {
+        $user = User::factory()->create(['role' => UserRole::User]);
+        Tabdepot::create(['nom' => 'Ahmed', 'tel' => '22334455', 'daterecp' => now()->format('Y-m-d'), 'objet' => 'Raccordement eau']);
+        Tabdepot::create(['nom' => 'Fatimetou', 'tel' => '22334456', 'daterecp' => now()->format('Y-m-d'), 'objet' => 'Certificat de résidence']);
+
+        $response = $this->actingAs($user)->get('/depot?search=Raccordement');
+
+        $response->assertOk();
+        $response->assertSee('Ahmed');
+        $response->assertDontSee('Fatimetou');
+    }
 }

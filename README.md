@@ -65,3 +65,4 @@ Les tests tournent sur SQLite en mémoire (`phpunit.xml`) et couvrent le circuit
 
 - Les tables métier (`tabdepot`, `affectation`, `orientation`, `typedem`) utilisent des noms **singuliers**, contrairement à la convention Laravel — c'est voulu, ne pas renommer.
 - Les listes de travail (Dépôt, Affectation) affichent les entrées les plus récentes en premier (tri par id décroissant).
+- NNI et adresse ne sont demandés que pour une demande **externe** (citoyen/institution) — sans objet pour une note interne entre agents municipaux, ils sont masqués et jamais enregistrés dans ce cas. Le téléphone n'est pas obligatoire pour un expéditeur institution (courrier officiel scanné).

@@ -39,7 +39,9 @@ class TabdepotController extends Controller
                       ->orWhere('nni', 'like', "%{$search}%")
                       ->orWhere('tel', 'like', "%{$search}%")
                       ->orWhere('adresse', 'like', "%{$search}%")
-                      ->orWhere('typdm', 'like', "%{$search}%");
+                      ->orWhere('typdm', 'like', "%{$search}%")
+                      ->orWhere('objet', 'like', "%{$search}%")
+                      ->orWhere('reference', 'like', "%{$search}%");
             })
             ->orderby('id', 'desc')
             ->paginate(5)
@@ -58,8 +60,8 @@ class TabdepotController extends Controller
 
         return $this->streamCsv(
             $tabdepots,
-            ['N°', 'Nom', 'NNI', 'Téléphone', 'Adresse', 'Type demande', 'Origine', 'Détails Origine', 'Date réception'],
-            fn ($t, $i) => [$i + 1, $t->nom, $t->nni, $t->tel, $t->adresse, $t->typdm, $t->origine, $t->origine_detail, $t->daterecp],
+            ['N°', 'Nom', 'NNI', 'Téléphone', 'Adresse', 'Type demande', 'Objet', 'Référence', 'Origine', 'Détails Origine', 'Date réception', 'Statut'],
+            fn ($t, $i) => [$i + 1, $t->nom, $t->nni, $t->tel, $t->adresse, $t->typdm, $t->objet, $t->reference, $t->origine, $t->origine_detail, $t->daterecp, $t->statutLabel()],
             'depot_demandes'
         );
     }
@@ -110,18 +112,24 @@ class TabdepotController extends Controller
             abort(403, "Cette page est réservée à l'accueil et aux administrateurs.");
         }
 
+        $isInterne = $request->origine === 'interne';
+        $isInstitution = $request->type_expediteur === 'institution';
+
         $request->validate([
-            'typdm' => [$request->origine === 'interne' ? 'required' : 'nullable', 'string', 'max:255'],
-            'nom' => [$request->type_expediteur === 'institution' ? 'nullable' : 'required', 'string', 'max:255'],
+            'typdm' => [$isInterne ? 'required' : 'nullable', 'string', 'max:255'],
+            'objet' => ['nullable', 'string', 'max:255'],
+            'reference' => ['nullable', 'string', 'max:100'],
+            'nom' => [$isInstitution ? 'nullable' : 'required', 'string', 'max:255'],
             'nni' => ['nullable', 'digits:10'],
-            'tel' => ['required', 'digits:8'],
+            'tel' => [$isInstitution ? 'nullable' : 'required', 'digits:8'],
             'adresse' => ['nullable', 'string', 'max:255'],
             'daterecp' => ['nullable', 'date', 'before_or_equal:today'],
-            'piece_jointe' => [$request->type_expediteur === 'institution' ? 'required' : 'nullable', 'file', 'mimes:pdf,jpg,jpeg,png', 'max:10240'],
+            'piece_jointe' => [$isInstitution ? 'required' : 'nullable', 'file', 'mimes:pdf,jpg,jpeg,png', 'max:10240'],
         ], [
             'typdm.required' => 'Le type de demande est obligatoire pour une demande interne.',
             'nom.required' => 'Le nom est obligatoire.',
             'nni.digits' => 'Le NNI doit contenir exactement 10 chiffres.',
+            'tel.required' => 'Le téléphone est obligatoire.',
             'tel.digits' => 'Le téléphone doit contenir exactement 8 chiffres.',
             'daterecp.before_or_equal' => 'La date ne peut pas être dans le futur.',
             'piece_jointe.required' => 'La pièce jointe (scan du document) est obligatoire pour une institution.',
@@ -136,14 +144,17 @@ class TabdepotController extends Controller
 
         $demande = Tabdepot::create([
             'typdm' => $request->typdm,
+            'objet' => $request->objet,
+            'reference' => $request->reference,
             'origine' => $request->origine,
             'origine_detail' => $request->origine_detail,
             'type_expediteur' => $request->type_expediteur,
             'piece_jointe' => $pieceJointePath,
             'nom' => $request->nom,
-            'nni' => $request->nni,
+            // NNI et adresse n'ont pas de sens pour une demande interne (agent municipal).
+            'nni' => $isInterne ? null : $request->nni,
             'tel' => $request->tel,
-            'adresse' => $request->adresse,
+            'adresse' => $isInterne ? null : $request->adresse,
             'daterecp' => $request->daterecp ?: now()->format('Y-m-d'),
         ]);
 
@@ -175,24 +186,30 @@ class TabdepotController extends Controller
         abort(403, "Cette page est réservée à l'accueil et aux administrateurs.");
     }
 
+    $isInterne = $request->origine === 'interne';
+    $isInstitution = $request->type_expediteur === 'institution';
+
     $request->validate([
-        'typdm' => [$request->origine === 'interne' ? 'required' : 'nullable', 'string', 'max:255'],
+        'typdm' => [$isInterne ? 'required' : 'nullable', 'string', 'max:255'],
+        'objet' => ['nullable', 'string', 'max:255'],
+        'reference' => ['nullable', 'string', 'max:100'],
         'origine' => ['nullable', 'in:interne,externe'],
         'origine_detail' => ['nullable', 'string', 'max:255'],
         'type_expediteur' => ['nullable', 'in:personne,institution'],
         'piece_jointe' => [
-            ($request->type_expediteur === 'institution' && !$tabdepot->piece_jointe && !$request->hasFile('piece_jointe')) ? 'required' : 'nullable',
+            ($isInstitution && !$tabdepot->piece_jointe && !$request->hasFile('piece_jointe')) ? 'required' : 'nullable',
             'file', 'mimes:pdf,jpg,jpeg,png', 'max:10240',
         ],
-        'nom' => [$request->type_expediteur === 'institution' ? 'nullable' : 'required', 'string', 'max:255', 'regex:/^[\pL\s]+$/u'],
+        'nom' => [$isInstitution ? 'nullable' : 'required', 'string', 'max:255', 'regex:/^[\pL\s]+$/u'],
         'nni' => ['nullable', 'digits:10'],
-        'tel' => ['required', 'digits:8'],
+        'tel' => [$isInstitution ? 'nullable' : 'required', 'digits:8'],
         'adresse' => ['nullable', 'string', 'max:255'],
         'daterecp' => ['nullable', 'date', 'before_or_equal:today'],
     ], [
         'nom.regex' => 'Le nom ne doit contenir que des lettres.',
         'nom.required' => 'Le nom est obligatoire.',
         'nni.digits' => 'Le NNI doit contenir exactement 10 chiffres.',
+        'tel.required' => 'Le téléphone est obligatoire.',
         'tel.digits' => 'Le téléphone doit contenir exactement 8 chiffres.',
         'daterecp.before_or_equal' => 'La date ne peut pas être dans le futur.',
         'piece_jointe.required' => 'La pièce jointe (scan du document) est obligatoire pour une institution.',
@@ -200,7 +217,13 @@ class TabdepotController extends Controller
         'piece_jointe.max' => 'La pièce jointe ne doit pas dépasser 10 Mo.',
     ]);
 
-    $data = $request->only(['typdm', 'origine', 'origine_detail', 'type_expediteur', 'nom', 'nni', 'tel', 'adresse', 'daterecp']);
+    $data = $request->only(['typdm', 'objet', 'reference', 'origine', 'origine_detail', 'type_expediteur', 'nom', 'nni', 'tel', 'adresse', 'daterecp']);
+
+    if ($isInterne) {
+        // NNI et adresse n'ont pas de sens pour une demande interne (agent municipal).
+        $data['nni'] = null;
+        $data['adresse'] = null;
+    }
 
     if ($request->hasFile('piece_jointe')) {
         if ($tabdepot->piece_jointe) {
