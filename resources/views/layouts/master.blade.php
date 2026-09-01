@@ -312,13 +312,13 @@
 
 @yield('scripts')
 
-<!-- Déconnexion automatique après 15 minutes d'inactivité -->
+<!-- Déconnexion automatique après 60 minutes d'inactivité -->
 <script>
 (function () {
     var logoutUrl = "{{ route('auth.login.logout') }}";
     var keepAliveUrl = "{{ route('keep-alive') }}";
-    var timeoutMinutes = 2;
-    var warningBeforeMinutes = 1;
+    var timeoutMinutes = 60;
+    var warningBeforeMinutes = 2;
     var inactivityTimer, warningTimer;
     var lastPing = 0;
     var pingIntervalMs = 60 * 1000; // 1 ping serveur max par minute
