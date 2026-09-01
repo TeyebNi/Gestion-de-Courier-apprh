@@ -111,21 +111,9 @@ Dashboard Courier
         @csrf
       <div class="input-group">
         <div class="input-group-prepend">
-        <span class="input-group-text" id="create_typdm_label">Type de Demande</span>
+        <span class="input-group-text">Origine *</span>
       </div>
-     <select   class="form-control" name="typdm" id="create_typdm">
-      <option value="">Sélectionner le type de demande</option>
-      @foreach($typedem as $c)
-        <option value="{{$c->name}}">{{$c->name}}</option>
-    @endforeach
-    </select>
-    </div>
-     <br>
-     <div class="input-group">
-        <div class="input-group-prepend">
-        <span class="input-group-text">Origine</span>
-      </div>
-     <select id="create_origine" class="form-control" name="origine" onchange="toggleOrigineDetail(this, 'create')">
+     <select id="create_origine" class="form-control" name="origine" onchange="toggleOrigineDetail(this, 'create')" required>
       <option value="">Sélectionner l'origine</option>
       <option value="interne">Interne (agents de la commune)</option>
       <option value="externe">Externe (ministère, citoyen...)</option>
@@ -160,6 +148,18 @@ Dashboard Courier
     </select>
       </div>
       <br>
+      <div class="input-group">
+        <div class="input-group-prepend">
+        <span class="input-group-text" id="create_typdm_label">Type de Demande</span>
+      </div>
+     <select   class="form-control" name="typdm" id="create_typdm">
+      <option value="">Sélectionner le type de demande</option>
+      @foreach($typedem as $c)
+        <option value="{{$c->name}}">{{$c->name}}</option>
+    @endforeach
+    </select>
+    </div>
+     <br>
       <div class="input-group" id="create_nni_wrap">
         <div class="input-group-prepend">
         <span class="input-group-text" id="create_nni_label">NNI</span>
@@ -169,21 +169,21 @@ Dashboard Courier
       <br>
       <div class="input-group">
         <div class="input-group-prepend">
-        <span class="input-group-text">Nom</span>
+        <span class="input-group-text" id="create_nom_label">Nom *</span>
       </div>
       <input type="text" class="form-control" name="nom" placeholder="Entrer Nom" oninput="this.value=this.value.replace(/[0-9]/g,'')" required>
     </div>
       <br>
       <div class="input-group">
         <div class="input-group-prepend">
-        <span class="input-group-text">Tel</span>
+        <span class="input-group-text">Tel *</span>
       </div>
       <input type="text" class="form-control" name="tel" placeholder="Entrer Tel" oninput="this.value=this.value.replace(/[^0-9]/g,'').slice(0,8)" required pattern="[0-9]{8}" minlength="8" maxlength="8" inputmode="numeric">
     </div>
      <br>
      <div class="input-group">
         <div class="input-group-prepend">
-        <span class="input-group-text">Adresse</span>
+        <span class="input-group-text">Adresse (optionnel)</span>
       </div>
       <input type="text" class="form-control" name="adresse" placeholder="Entrer Adresse">
     </div>
@@ -192,7 +192,7 @@ Dashboard Courier
         <div class="input-group-prepend">
         <span class="input-group-text">Date</span>
       </div>
-      <input type="date" class="form-control" name="daterecp" max="{{ date('Y-m-d') }}">
+      <input type="date" class="form-control" name="daterecp" value="{{ date('Y-m-d') }}" max="{{ date('Y-m-d') }}">
     </div>
      <br>
    <div class="input-group">
@@ -290,6 +290,7 @@ function toggleNniRequirement(prefix) {
     var typeExpediteurSelect = document.getElementById(prefix + '_type_expediteur');
     var nniInput = document.getElementById(prefix + '_nni');
     var nniLabel = document.getElementById(prefix + '_nni_label');
+    var nomLabel = document.getElementById(prefix + '_nom_label');
     if (!nniInput) { return; }
 
     var isInstitution = typeExpediteurSelect && !typeExpediteurSelect.disabled && typeExpediteurSelect.value === 'institution';
@@ -299,8 +300,10 @@ function toggleNniRequirement(prefix) {
     if (isInstitution) {
         nniInput.value = '';
         if (nniLabel) { nniLabel.textContent = 'NNI (non applicable)'; }
+        if (nomLabel) { nomLabel.textContent = 'Nom (non applicable)'; }
     } else {
         if (nniLabel) { nniLabel.textContent = 'NNI (optionnel)'; }
+        if (nomLabel) { nomLabel.textContent = 'Nom *'; }
     }
 }
 
@@ -400,14 +403,6 @@ document.addEventListener('DOMContentLoaded', function () {
             maxLength: 8,
             isValid: function (value) {
                 return /^\d{8}$/.test(value);
-            }
-        },
-        {
-            element: form.querySelector('[name="adresse"]'),
-            emptyMessage: 'Veuillez saisir l’adresse.',
-            invalidMessage: 'L’adresse est obligatoire.',
-            isValid: function () {
-                return true;
             }
         },
         {
@@ -614,18 +609,6 @@ document.addEventListener('DOMContentLoaded', function () {
         <div class="modal-body">
         <div class="input-group">
         <div class="input-group-prepend">
-        <span class="input-group-text" id="edit_typdm_label">Type de Demande</span>
-      </div>
-     <select id="edit_typdm" class="form-control" name="typdm">
-      <option value="">Sélectionner le type de demande</option>
-      @foreach($typedem as $c)
-        <option value="{{$c->name}}">{{$c->name}}</option>
-    @endforeach
-    </select>
-      </div>
-      <br>
-      <div class="input-group">
-        <div class="input-group-prepend">
         <span class="input-group-text">Origine</span>
       </div>
      <select id="edit_origine" class="form-control" name="origine" onchange="toggleOrigineDetail(this, 'edit')">
@@ -663,6 +646,18 @@ document.addEventListener('DOMContentLoaded', function () {
     </select>
       </div>
       <br>
+      <div class="input-group">
+        <div class="input-group-prepend">
+        <span class="input-group-text" id="edit_typdm_label">Type de Demande</span>
+      </div>
+     <select id="edit_typdm" class="form-control" name="typdm">
+      <option value="">Sélectionner le type de demande</option>
+      @foreach($typedem as $c)
+        <option value="{{$c->name}}">{{$c->name}}</option>
+    @endforeach
+    </select>
+      </div>
+      <br>
       <div class="input-group" id="edit_nni_wrap">
         <div class="input-group-prepend">
         <span class="input-group-text" id="edit_nni_label">NNI</span>
@@ -672,21 +667,21 @@ document.addEventListener('DOMContentLoaded', function () {
       <br>
       <div class="input-group">
         <div class="input-group-prepend">
-        <span class="input-group-text">Nom</span>
+        <span class="input-group-text" id="edit_nom_label">Nom *</span>
       </div>
       <input id="edit_nom" type="text" class="form-control" name="nom" placeholder="Entrer Nom" oninput="this.value=this.value.replace(/[0-9]/g,'')">
     </div>
       <br>
       <div class="input-group">
         <div class="input-group-prepend">
-        <span class="input-group-text">Tel</span>
+        <span class="input-group-text">Tel *</span>
       </div>
       <input id="edit_tel" type="text" class="form-control" name="tel" placeholder="Entrer Tel" maxlength="8" inputmode="numeric" pattern="[0-9]{8}" oninput="this.value=this.value.replace(/[^0-9]/g,'').slice(0,8)" required>
     </div>
      <br>
      <div class="input-group">
         <div class="input-group-prepend">
-        <span class="input-group-text">Adresse</span>
+        <span class="input-group-text">Adresse (optionnel)</span>
       </div>
       <input id="edit_adresse" type="text" class="form-control" name="adresse" placeholder="Entrer Adresse">
     </div>
