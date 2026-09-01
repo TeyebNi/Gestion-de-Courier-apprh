@@ -182,6 +182,23 @@ class DepotTest extends TestCase
         $this->assertDatabaseCount('tabdepot', 0);
     }
 
+    public function test_index_shows_institution_name_instead_of_placeholder_text(): void
+    {
+        $user = User::factory()->create(['role' => UserRole::User]);
+        Tabdepot::create([
+            'origine' => 'externe',
+            'type_expediteur' => 'institution',
+            'origine_detail' => "Ministère de l'Intérieur",
+            'daterecp' => now()->format('Y-m-d'),
+        ]);
+
+        $response = $this->actingAs($user)->get('/depot');
+
+        $response->assertOk();
+        $response->assertSee("Ministère de l'Intérieur");
+        $response->assertDontSee('(institution)');
+    }
+
     public function test_internal_demande_never_stores_nni_or_adresse(): void
     {
         $user = User::factory()->create(['role' => UserRole::User]);

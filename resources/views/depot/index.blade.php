@@ -64,8 +64,8 @@ Dashboard Courier
                                         <span class="text-muted">—</span>
                                     @endif
                                 </td>
-                                <td class="text-right">{{$item->nom}}</td>
-                                  <td class="text-right">{{ $item->nni ?: ($item->type_expediteur === 'institution' ? '— (institution)' : '') }}</td>
+                                <td class="text-right">{{ $item->nom ?: ($item->origine_detail ?: '—') }}</td>
+                                  <td class="text-right">{{ $item->nni ?: '—' }}</td>
                                 <td class="text-right">{{ $item->tel ?: '—' }}</td>
                                   <td><span class="badge {{ $depotBadgeClass }}">{{ $item->statutLabel() }}</span></td>
                                   <td class="text-right">{{$item->daterecp}}</td>
