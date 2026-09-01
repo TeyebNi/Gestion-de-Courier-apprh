@@ -61,6 +61,23 @@ php artisan test
 
 Les tests tournent sur SQLite en mémoire (`phpunit.xml`) et couvrent le circuit complet de la demande, les permissions par rôle, le dépôt, les affectations, la configuration admin, la gestion des utilisateurs et les notifications de service.
 
+## Déploiement — usage prévu
+
+Application destinée à tourner en **réseau local de la commune uniquement**, jamais exposée sur Internet.
+Ce choix évite d'imposer HTTPS (certificat auto-signé inutile sur un intranet de confiance) et le
+mot de passe oublié se gère **manuellement par un administrateur** (Gestion des Utilisateurs → icône clé),
+pas par e-mail — `MAIL_MAILER=log` reste donc suffisant, aucun SMTP réel n'est nécessaire.
+
+Avant de considérer le déploiement final terminé (au-delà des tests de développement sur ce poste) :
+
+- [ ] Dans `.env` : `APP_ENV=production` et `APP_DEBUG=false` (actuellement laissés à `local`/`true`
+      pour faciliter le développement — passer en `false` masque les messages d'erreur détaillés
+      aux utilisateurs, à faire seulement une fois le développement terminé).
+- [ ] Vérifier que la tâche planifiée Windows `Backup-GestionCourier` (sauvegarde quotidienne de la base
+      via `scripts/backup-database.ps1`) est bien active sur le poste serveur final.
+- [ ] Le virtual host Apache (`http://courrier`) et l'entrée du fichier `hosts` doivent être recréés sur
+      le poste serveur final (voir section Installation) si ce n'est pas le même poste que celui du développement.
+
 ## Notes
 
 - Les tables métier (`tabdepot`, `affectation`, `orientation`, `typedem`) utilisent des noms **singuliers**, contrairement à la convention Laravel — c'est voulu, ne pas renommer.

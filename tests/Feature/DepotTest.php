@@ -281,4 +281,43 @@ class DepotTest extends TestCase
         $response->assertSee('title="En attente d\'envoi au Cabinet"', false);
         $response->assertSee('>2<', false);
     }
+
+    public function test_trashed_demandes_can_be_restored(): void
+    {
+        $user = User::factory()->create(['role' => UserRole::User]);
+        $demande = Tabdepot::create(['nom' => 'Ahmed', 'tel' => '22334455', 'daterecp' => now()->format('Y-m-d')]);
+        $demande->delete();
+
+        $listResponse = $this->actingAs($user)->get('/depot-corbeille');
+        $listResponse->assertOk();
+        $listResponse->assertSee('Ahmed');
+
+        $this->actingAs($user)->post("/depot-corbeille/{$demande->id}/restaurer")
+            ->assertRedirect(route('depot.trashed'));
+
+        $this->assertDatabaseHas('tabdepot', ['id' => $demande->id, 'deleted_at' => null]);
+    }
+
+    public function test_non_admin_cannot_permanently_delete_a_trashed_demande(): void
+    {
+        $user = User::factory()->create(['role' => UserRole::User]);
+        $demande = Tabdepot::create(['nom' => 'Ahmed', 'tel' => '22334455', 'daterecp' => now()->format('Y-m-d')]);
+        $demande->delete();
+
+        $this->actingAs($user)->delete("/depot-corbeille/{$demande->id}")->assertForbidden();
+
+        $this->assertSoftDeleted('tabdepot', ['id' => $demande->id]);
+    }
+
+    public function test_admin_can_permanently_delete_a_trashed_demande(): void
+    {
+        $admin = User::factory()->create(['role' => UserRole::Admin]);
+        $demande = Tabdepot::create(['nom' => 'Ahmed', 'tel' => '22334455', 'daterecp' => now()->format('Y-m-d')]);
+        $demande->delete();
+
+        $this->actingAs($admin)->delete("/depot-corbeille/{$demande->id}")
+            ->assertRedirect(route('depot.trashed'));
+
+        $this->assertDatabaseMissing('tabdepot', ['id' => $demande->id]);
+    }
 }

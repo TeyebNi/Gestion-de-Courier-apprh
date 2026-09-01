@@ -54,6 +54,11 @@ Les Utilisateurs
                                        data-toggle="modal" data-target="#editUserModal"
                                        type="button" class="btn btn-success btn-sm edit-user-btn" title="Modifier"><svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"></path><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"></path></svg></a>
 
+                                    <a data-id="{{ $u->id }}"
+                                       data-name="{{ $u->name }}"
+                                       data-toggle="modal" data-target="#resetPasswordModal"
+                                       type="button" class="btn btn-warning btn-sm" title="Réinitialiser le mot de passe"><i class="fas fa-key"></i></a>
+
                                     @if($u->id !== auth()->id())
                                     <a data-id="{{ $u->id }}"
                                        data-name="{{ $u->name }}"
@@ -138,6 +143,52 @@ Les Utilisateurs
     </div>
 </div>
 
+<!-- Modal Réinitialiser mot de passe -->
+<div class="modal fade" id="resetPasswordModal" tabindex="-1" role="dialog" aria-hidden="true">
+    <div class="modal-dialog modal-notify modal-lg modal-right modal-warning" role="document">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Réinitialiser le mot de passe de <span id="reset_password_name"></span></h5>
+                <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                    <span aria-hidden="true">&times;</span>
+                </button>
+            </div>
+            <form id="resetPasswordForm" method="POST" action="">
+                @csrf
+                @method('PUT')
+                <div class="modal-body">
+                    @if ($errors->any())
+                        <div class="alert alert-danger">
+                            <ul class="mb-0">
+                                @foreach ($errors->all() as $error)
+                                    <li>{{ $error }}</li>
+                                @endforeach
+                            </ul>
+                        </div>
+                    @endif
+                    <div class="input-group mb-3">
+                        <div class="input-group-prepend">
+                            <span class="input-group-text">Nouveau mot de passe</span>
+                        </div>
+                        <input type="password" class="form-control" name="password" minlength="8" required autocomplete="new-password">
+                    </div>
+                    <div class="input-group mb-3">
+                        <div class="input-group-prepend">
+                            <span class="input-group-text">Confirmer</span>
+                        </div>
+                        <input type="password" class="form-control" name="password_confirmation" minlength="8" required autocomplete="new-password">
+                    </div>
+                    <small class="text-muted">L'utilisateur devra utiliser ce mot de passe à sa prochaine connexion. Communiquez-le lui directement.</small>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-warning" data-dismiss="modal" title="Fermer"><svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg></button>
+                    <button type="submit" class="btn btn-success" title="Réinitialiser"><svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"></polyline></svg></button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
 <!-- Modal Delete -->
 <div class="modal fade" id="deleteUserModal" tabindex="-1" role="dialog" aria-hidden="true">
     <div class="modal-dialog modal-notify modal-lg modal-right modal-danger" role="document">
@@ -213,6 +264,14 @@ function toggleServiceField(role) {
         $('#edit_can_affectation_group').show();
     }
 }
+
+$('#resetPasswordModal').on('show.bs.modal', function (event) {
+    var button = $(event.relatedTarget);
+    var id = button.data('id');
+    $('#resetPasswordForm').attr('action', '{{ url('/utilisateurs') }}/' + id + '/mot-de-passe');
+    $('#reset_password_name').text(button.data('name'));
+    $('#resetPasswordForm')[0].reset();
+});
 
 $('#deleteUserModal').on('show.bs.modal', function (event) {
     var button = $(event.relatedTarget);

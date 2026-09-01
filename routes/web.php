@@ -37,6 +37,9 @@ Route::middleware('auth')->group(function () {
     Route::delete('affectation/{affectation}', [AffectationController::class, 'destroy'])->name('affectation.destroy');
     Route::put('depot/{tabdepot}', [TabdepotController::class, 'update'])->name('depot.update');
     Route::delete('depot/{tabdepot}', [TabdepotController::class, 'destroy'])->name('depot.destroy');
+    Route::get('depot-corbeille', [TabdepotController::class, 'trashed'])->name('depot.trashed');
+    Route::post('depot-corbeille/{id}/restaurer', [TabdepotController::class, 'restore'])->name('depot.restore');
+    Route::delete('depot-corbeille/{id}', [TabdepotController::class, 'forceDelete'])->name('depot.force-delete');
 
 
     Route::get('notifications', [ServiceNotificationController::class, 'index'])->name('notifications.index');
@@ -84,6 +87,7 @@ Route::middleware('auth')->group(function () {
         Route::get('utilisateurs', [UserController::class, 'index'])->name('users.index');
         Route::get('utilisateurs/export', [UserController::class, 'exportExcel'])->name('users.export');
         Route::put('utilisateurs/{user}', [UserController::class, 'update'])->name('users.update');
+        Route::put('utilisateurs/{user}/mot-de-passe', [UserController::class, 'resetPassword'])->name('users.reset-password');
         Route::delete('utilisateurs/{user}', [UserController::class, 'destroy'])->name('users.destroy');
 
         

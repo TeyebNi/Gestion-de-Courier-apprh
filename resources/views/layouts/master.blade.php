@@ -95,7 +95,7 @@
                     @php
                         $pendingSendCount = \App\Models\Tabdepot::where('statut_circuit', 'accueil')->count();
                     @endphp
-                    <li class="{{ request()->is('depot*') ? 'active' : '' }}">
+                    <li class="{{ request()->is('depot') || request()->is('depot/*') ? 'active' : '' }}">
                         <a href="{{ route('depot.index') }}">
                             <i class="now-ui-icons files_box"></i>
                             <p>
@@ -104,6 +104,12 @@
                                     <span class="badge badge-warning" title="En attente d'envoi au Cabinet">{{ $pendingSendCount }}</span>
                                 @endif
                             </p>
+                        </a>
+                    </li>
+                    <li class="{{ request()->is('depot-corbeille*') ? 'active' : '' }}">
+                        <a href="{{ route('depot.trashed') }}">
+                            <i class="fas fa-trash-restore"></i>
+                            <p>Corbeille</p>
                         </a>
                     </li>
                     @endif

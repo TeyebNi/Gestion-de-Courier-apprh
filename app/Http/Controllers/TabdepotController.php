@@ -263,5 +263,54 @@ class TabdepotController extends Controller
 
     return redirect()->route('depot.index')->with('success', "Demande de {$nom} supprimée avec succès.");
 }
-    
+
+    public function trashed(Request $request)
+    {
+        if (! auth()->user()->canAccessDepot()) {
+            abort(403, "Cette page est réservée à l'accueil et aux administrateurs.");
+        }
+
+        $search = $request->search;
+
+        $tabdepot = Tabdepot::onlyTrashed()
+            ->when($search, function ($query) use ($search) {
+                $query->where('nom', 'like', "%{$search}%")
+                      ->orWhere('objet', 'like', "%{$search}%");
+            })
+            ->orderByDesc('deleted_at')
+            ->paginate(10)
+            ->appends(['search' => $search]);
+
+        return view('depot.corbeille', compact('tabdepot', 'search'));
+    }
+
+    public function restore($id)
+    {
+        if (! auth()->user()->canAccessDepot()) {
+            abort(403, "Cette page est réservée à l'accueil et aux administrateurs.");
+        }
+
+        $tabdepot = Tabdepot::onlyTrashed()->findOrFail($id);
+        $tabdepot->restore();
+
+        return redirect()->route('depot.trashed')->with('success', "Demande de {$tabdepot->nom} restaurée avec succès.");
+    }
+
+    public function forceDelete($id)
+    {
+        if (! auth()->user()->isAdmin()) {
+            abort(403, "Seuls les administrateurs peuvent supprimer définitivement une demande.");
+        }
+
+        $tabdepot = Tabdepot::onlyTrashed()->findOrFail($id);
+        $nom = $tabdepot->nom;
+
+        if ($tabdepot->piece_jointe) {
+            \Illuminate\Support\Facades\Storage::disk('public')->delete($tabdepot->piece_jointe);
+        }
+
+        $tabdepot->forceDelete();
+
+        return redirect()->route('depot.trashed')->with('success', "Demande de {$nom} supprimée définitivement.");
+    }
 }

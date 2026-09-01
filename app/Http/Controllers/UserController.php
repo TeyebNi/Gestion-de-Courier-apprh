@@ -73,6 +73,17 @@ class UserController extends Controller
 
     return redirect()->route('users.index')->with('success', "{$roleLabel} {$user->name} mis à jour avec succès. Nouveau rôle : " . ($user->isAdmin() ? 'Admin' : 'User') . ". Service : " . ($user->service ?: 'Aucun') . ".");
 }
+    public function resetPassword(Request $request, User $user)
+    {
+        $request->validate([
+            'password' => ['required', 'string', 'min:8', 'confirmed'],
+        ]);
+
+        $user->update(['password' => bcrypt($request->password)]);
+
+        return redirect()->route('users.index')->with('success', "Mot de passe de {$user->name} réinitialisé avec succès.");
+    }
+
     public function destroy(User $user)
     {
         if ($user->id === auth()->id()) {
