@@ -168,6 +168,8 @@
                             <p>Gestion de Demande</p>
                         </a>
                     </li>
+                    @endif
+                    @if(auth()->check() && auth()->user()->canManageUsers())
                     <li class="{{ request()->is('utilisateurs*') ? 'active' : '' }}">
                         <a href="{{ route('users.index') }}">
                             <i class="now-ui-icons users_single-02"></i>

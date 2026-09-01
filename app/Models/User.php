@@ -26,6 +26,7 @@ class User extends Authenticatable
         'role',
         'service',
         'can_affectation',
+        'can_manage_users',
     ];
 
     /**
@@ -50,6 +51,7 @@ class User extends Authenticatable
             'password' => 'hashed',
             'role' => UserRole::class,
             'can_affectation' => 'boolean',
+            'can_manage_users' => 'boolean',
         ];
     }
 
@@ -92,5 +94,17 @@ class User extends Authenticatable
     public function canAccessDepot(): bool
     {
         return $this->isAdmin() || (! $this->isFatou() && ! $this->isMaire() && empty($this->service));
+    }
+
+    /**
+     * Whether this admin can access "Les Utilisateurs" (user account management).
+     * Lets a specific admin (ex: le compte Accueil) keep the rest of the admin
+     * rights (Orientation, Types de demande...) without seeing/managing accounts.
+     */
+    public function canManageUsers(): bool
+    {
+        // NULL est traité comme "autorisé" (comportement par défaut d'un admin) :
+        // seule une restriction explicite (false) retire l'accès.
+        return $this->isAdmin() && $this->can_manage_users !== false;
     }
 }

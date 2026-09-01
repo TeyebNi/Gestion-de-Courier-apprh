@@ -26,10 +26,9 @@ class DatabaseSeeder extends Seeder
             $admin->update(['role' => UserRole::Admin]);
         }
 
-        // Rôle "user" sans service : c'est la définition même de l'Accueil dans ce
-        // système (Dépôt, Suivi, Notifications, Affectation via can_affectation).
-        // Ne doit jamais être admin : l'Accueil n'a pas à gérer les comptes ou la
-        // configuration du système (Orientation, Types de demande).
+        // L'Accueil garde le rôle admin (accès à Orientation, Types de demande...)
+        // mais sans pouvoir gérer "Les Utilisateurs" (can_manage_users = false) :
+        // ce n'est pas son rôle de voir/modifier/supprimer des comptes.
         $accueil = User::where('email', 'accueil@gmail.com')->first();
 
         if (! $accueil) {
@@ -37,11 +36,11 @@ class DatabaseSeeder extends Seeder
                 'name' => 'Accueil',
                 'email' => 'accueil@gmail.com',
                 'password' => bcrypt('12345678'),
-                'role' => UserRole::User,
-                'can_affectation' => true,
+                'role' => UserRole::Admin,
+                'can_manage_users' => false,
             ]);
-        } elseif ($accueil->role !== UserRole::User || ! $accueil->can_affectation) {
-            $accueil->update(['role' => UserRole::User, 'can_affectation' => true]);
+        } elseif (! $accueil->isAdmin() || $accueil->can_manage_users) {
+            $accueil->update(['role' => UserRole::Admin, 'can_manage_users' => false]);
         }
 
         $cabinet = User::where('email', 'cabinet@gmail.com')->first();

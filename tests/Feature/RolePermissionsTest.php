@@ -64,6 +64,46 @@ class RolePermissionsTest extends TestCase
         $this->assertTrue($grantedUser->canAccessAffectation());
     }
 
+    public function test_admin_without_can_manage_users_keeps_other_admin_access(): void
+    {
+        $restrictedAdmin = User::factory()->create(['role' => UserRole::Admin, 'can_manage_users' => false]);
+
+        $this->actingAs($restrictedAdmin)->get('/utilisateurs')->assertForbidden();
+        $this->actingAs($restrictedAdmin)->get('/orientation')->assertOk();
+        $this->actingAs($restrictedAdmin)->get('/typedem')->assertOk();
+        $this->actingAs($restrictedAdmin)->get('/depot')->assertOk();
+    }
+
+    public function test_cannot_remove_the_last_user_manager(): void
+    {
+        $admin = User::factory()->create(['role' => UserRole::Admin, 'name' => 'Jean Dupont', 'can_manage_users' => true]);
+
+        $response = $this->actingAs($admin)->put("/utilisateurs/{$admin->id}", [
+            'name' => 'Jean Dupont',
+            'email' => $admin->email,
+            'role' => 'admin',
+            'can_manage_users' => '0',
+        ]);
+
+        $response->assertRedirect(route('users.index'));
+        $this->assertTrue($admin->fresh()->can_manage_users);
+    }
+
+    public function test_can_remove_can_manage_users_when_another_admin_still_has_it(): void
+    {
+        $admin = User::factory()->create(['role' => UserRole::Admin, 'can_manage_users' => true]);
+        $target = User::factory()->create(['role' => UserRole::Admin, 'name' => 'Jean Dupont', 'can_manage_users' => true]);
+
+        $this->actingAs($admin)->put("/utilisateurs/{$target->id}", [
+            'name' => 'Jean Dupont',
+            'email' => $target->email,
+            'role' => 'admin',
+            'can_manage_users' => '0',
+        ])->assertRedirect(route('users.index'));
+
+        $this->assertFalse($target->fresh()->can_manage_users);
+    }
+
     public function test_dashboard_does_not_leak_raw_demande_list_to_cabinet_or_maire(): void
     {
         $cabinet = User::factory()->create(['role' => UserRole::Fatou]);
