@@ -158,12 +158,28 @@ class DepotTest extends TestCase
         $response = $this->actingAs($user)->post('/depot', [
             'origine' => 'externe',
             'type_expediteur' => 'institution',
+            'origine_detail' => "Ministère de l'Intérieur",
             'piece_jointe' => \Illuminate\Http\UploadedFile::fake()->create('lettre.pdf', 100, 'application/pdf'),
         ]);
 
         $response->assertSessionDoesntHaveErrors('tel');
         $this->assertDatabaseCount('tabdepot', 1);
         $this->assertNull(Tabdepot::first()->tel);
+        $this->assertSame("Ministère de l'Intérieur", Tabdepot::first()->origine_detail);
+    }
+
+    public function test_institution_sender_requires_its_name(): void
+    {
+        $user = User::factory()->create(['role' => UserRole::User]);
+
+        $response = $this->actingAs($user)->post('/depot', [
+            'origine' => 'externe',
+            'type_expediteur' => 'institution',
+            'piece_jointe' => \Illuminate\Http\UploadedFile::fake()->create('lettre.pdf', 100, 'application/pdf'),
+        ]);
+
+        $response->assertSessionHasErrors('origine_detail');
+        $this->assertDatabaseCount('tabdepot', 0);
     }
 
     public function test_internal_demande_never_stores_nni_or_adresse(): void

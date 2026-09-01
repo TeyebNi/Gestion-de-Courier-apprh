@@ -119,6 +119,7 @@ class TabdepotController extends Controller
             'typdm' => [$isInterne ? 'required' : 'nullable', 'string', 'max:255'],
             'objet' => ['nullable', 'string', 'max:255'],
             'reference' => ['nullable', 'string', 'max:100'],
+            'origine_detail' => [$isInstitution ? 'required' : 'nullable', 'string', 'max:255'],
             'nom' => [$isInstitution ? 'nullable' : 'required', 'string', 'max:255'],
             'nni' => ['nullable', 'digits:10'],
             'tel' => [$isInstitution ? 'nullable' : 'required', 'digits:8'],
@@ -127,6 +128,7 @@ class TabdepotController extends Controller
             'piece_jointe' => [$isInstitution ? 'required' : 'nullable', 'file', 'mimes:pdf,jpg,jpeg,png', 'max:10240'],
         ], [
             'typdm.required' => 'Le type de demande est obligatoire pour une demande interne.',
+            'origine_detail.required' => "Le nom de l'institution est obligatoire.",
             'nom.required' => 'Le nom est obligatoire.',
             'nni.digits' => 'Le NNI doit contenir exactement 10 chiffres.',
             'tel.required' => 'Le téléphone est obligatoire.',
@@ -194,7 +196,7 @@ class TabdepotController extends Controller
         'objet' => ['nullable', 'string', 'max:255'],
         'reference' => ['nullable', 'string', 'max:100'],
         'origine' => ['nullable', 'in:interne,externe'],
-        'origine_detail' => ['nullable', 'string', 'max:255'],
+        'origine_detail' => [$isInstitution ? 'required' : 'nullable', 'string', 'max:255'],
         'type_expediteur' => ['nullable', 'in:personne,institution'],
         'piece_jointe' => [
             ($isInstitution && !$tabdepot->piece_jointe && !$request->hasFile('piece_jointe')) ? 'required' : 'nullable',
@@ -208,6 +210,7 @@ class TabdepotController extends Controller
     ], [
         'nom.regex' => 'Le nom ne doit contenir que des lettres.',
         'nom.required' => 'Le nom est obligatoire.',
+        'origine_detail.required' => "Le nom de l'institution est obligatoire.",
         'nni.digits' => 'Le NNI doit contenir exactement 10 chiffres.',
         'tel.required' => 'Le téléphone est obligatoire.',
         'tel.digits' => 'Le téléphone doit contenir exactement 8 chiffres.',

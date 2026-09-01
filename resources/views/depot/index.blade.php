@@ -126,11 +126,14 @@ Dashboard Courier
       </div>
      <select id="create_origine" class="form-control" name="origine" onchange="toggleOrigineDetail(this, 'create')" required>
       <option value="">Sélectionner l'origine</option>
-      <option value="interne">Interne (agents de la commune)</option>
-      <option value="externe">Externe (ministère, citoyen...)</option>
+      <option value="interne">Interne (note entre services de la commune)</option>
+      <option value="externe">Externe (citoyen, institution, organisme...)</option>
     </select>
       </div>
-      <br>
+      <small class="form-text text-muted" style="margin: -8px 0 10px 5px;">
+          "Interne" = uniquement une note d'un service municipal vers un autre. Toute demande ou réclamation
+          venant d'un citoyen (même liée à un service interne comme les impôts) est "Externe → Citoyen".
+      </small>
       <div class="input-group" id="create_origine_interne_wrap" style="display:none;">
         <div class="input-group-prepend">
         <span class="input-group-text">Service</span>
@@ -142,22 +145,23 @@ Dashboard Courier
       @endforeach
     </select>
       </div>
-      <div class="input-group" id="create_origine_externe_wrap" style="display:none;">
-        <div class="input-group-prepend">
-        <span class="input-group-text">Détails</span>
-      </div>
-      <input type="text" class="form-control" name="origine_detail" id="create_origine_detail_text" placeholder="Ex: Ministère de l'Intérieur, citoyen..." disabled>
-    </div>
-      <br>
       <div class="input-group" id="create_type_expediteur_wrap" style="display:none;">
         <div class="input-group-prepend">
-        <span class="input-group-text">Type d'expéditeur</span>
+        <span class="input-group-text">Type d'expéditeur *</span>
       </div>
      <select class="form-control" name="type_expediteur" id="create_type_expediteur" disabled onchange="toggleNniRequirement('create')">
+      <option value="">Sélectionner le type d'expéditeur</option>
       <option value="personne">Citoyen (personne physique)</option>
-      <option value="institution">Institution (ministère, organisme...)</option>
+      <option value="institution">Institution / Organisme (administration, entreprise, association, école...)</option>
     </select>
       </div>
+      <br>
+      <div class="input-group" id="create_origine_externe_wrap" style="display:none;">
+        <div class="input-group-prepend">
+        <span class="input-group-text">Nom de l'institution *</span>
+      </div>
+      <input type="text" class="form-control" name="origine_detail" id="create_origine_detail_text" placeholder="Ex: Ministère de l'Intérieur" disabled>
+    </div>
       <br>
       <div class="input-group">
         <div class="input-group-prepend">
@@ -192,11 +196,11 @@ Dashboard Courier
       <input type="text" class="form-control" name="nni" id="create_nni" placeholder="Entrer NNI" oninput="this.value=this.value.replace(/[^0-9]/g,'').slice(0,10)" pattern="[0-9]{10}" minlength="10" maxlength="10" inputmode="numeric">
     </div>
       <br>
-      <div class="input-group">
+      <div class="input-group" id="create_nom_wrap">
         <div class="input-group-prepend">
         <span class="input-group-text" id="create_nom_label">Nom *</span>
       </div>
-      <input type="text" class="form-control" name="nom" placeholder="Entrer Nom" oninput="this.value=this.value.replace(/[0-9]/g,'')" required>
+      <input type="text" class="form-control" name="nom" id="create_nom" placeholder="Entrer Nom" oninput="this.value=this.value.replace(/[0-9]/g,'')" required>
     </div>
       <br>
       <div class="input-group">
@@ -264,9 +268,7 @@ Dashboard Courier
 function toggleOrigineDetail(selectEl, prefix) {
     var value = selectEl.value;
     var interneWrap = document.getElementById(prefix + '_origine_interne_wrap');
-    var externeWrap = document.getElementById(prefix + '_origine_externe_wrap');
     var interneSelect = document.getElementById(prefix + '_origine_detail_select');
-    var externeInput = document.getElementById(prefix + '_origine_detail_text');
     var typeExpediteurWrap = document.getElementById(prefix + '_type_expediteur_wrap');
     var typeExpediteurSelect = document.getElementById(prefix + '_type_expediteur');
     var nniWrap = document.getElementById(prefix + '_nni_wrap');
@@ -274,6 +276,7 @@ function toggleOrigineDetail(selectEl, prefix) {
     var adresseWrap = document.getElementById(prefix + '_adresse_wrap');
     var adresseInput = document.getElementById(prefix + '_adresse');
     var isInterne = value === 'interne';
+    var isExterne = value === 'externe';
 
     // NNI et adresse ne concernent qu'un expéditeur externe (citoyen/institution) :
     // une demande interne entre agents municipaux n'en a pas besoin.
@@ -292,44 +295,24 @@ function toggleOrigineDetail(selectEl, prefix) {
         }
     }
 
-    if (value === 'interne') {
-        interneWrap.style.display = '';
-        externeWrap.style.display = 'none';
-        interneSelect.disabled = false;
-        externeInput.disabled = true;
-        externeInput.value = '';
-        if (typeExpediteurWrap) {
-            typeExpediteurWrap.style.display = 'none';
-            typeExpediteurSelect.disabled = true;
-            typeExpediteurSelect.value = 'personne';
-        }
-    } else if (value === 'externe') {
-        interneWrap.style.display = 'none';
-        externeWrap.style.display = '';
-        interneSelect.disabled = true;
-        externeInput.disabled = false;
-        interneSelect.value = '';
-        if (typeExpediteurWrap) {
-            typeExpediteurWrap.style.display = '';
-            typeExpediteurSelect.disabled = false;
-        }
-    } else {
-        interneWrap.style.display = 'none';
-        externeWrap.style.display = 'none';
-        interneSelect.disabled = true;
-        externeInput.disabled = true;
-        if (typeExpediteurWrap) {
-            typeExpediteurWrap.style.display = 'none';
-            typeExpediteurSelect.disabled = true;
-            typeExpediteurSelect.value = 'personne';
-        }
+    interneWrap.style.display = isInterne ? '' : 'none';
+    interneSelect.disabled = !isInterne;
+    if (!isInterne) { interneSelect.value = ''; }
+
+    if (typeExpediteurWrap) {
+        typeExpediteurWrap.style.display = isExterne ? '' : 'none';
+        typeExpediteurSelect.disabled = !isExterne;
+        // On force un choix explicite à chaque changement d'origine : pas de
+        // valeur par défaut silencieuse qui ferait croire que "Citoyen" est
+        // déjà sélectionné.
+        typeExpediteurSelect.value = '';
     }
 
     toggleNniRequirement(prefix);
 
     var typdmLabel = document.getElementById(prefix + '_typdm_label');
     if (typdmLabel) {
-        typdmLabel.textContent = (value === 'interne') ? 'Type de Demande *' : 'Type de Demande';
+        typdmLabel.textContent = isInterne ? 'Type de Demande *' : 'Type de Demande';
     }
 }
 
@@ -337,24 +320,37 @@ function toggleNniRequirement(prefix) {
     var typeExpediteurSelect = document.getElementById(prefix + '_type_expediteur');
     var nniInput = document.getElementById(prefix + '_nni');
     var nniLabel = document.getElementById(prefix + '_nni_label');
-    var nomLabel = document.getElementById(prefix + '_nom_label');
+    var nomWrap = document.getElementById(prefix + '_nom_wrap');
+    var nomInput = document.getElementById(prefix + '_nom');
     var telInput = document.getElementById(prefix + '_tel');
     var telLabel = document.getElementById(prefix + '_tel_label');
+    var institutionWrap = document.getElementById(prefix + '_origine_externe_wrap');
+    var institutionInput = document.getElementById(prefix + '_origine_detail_text');
     if (!nniInput) { return; }
 
     var isInstitution = typeExpediteurSelect && !typeExpediteurSelect.disabled && typeExpediteurSelect.value === 'institution';
 
     nniInput.removeAttribute('required');
 
+    if (institutionWrap) {
+        institutionWrap.style.display = isInstitution ? '' : 'none';
+        if (institutionInput) {
+            institutionInput.disabled = !isInstitution;
+            if (!isInstitution) { institutionInput.value = ''; }
+        }
+    }
+
     if (isInstitution) {
         nniInput.value = '';
         if (nniLabel) { nniLabel.textContent = 'NNI (non applicable)'; }
-        if (nomLabel) { nomLabel.textContent = 'Nom (non applicable)'; }
+        if (nomWrap) { nomWrap.style.display = 'none'; }
+        if (nomInput) { nomInput.disabled = true; nomInput.value = ''; }
         if (telInput) { telInput.removeAttribute('required'); }
         if (telLabel) { telLabel.textContent = 'Tel (optionnel)'; }
     } else {
         if (nniLabel) { nniLabel.textContent = 'NNI (optionnel)'; }
-        if (nomLabel) { nomLabel.textContent = 'Nom *'; }
+        if (nomWrap) { nomWrap.style.display = ''; }
+        if (nomInput) { nomInput.disabled = false; }
         if (telInput) { telInput.setAttribute('required', 'required'); }
         if (telLabel) { telLabel.textContent = 'Tel *'; }
     }
@@ -406,6 +402,18 @@ document.addEventListener('DOMContentLoaded', function () {
                     return value !== '';
                 }
                 return true;
+            }
+        },
+        {
+            element: document.getElementById('create_origine_detail_text'),
+            emptyMessage: "Veuillez saisir le nom de l'institution.",
+            isValid: function (value) {
+                var typeExpediteurEl = document.getElementById('create_type_expediteur');
+                var isInstitution = typeExpediteurEl && !typeExpediteurEl.disabled && typeExpediteurEl.value === 'institution';
+                if (!isInstitution) {
+                    return true;
+                }
+                return value.trim() !== '';
             }
         },
         {
@@ -671,11 +679,14 @@ document.addEventListener('DOMContentLoaded', function () {
       </div>
      <select id="edit_origine" class="form-control" name="origine" onchange="toggleOrigineDetail(this, 'edit')">
       <option value="">Sélectionner l'origine</option>
-      <option value="interne">Interne (agents de la commune)</option>
-      <option value="externe">Externe (ministère, citoyen...)</option>
+      <option value="interne">Interne (note entre services de la commune)</option>
+      <option value="externe">Externe (citoyen, institution, organisme...)</option>
     </select>
       </div>
-      <br>
+      <small class="form-text text-muted" style="margin: -8px 0 10px 5px;">
+          "Interne" = uniquement une note d'un service municipal vers un autre. Toute demande ou réclamation
+          venant d'un citoyen (même liée à un service interne comme les impôts) est "Externe → Citoyen".
+      </small>
       <div class="input-group" id="edit_origine_interne_wrap" style="display:none;">
         <div class="input-group-prepend">
         <span class="input-group-text">Service</span>
@@ -687,22 +698,23 @@ document.addEventListener('DOMContentLoaded', function () {
       @endforeach
     </select>
       </div>
-      <div class="input-group" id="edit_origine_externe_wrap" style="display:none;">
-        <div class="input-group-prepend">
-        <span class="input-group-text">Détails</span>
-      </div>
-      <input type="text" class="form-control" name="origine_detail" id="edit_origine_detail_text" placeholder="Ex: Ministère de l'Intérieur, citoyen..." disabled>
-    </div>
-      <br>
       <div class="input-group" id="edit_type_expediteur_wrap" style="display:none;">
         <div class="input-group-prepend">
-        <span class="input-group-text">Type d'expéditeur</span>
+        <span class="input-group-text">Type d'expéditeur *</span>
       </div>
      <select class="form-control" name="type_expediteur" id="edit_type_expediteur" disabled onchange="toggleNniRequirement('edit')">
+      <option value="">Sélectionner le type d'expéditeur</option>
       <option value="personne">Citoyen (personne physique)</option>
-      <option value="institution">Institution (ministère, organisme...)</option>
+      <option value="institution">Institution / Organisme (administration, entreprise, association, école...)</option>
     </select>
       </div>
+      <br>
+      <div class="input-group" id="edit_origine_externe_wrap" style="display:none;">
+        <div class="input-group-prepend">
+        <span class="input-group-text">Nom de l'institution *</span>
+      </div>
+      <input type="text" class="form-control" name="origine_detail" id="edit_origine_detail_text" placeholder="Ex: Ministère de l'Intérieur" disabled>
+    </div>
       <br>
       <div class="input-group">
         <div class="input-group-prepend">
@@ -737,7 +749,7 @@ document.addEventListener('DOMContentLoaded', function () {
       <input id="edit_nni" type="text" class="form-control" name="nni" placeholder="Entrer NNI" maxlength="10" inputmode="numeric" pattern="[0-9]{10}" oninput="this.value=this.value.replace(/[^0-9]/g,'').slice(0,10)">
     </div>
       <br>
-      <div class="input-group">
+      <div class="input-group" id="edit_nom_wrap">
         <div class="input-group-prepend">
         <span class="input-group-text" id="edit_nom_label">Nom *</span>
       </div>
