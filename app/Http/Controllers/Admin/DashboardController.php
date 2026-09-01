@@ -65,6 +65,7 @@ class DashboardController extends Controller
                 Carbon::now()->startOfWeek(), Carbon::now()->endOfWeek(),
             ])->count();
             $totalDemandesAll = Tabdepot::count();
+            $totalEnAttenteEnvoi = Tabdepot::where('statut_circuit', 'accueil')->count();
             $recentDemandesUser = Tabdepot::orderByDesc('id')->limit(8)->get();
 
             $moisFr = ['Jan', 'Fév', 'Mar', 'Avr', 'Mai', 'Juin', 'Juil', 'Août', 'Sep', 'Oct', 'Nov', 'Déc'];
@@ -98,6 +99,7 @@ class DashboardController extends Controller
                 'totalDemandesToday',
                 'totalDemandesWeek',
                 'totalDemandesAll',
+                'totalEnAttenteEnvoi',
                 'recentDemandesUser',
                 'months',
                 'monthCounts',

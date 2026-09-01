@@ -87,7 +87,9 @@ Dashboard Courier
                                     </a>
                                     @endif
                                     <a data-id="{{$item->id}}" data-typdm="{{$item->typdm}}" data-objet="{{$item->objet}}" data-reference="{{$item->reference}}" data-origine="{{$item->origine}}" data-origine-detail="{{$item->origine_detail}}" data-type-expediteur="{{$item->type_expediteur}}" data-piece-jointe="{{ $item->piece_jointe ? asset('storage/' . $item->piece_jointe) : '' }}" data-nom="{{$item->nom}}" data-nni="{{$item->nni}}" data-adresse="{{$item->adresse}}" data-tel="{{$item->tel}}" data-daterecp="{{$item->daterecp}}" data-toggle="modal" data-target="#exampleModal-edit" type="button" class="btn btn-info btn-sm" title="Modifier"><svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"></path><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"></path></svg></a>
+                                    @if(($item->statut_circuit ?? 'accueil') === 'accueil')
                                     <a data-id="{{$item->id}}" data-nom="{{$item->nom}}" data-toggle="modal" data-target="#exampleModal-delete" type="button" class="btn btn-danger btn-sm" title="Supprimer"><svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"></polyline><path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"></path><path d="M10 11v6"></path><path d="M14 11v6"></path><path d="M9 6V4a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v2"></path></svg></a>
+                                    @endif
                                 </td>
                             </tr>
                             @endforeach

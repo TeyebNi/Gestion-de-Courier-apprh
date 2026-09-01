@@ -231,4 +231,54 @@ class DepotTest extends TestCase
         $response->assertSee('Ahmed');
         $response->assertDontSee('Fatimetou');
     }
+
+    public function test_cannot_delete_a_demande_once_it_left_accueil(): void
+    {
+        $user = User::factory()->create(['role' => UserRole::User]);
+        $demande = Tabdepot::create([
+            'nom' => 'Ahmed', 'tel' => '22334455', 'daterecp' => now()->format('Y-m-d'),
+            'statut_circuit' => 'fatou',
+        ]);
+
+        $this->actingAs($user)->delete("/depot/{$demande->id}")->assertForbidden();
+
+        $this->assertDatabaseHas('tabdepot', ['id' => $demande->id, 'deleted_at' => null]);
+    }
+
+    public function test_can_still_delete_a_demande_still_at_accueil(): void
+    {
+        $user = User::factory()->create(['role' => UserRole::User]);
+        $demande = Tabdepot::create(['nom' => 'Ahmed', 'tel' => '22334455', 'daterecp' => now()->format('Y-m-d')]);
+
+        $this->actingAs($user)->delete("/depot/{$demande->id}")->assertRedirect(route('depot.index'));
+
+        $this->assertSoftDeleted('tabdepot', ['id' => $demande->id]);
+    }
+
+    public function test_update_logs_an_history_entry(): void
+    {
+        $user = User::factory()->create(['role' => UserRole::User]);
+        $demande = Tabdepot::create(['nom' => 'Ahmed', 'tel' => '22334455', 'daterecp' => now()->format('Y-m-d')]);
+
+        $this->actingAs($user)->put("/depot/{$demande->id}", [
+            'nom' => 'Ahmed Modifié',
+            'tel' => '22334455',
+        ]);
+
+        $this->assertSame(1, $demande->historiques()->count());
+    }
+
+    public function test_sidebar_shows_count_of_demandes_not_yet_sent_to_cabinet(): void
+    {
+        $user = User::factory()->create(['role' => UserRole::User]);
+        Tabdepot::create(['nom' => 'Ahmed', 'tel' => '22334455', 'daterecp' => now()->format('Y-m-d')]);
+        Tabdepot::create(['nom' => 'Fatimetou', 'tel' => '22334456', 'daterecp' => now()->format('Y-m-d')]);
+        Tabdepot::create(['nom' => 'Deja envoye', 'tel' => '22334457', 'daterecp' => now()->format('Y-m-d'), 'statut_circuit' => 'fatou']);
+
+        $response = $this->actingAs($user)->get('/depot');
+
+        $response->assertOk();
+        $response->assertSee('title="En attente d\'envoi au Cabinet"', false);
+        $response->assertSee('>2<', false);
+    }
 }

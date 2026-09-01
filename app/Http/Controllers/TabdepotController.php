@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\DemandeHistorique;
 use App\Models\Tabdepot;
 use App\Models\Typedem;
 use App\Models\Orientation;
@@ -237,6 +238,13 @@ class TabdepotController extends Controller
 
     $tabdepot->update($data);
 
+    DemandeHistorique::create([
+        'tabdepot_id' => $tabdepot->id,
+        'vers_statut' => $tabdepot->statut_circuit,
+        'user_id' => auth()->id(),
+        'commentaire' => 'Informations de la demande modifiées par ' . auth()->user()->name . '.',
+    ]);
+
     return redirect()->route('depot.index')->with('success', "Demande de {$tabdepot->nom} modifiée avec succès.");
 }
 
@@ -244,6 +252,10 @@ class TabdepotController extends Controller
 {
     if (! auth()->user()->canAccessDepot()) {
         abort(403, "Cette page est réservée à l'accueil et aux administrateurs.");
+    }
+
+    if (($tabdepot->statut_circuit ?? 'accueil') !== 'accueil') {
+        abort(403, "Cette demande a déjà été envoyée dans le circuit et ne peut plus être supprimée depuis l'accueil.");
     }
 
     $nom = $tabdepot->nom;

@@ -92,10 +92,18 @@
                     @endif
 
                     @if(auth()->user()->canAccessDepot())
+                    @php
+                        $pendingSendCount = \App\Models\Tabdepot::where('statut_circuit', 'accueil')->count();
+                    @endphp
                     <li class="{{ request()->is('depot*') ? 'active' : '' }}">
                         <a href="{{ route('depot.index') }}">
                             <i class="now-ui-icons files_box"></i>
-                            <p>Dépôt des Demandes</p>
+                            <p>
+                                Dépôt des Demandes
+                                @if($pendingSendCount > 0)
+                                    <span class="badge badge-warning" title="En attente d'envoi au Cabinet">{{ $pendingSendCount }}</span>
+                                @endif
+                            </p>
                         </a>
                     </li>
                     @endif
