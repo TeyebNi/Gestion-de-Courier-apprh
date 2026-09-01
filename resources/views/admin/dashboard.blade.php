@@ -6,9 +6,92 @@ Tableau de bord
 
 @section('content')
 
-<div class="row">
-    <div class="col-md-12">
-        <h3 style="font-weight: 700; color: #2c3e50; margin: 0 0 20px;">Gestion de Dashboard</h3>
+<style>
+    /* ---- Bannière d'accueil ---- */
+    .dash-hero {
+        background: linear-gradient(120deg, #0c2646 0%, #16233d 55%, #1d3457 100%);
+        border-radius: 12px;
+        padding: 28px 32px;
+        margin-bottom: 24px;
+        color: #fff;
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        flex-wrap: wrap;
+        gap: 12px;
+        box-shadow: 0 8px 24px rgba(12, 38, 70, 0.18);
+    }
+    .dash-hero h3 {
+        font-weight: 700;
+        margin: 0 0 4px;
+        font-size: 1.5rem;
+    }
+    .dash-hero p {
+        margin: 0;
+        color: rgba(255, 255, 255, 0.75);
+        font-size: 0.9rem;
+    }
+    .dash-hero .dash-hero-date {
+        background: rgba(255, 255, 255, 0.12);
+        border: 1px solid rgba(255, 255, 255, 0.18);
+        border-radius: 30px;
+        padding: 8px 18px;
+        font-size: 0.85rem;
+        font-weight: 600;
+        white-space: nowrap;
+    }
+    .dash-hero .dash-hero-date i { color: #e8862c; margin-right: 6px; }
+
+    /* ---- Cartes statistiques : icônes en pastille + accent couleur ---- */
+    .dashboard-page .card-stats,
+    .dashboard-page .card-chart,
+    .dashboard-page .card-tasks {
+        border: none;
+        border-top: 3px solid #e2e6ea;
+        border-radius: 10px;
+        box-shadow: 0 2px 10px rgba(0, 0, 0, 0.04);
+        transition: transform 0.18s ease, box-shadow 0.18s ease;
+    }
+    .dashboard-page .card-stats:hover {
+        transform: translateY(-4px);
+        box-shadow: 0 12px 24px rgba(0, 0, 0, 0.08);
+    }
+    .dashboard-page .card-stats .icon-big {
+        width: 54px;
+        height: 54px;
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        background: rgba(44, 168, 255, 0.12);
+    }
+    .dashboard-page .card-stats .icon-big i { font-size: 22px; }
+    .dashboard-page .card-stats:has(.text-info) { border-top-color: #2CA8FF; }
+    .dashboard-page .card-stats:has(.text-info) .icon-big { background: rgba(44, 168, 255, 0.12); }
+    .dashboard-page .card-stats:has(.text-primary) { border-top-color: #e8862c; }
+    .dashboard-page .card-stats:has(.text-primary) .icon-big { background: rgba(232, 134, 44, 0.14); }
+    .dashboard-page .card-stats:has(.text-success) { border-top-color: #18ce0f; }
+    .dashboard-page .card-stats:has(.text-success) .icon-big { background: rgba(24, 206, 15, 0.12); }
+    .dashboard-page .card-stats:has(.text-warning) { border-top-color: #FFA534; }
+    .dashboard-page .card-stats:has(.text-warning) .icon-big { background: rgba(255, 165, 52, 0.14); }
+    .dashboard-page .card-stats:has(.text-danger) { border-top-color: #FB404B; }
+    .dashboard-page .card-stats:has(.text-danger) .icon-big { background: rgba(251, 64, 75, 0.12); }
+
+    .dashboard-page .card-chart,
+    .dashboard-page .card-tasks { border-top-color: #1d3457; }
+    .dashboard-page .card-header .card-title { font-weight: 700; color: #2c3e50; }
+    .dashboard-page .table thead th { color: #1d3457 !important; }
+</style>
+
+<div class="dashboard-page">
+
+<div class="dash-hero">
+    <div>
+        <h3>Bonjour, {{ auth()->user()->name }} 👋</h3>
+        <p>Bienvenue sur le tableau de bord — Gestion de Courrier</p>
+    </div>
+    <div class="dash-hero-date">
+        <i class="now-ui-icons ui-1_calendar-60"></i>{{ now()->format('d/m/Y') }} · {{ now()->format('H:i') }}
     </div>
 </div>
 
@@ -146,8 +229,8 @@ Tableau de bord
 @elseif($isCabinet || $isMaireUser)
 
 <!-- Dashboard minimal Cabinet / Maire -->
-<div class="row">
-    <div class="col-lg-4 col-md-6">
+<div class="row justify-content-center">
+    <div class="col-lg-5 col-md-6">
         <div class="card card-stats">
             <div class="card-body">
                 <div class="row">
@@ -504,6 +587,8 @@ Tableau de bord
 
 @endif
 
+</div>
+
 @endsection
 
 @section('scripts')
@@ -530,11 +615,11 @@ document.addEventListener('DOMContentLoaded', function () {
             datasets: [{
                 label: 'Demandes',
                 data: monthCounts,
-                borderColor: '#2CA8FF',
-                backgroundColor: 'rgba(44,168,255,0.15)',
+                borderColor: '#e8862c',
+                backgroundColor: 'rgba(232,134,44,0.15)',
                 fill: true,
                 tension: 0.35,
-                pointBackgroundColor: '#2CA8FF',
+                pointBackgroundColor: '#e8862c',
             }]
         },
         options: {
