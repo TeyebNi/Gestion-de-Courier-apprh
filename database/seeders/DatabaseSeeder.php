@@ -26,17 +26,22 @@ class DatabaseSeeder extends Seeder
             $admin->update(['role' => UserRole::Admin]);
         }
 
-        $accueil = User::where('email', 'acceil@gmail.com')->first();
+        // Rôle "user" sans service : c'est la définition même de l'Accueil dans ce
+        // système (Dépôt, Suivi, Notifications, Affectation via can_affectation).
+        // Ne doit jamais être admin : l'Accueil n'a pas à gérer les comptes ou la
+        // configuration du système (Orientation, Types de demande).
+        $accueil = User::where('email', 'accueil@gmail.com')->first();
 
         if (! $accueil) {
             User::create([
                 'name' => 'Accueil',
-                'email' => 'acceil@gmail.com',
+                'email' => 'accueil@gmail.com',
                 'password' => bcrypt('12345678'),
-                'role' => UserRole::Admin,
+                'role' => UserRole::User,
+                'can_affectation' => true,
             ]);
-        } elseif (! $accueil->isAdmin()) {
-            $accueil->update(['role' => UserRole::Admin]);
+        } elseif ($accueil->role !== UserRole::User || ! $accueil->can_affectation) {
+            $accueil->update(['role' => UserRole::User, 'can_affectation' => true]);
         }
 
         $cabinet = User::where('email', 'cabinet@gmail.com')->first();
