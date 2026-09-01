@@ -10,7 +10,7 @@ class EnsureUserIsMaire
 {
     public function handle(Request $request, Closure $next): Response
     {
-        if (! $request->user() || (! $request->user()->isMaire() && ! $request->user()->isAdmin())) {
+        if (! $request->user() || ! $request->user()->canAccessMaire()) {
             abort(403, "Accès réservé au Maire.");
         }
 

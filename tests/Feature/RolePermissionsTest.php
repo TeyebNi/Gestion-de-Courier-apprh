@@ -104,6 +104,49 @@ class RolePermissionsTest extends TestCase
         $this->assertFalse($target->fresh()->can_manage_users);
     }
 
+    public function test_restricted_admin_like_accueil_loses_cabinet_maire_and_all_services_access(): void
+    {
+        $accueilLikeAdmin = User::factory()->create([
+            'role' => UserRole::Admin,
+            'can_access_cabinet' => false,
+            'can_access_maire' => false,
+            'can_access_all_services' => false,
+        ]);
+
+        $this->actingAs($accueilLikeAdmin)->get('/circuit/fatou')->assertForbidden();
+        $this->actingAs($accueilLikeAdmin)->get('/circuit/maire')->assertForbidden();
+        // Toujours admin : garde Orientation/Typedem/Dépôt.
+        $this->actingAs($accueilLikeAdmin)->get('/orientation')->assertOk();
+        $this->actingAs($accueilLikeAdmin)->get('/depot')->assertOk();
+    }
+
+    public function test_restricted_admin_sees_the_minimal_accueil_dashboard(): void
+    {
+        $accueilLikeAdmin = User::factory()->create([
+            'role' => UserRole::Admin,
+            'can_manage_users' => false,
+            'can_access_cabinet' => false,
+            'can_access_maire' => false,
+            'can_access_all_services' => false,
+        ]);
+
+        $response = $this->actingAs($accueilLikeAdmin)->get('/');
+
+        $response->assertOk();
+        $response->assertSee('Guichet');
+    }
+
+    public function test_unrestricted_admin_still_sees_the_full_dashboard(): void
+    {
+        $admin = User::factory()->create(['role' => UserRole::Admin]);
+
+        $response = $this->actingAs($admin)->get('/');
+
+        $response->assertOk();
+        $response->assertDontSee('Guichet');
+        $response->assertSee('Nombre de Demandes');
+    }
+
     public function test_dashboard_does_not_leak_raw_demande_list_to_cabinet_or_maire(): void
     {
         $cabinet = User::factory()->create(['role' => UserRole::Fatou]);

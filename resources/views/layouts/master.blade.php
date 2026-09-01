@@ -113,7 +113,7 @@
                         </a>
                     </li>
                     @endif
-                    @if(auth()->user()->isFatou() || auth()->user()->isAdmin())
+                    @if(auth()->user()->canAccessCabinet())
                     <li class="{{ request()->is('circuit/fatou*') ? 'active' : '' }}">
                         <a href="{{ route('circuit.fatou.index') }}">
                             <i class="now-ui-icons arrows-1_share-66"></i>
@@ -121,7 +121,7 @@
                         </a>
                     </li>
                     @endif
-                    @if(auth()->user()->isMaire() || auth()->user()->isAdmin())
+                    @if(auth()->user()->canAccessMaire())
                     <li class="{{ request()->is('circuit/maire*') ? 'active' : '' }}">
                         <a href="{{ route('circuit.maire.index') }}">
                             <i class="now-ui-icons business_briefcase-24"></i>
@@ -129,7 +129,7 @@
                         </a>
                     </li>
                     @endif
-                    @if(!empty(auth()->user()->service) || auth()->user()->isAdmin())
+                    @if(!empty(auth()->user()->service) || auth()->user()->canAccessAllServices())
                     <li class="{{ request()->is('circuit/service*') ? 'active' : '' }}">
                         <a href="{{ route('circuit.service.index') }}">
                             <i class="now-ui-icons business_briefcase-24"></i>
@@ -137,7 +137,7 @@
                         </a>
                     </li>
                     @php
-                        $unreadNotifCount = auth()->user()->isAdmin()
+                        $unreadNotifCount = auth()->user()->canAccessAllServices()
                             ? \App\Models\ServiceNotification::where('is_read', false)->count()
                             : \App\Models\ServiceNotification::where('service', auth()->user()->service)->where('is_read', false)->count();
                     @endphp

@@ -27,20 +27,28 @@ class DatabaseSeeder extends Seeder
         }
 
         // L'Accueil garde le rôle admin (accès à Orientation, Types de demande...)
-        // mais sans pouvoir gérer "Les Utilisateurs" (can_manage_users = false) :
-        // ce n'est pas son rôle de voir/modifier/supprimer des comptes.
+        // mais sans les pouvoirs qui ne concernent pas sa fonction : gérer les
+        // comptes, coordonner (Cabinet), décider (Maire), ou voir les files de
+        // toutes les services.
         $accueil = User::where('email', 'accueil@gmail.com')->first();
+        $accueilRestrictions = [
+            'role' => UserRole::Admin,
+            'can_manage_users' => false,
+            'can_access_cabinet' => false,
+            'can_access_maire' => false,
+            'can_access_all_services' => false,
+        ];
 
         if (! $accueil) {
-            User::create([
+            User::create($accueilRestrictions + [
                 'name' => 'Accueil',
                 'email' => 'accueil@gmail.com',
                 'password' => bcrypt('12345678'),
-                'role' => UserRole::Admin,
-                'can_manage_users' => false,
             ]);
-        } elseif (! $accueil->isAdmin() || $accueil->can_manage_users) {
-            $accueil->update(['role' => UserRole::Admin, 'can_manage_users' => false]);
+        } else {
+            // Toujours réappliquer : simple et garantit l'état correct à chaque
+            // exécution, sans avoir à comparer chaque champ un à un.
+            $accueil->update($accueilRestrictions);
         }
 
         $cabinet = User::where('email', 'cabinet@gmail.com')->first();

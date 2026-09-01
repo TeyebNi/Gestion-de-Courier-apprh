@@ -51,7 +51,10 @@ Les Utilisateurs
                                        data-role="{{ $u->role->value }}"
                                        data-service="{{ $u->service }}"
                                        data-can-affectation="{{ $u->can_affectation ? '1' : '0' }}"
-                                       data-can-manage-users="{{ $u->can_manage_users ? '1' : '0' }}"
+                                       data-can-manage-users="{{ $u->can_manage_users !== false ? '1' : '0' }}"
+                                       data-can-access-cabinet="{{ $u->can_access_cabinet !== false ? '1' : '0' }}"
+                                       data-can-access-maire="{{ $u->can_access_maire !== false ? '1' : '0' }}"
+                                       data-can-access-all-services="{{ $u->can_access_all_services !== false ? '1' : '0' }}"
                                        data-toggle="modal" data-target="#editUserModal"
                                        type="button" class="btn btn-success btn-sm edit-user-btn" title="Modifier"><svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"></path><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"></path></svg></a>
 
@@ -134,9 +137,25 @@ Les Utilisateurs
                         <input type="checkbox" class="form-check-input" name="can_affectation" id="edit_can_affectation" value="1">
                         <label class="form-check-label" for="edit_can_affectation">Accès au module Affectation</label>
                     </div>
-                    <div class="form-check mt-3" id="edit_can_manage_users_group" style="display:none;">
-                        <input type="checkbox" class="form-check-input" name="can_manage_users" id="edit_can_manage_users" value="1">
-                        <label class="form-check-label" for="edit_can_manage_users">Peut gérer "Les Utilisateurs" (voir/modifier/supprimer des comptes)</label>
+                    <div id="edit_admin_permissions_group" style="display:none;">
+                        <hr>
+                        <p class="text-muted mb-2" style="font-size:0.85em;">Droits admin supplémentaires (décochez pour restreindre ce compte, ex: Accueil) :</p>
+                        <div class="form-check mt-2">
+                            <input type="checkbox" class="form-check-input" name="can_manage_users" id="edit_can_manage_users" value="1">
+                            <label class="form-check-label" for="edit_can_manage_users">Peut gérer "Les Utilisateurs" (voir/modifier/supprimer des comptes)</label>
+                        </div>
+                        <div class="form-check mt-2">
+                            <input type="checkbox" class="form-check-input" name="can_access_cabinet" id="edit_can_access_cabinet" value="1">
+                            <label class="form-check-label" for="edit_can_access_cabinet">Accès aux pages Cabinet (coordination)</label>
+                        </div>
+                        <div class="form-check mt-2">
+                            <input type="checkbox" class="form-check-input" name="can_access_maire" id="edit_can_access_maire" value="1">
+                            <label class="form-check-label" for="edit_can_access_maire">Accès aux pages Maire (décision)</label>
+                        </div>
+                        <div class="form-check mt-2">
+                            <input type="checkbox" class="form-check-input" name="can_access_all_services" id="edit_can_access_all_services" value="1">
+                            <label class="form-check-label" for="edit_can_access_all_services">Voit les demandes de tous les services (Suivi du Circuit / Notifications)</label>
+                        </div>
                     </div>
                 </div>
                 <div class="modal-footer">
@@ -248,6 +267,9 @@ $('#editUserModal').on('show.bs.modal', function (event) {
     $('#edit_service').val(button.data('service'));
     $('#edit_can_affectation').prop('checked', button.data('can-affectation') == 1);
     $('#edit_can_manage_users').prop('checked', button.data('can-manage-users') == 1);
+    $('#edit_can_access_cabinet').prop('checked', button.data('can-access-cabinet') == 1);
+    $('#edit_can_access_maire').prop('checked', button.data('can-access-maire') == 1);
+    $('#edit_can_access_all_services').prop('checked', button.data('can-access-all-services') == 1);
 
     var isLastAdmin = (role === 'admin' && {{ $adminCount }} <= 1);
     $('#edit_role option[value="user"]').prop('disabled', isLastAdmin);
@@ -265,12 +287,15 @@ function toggleServiceField(role) {
         $('#edit_service').val('');
         $('#edit_can_affectation_group').hide();
         $('#edit_can_affectation').prop('checked', false);
-        $('#edit_can_manage_users_group').show();
+        $('#edit_admin_permissions_group').show();
     } else {
         $('#edit_service_group').show();
         $('#edit_can_affectation_group').show();
-        $('#edit_can_manage_users_group').hide();
+        $('#edit_admin_permissions_group').hide();
         $('#edit_can_manage_users').prop('checked', false);
+        $('#edit_can_access_cabinet').prop('checked', false);
+        $('#edit_can_access_maire').prop('checked', false);
+        $('#edit_can_access_all_services').prop('checked', false);
     }
 }
 

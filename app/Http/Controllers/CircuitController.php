@@ -159,12 +159,12 @@ class CircuitController extends Controller
         $user = auth()->user();
 
         $demandes = Tabdepot::where('statut_circuit', 'service')
-            ->when(! $user->isAdmin(), fn ($q) => $q->where('service_assigne', $user->service))
+            ->when(! $user->canAccessAllServices(), fn ($q) => $q->where('service_assigne', $user->service))
             ->orderByDesc('id')
             ->get();
 
         $demandesTraitees = Tabdepot::where('statut_circuit', 'cloture')
-            ->when(! $user->isAdmin(), fn ($q) => $q->where('service_assigne', $user->service))
+            ->when(! $user->canAccessAllServices(), fn ($q) => $q->where('service_assigne', $user->service))
             ->orderByDesc('updated_at')
             ->paginate(10, ['*'], 'traitees_page');
 
@@ -178,7 +178,7 @@ class CircuitController extends Controller
     {
         $user = auth()->user();
 
-        if (! $user->isAdmin() && $tabdepot->service_assigne !== $user->service) {
+        if (! $user->canAccessAllServices() && $tabdepot->service_assigne !== $user->service) {
             abort(403, "Cette demande n'est pas assignée à votre service.");
         }
 

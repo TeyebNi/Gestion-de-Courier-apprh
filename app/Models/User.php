@@ -27,6 +27,9 @@ class User extends Authenticatable
         'service',
         'can_affectation',
         'can_manage_users',
+        'can_access_cabinet',
+        'can_access_maire',
+        'can_access_all_services',
     ];
 
     /**
@@ -52,6 +55,9 @@ class User extends Authenticatable
             'role' => UserRole::class,
             'can_affectation' => 'boolean',
             'can_manage_users' => 'boolean',
+            'can_access_cabinet' => 'boolean',
+            'can_access_maire' => 'boolean',
+            'can_access_all_services' => 'boolean',
         ];
     }
 
@@ -106,5 +112,47 @@ class User extends Authenticatable
         // NULL est traité comme "autorisé" (comportement par défaut d'un admin) :
         // seule une restriction explicite (false) retire l'accès.
         return $this->isAdmin() && $this->can_manage_users !== false;
+    }
+
+    /**
+     * Whether this user can access the Cabinet (Fatou) coordination pages.
+     */
+    public function canAccessCabinet(): bool
+    {
+        return $this->isFatou() || ($this->isAdmin() && $this->can_access_cabinet !== false);
+    }
+
+    /**
+     * Whether this user can access the Maire decision pages.
+     */
+    public function canAccessMaire(): bool
+    {
+        return $this->isMaire() || ($this->isAdmin() && $this->can_access_maire !== false);
+    }
+
+    /**
+     * Whether this admin sees every service's queue in "Demandes du Circuit" /
+     * "Suivi", instead of being scoped to their own service like a service user.
+     * A restricted admin (ex: Accueil) has no service of their own, so being
+     * scoped down here means they simply see nothing there — not their concern.
+     */
+    public function canAccessAllServices(): bool
+    {
+        return $this->isAdmin() && $this->can_access_all_services !== false;
+    }
+
+    /**
+     * Whether this account is a "full" admin (sees everything) as opposed to
+     * an admin restricted to specific config areas (ex: le compte Accueil,
+     * qui garde Orientation/Types de demande mais pas Cabinet/Maire/Utilisateurs).
+     * Used to decide which dashboard variant to show.
+     */
+    public function isUnrestrictedAdmin(): bool
+    {
+        return $this->isAdmin()
+            && $this->canManageUsers()
+            && $this->canAccessCabinet()
+            && $this->canAccessMaire()
+            && $this->canAccessAllServices();
     }
 }

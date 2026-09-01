@@ -63,6 +63,9 @@ class UserController extends Controller
         'service' => ['nullable', 'string', 'max:255'],
         'can_affectation' => ['nullable', 'boolean'],
         'can_manage_users' => ['nullable', 'boolean'],
+        'can_access_cabinet' => ['nullable', 'boolean'],
+        'can_access_maire' => ['nullable', 'boolean'],
+        'can_access_all_services' => ['nullable', 'boolean'],
     ], [
         'name.regex' => 'Le nom ne doit contenir que des lettres.',
         'email.unique' => 'Cet email est déjà utilisé par un autre utilisateur.',
@@ -91,6 +94,9 @@ class UserController extends Controller
         'service' => $service,
         'can_affectation' => $request->boolean('can_affectation'),
         'can_manage_users' => $request->role === 'admin' ? $request->boolean('can_manage_users') : true,
+        'can_access_cabinet' => $request->role === 'admin' ? $request->boolean('can_access_cabinet') : true,
+        'can_access_maire' => $request->role === 'admin' ? $request->boolean('can_access_maire') : true,
+        'can_access_all_services' => $request->role === 'admin' ? $request->boolean('can_access_all_services') : true,
     ]);
 
     $roleLabel = $user->isAdmin() ? 'Administrateur' : 'Utilisateur';
