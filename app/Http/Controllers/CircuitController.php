@@ -36,6 +36,14 @@ class CircuitController extends Controller
      */
     public function sendToFatou(Tabdepot $tabdepot)
     {
+        if (! auth()->user()->canAccessDepot()) {
+            abort(403, "Cette page est réservée à l'accueil et aux administrateurs.");
+        }
+
+        if ($tabdepot->statut_circuit !== 'accueil') {
+            abort(403, "Cette demande n'est plus à l'accueil, elle ne peut pas être renvoyée au Cabinet depuis ici.");
+        }
+
         $ancien = $tabdepot->statut_circuit;
 
         $tabdepot->update([
@@ -68,6 +76,10 @@ class CircuitController extends Controller
      */
     public function sendToMaire(Tabdepot $tabdepot)
     {
+        if ($tabdepot->statut_circuit !== 'fatou') {
+            abort(403, "Cette demande n'est pas en attente chez le Cabinet, elle ne peut pas être transmise au Maire.");
+        }
+
         $this->logHistorique($tabdepot, $tabdepot->statut_circuit, 'maire');
 
         $tabdepot->update(['statut_circuit' => 'maire']);
@@ -98,6 +110,8 @@ class CircuitController extends Controller
                 $q->where(function ($sub) use ($search) {
                     $sub->where('nom', 'like', "%{$search}%")
                         ->orWhere('nni', 'like', "%{$search}%")
+                        ->orWhere('objet', 'like', "%{$search}%")
+                        ->orWhere('reference', 'like', "%{$search}%")
                         ->orWhere('id', 'like', "%{$search}%");
                 });
             })
@@ -118,6 +132,10 @@ class CircuitController extends Controller
      */
     public function decide(Request $request, Tabdepot $tabdepot)
     {
+        if ($tabdepot->statut_circuit !== 'maire') {
+            abort(403, "Cette demande n'est pas en attente de décision chez le Maire.");
+        }
+
         $request->validate([
             'decision_maire' => ['required', 'in:accepte,refuse'],
             'remarque_maire' => ['nullable', 'string', 'max:2000'],

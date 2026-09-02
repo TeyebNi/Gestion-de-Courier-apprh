@@ -13,10 +13,7 @@ Historique du Maire
                 <h4 class="card-title mb-0" style="font-weight: 700; color: #212529;">
                     Historique de mes décisions
                 </h4>
-                <form method="GET" action="{{ route('circuit.maire.historique') }}" class="form-inline">
-                    <input type="text" name="search" class="form-control form-control-sm" placeholder="Rechercher par N°, nom ou NNI..." value="{{ $search }}">
-                    <button type="submit" class="btn btn-primary btn-sm ml-2">Rechercher</button>
-                </form>
+                @include('partials.search-box', ['route' => 'circuit.maire.historique', 'placeholder' => 'Rechercher par N°, nom, NNI, objet, référence...', 'minWidth' => 300])
             </div>
             <div class="card-body">
                 <div class="table-responsive">
@@ -25,6 +22,7 @@ Historique du Maire
                             <th>N°</th>
                             <th>Nom</th>
                             <th>Type</th>
+                            <th>Objet</th>
                             <th>Décision</th>
                             <th>Remarque</th>
                             <th>Statut actuel</th>
@@ -34,8 +32,9 @@ Historique du Maire
                             @forelse($demandes as $d)
                             <tr>
                                 <td>{{ $d->id }}</td>
-                                <td>{{ $d->nom }} @if($d->piece_jointe)<a href="{{ asset('storage/' . $d->piece_jointe) }}" target="_blank" title="Voir la pièce jointe"><i class="fas fa-paperclip text-info"></i></a>@endif</td>
-                                <td>{{ $d->typdm }}</td>
+                                <td>{{ $d->nom ?: ($d->origine_detail ?: '—') }} @if($d->piece_jointe)<a href="{{ asset('storage/' . $d->piece_jointe) }}" target="_blank" title="Voir la pièce jointe"><i class="fas fa-paperclip text-info"></i></a>@endif</td>
+                                <td>{{ $d->typdm ?: '—' }}</td>
+                                <td class="text-truncate" style="max-width:220px;" title="{{ $d->objet }}">{{ $d->objet ?: '—' }}</td>
                                 <td>
                                     @if($d->decision_maire === 'accepte')
                                         <span class="badge badge-success">Acceptée</span>
@@ -53,7 +52,13 @@ Historique du Maire
                             </tr>
                             @empty
                             <tr>
-                                <td colspan="7" class="text-center text-muted">Aucune décision prise pour le moment.</td>
+                                <td colspan="8" class="text-center text-muted">
+                                    @if($search)
+                                        Aucune décision ne correspond à « {{ $search }} ».
+                                    @else
+                                        Aucune décision prise pour le moment.
+                                    @endif
+                                </td>
                             </tr>
                             @endforelse
                         </tbody>

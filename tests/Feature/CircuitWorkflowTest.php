@@ -88,6 +88,33 @@ class CircuitWorkflowTest extends TestCase
         $response->assertDontSee('2026-08-30');
     }
 
+    public function test_maire_historique_shows_institution_name_and_objet_and_search_matches_objet(): void
+    {
+        $maire = User::factory()->create(['role' => UserRole::Maire]);
+        Tabdepot::create([
+            'origine' => 'externe',
+            'type_expediteur' => 'institution',
+            'origine_detail' => "Ministère de l'Intérieur",
+            'objet' => 'Demande de raccordement eau',
+            'decision_maire' => 'accepte',
+            'statut_circuit' => 'service',
+            'daterecp' => now()->format('Y-m-d'),
+        ]);
+        Tabdepot::create([
+            'nom' => 'Autre Citoyen',
+            'decision_maire' => 'refuse',
+            'statut_circuit' => 'service',
+            'daterecp' => now()->format('Y-m-d'),
+        ]);
+
+        $response = $this->actingAs($maire)->get('/circuit/maire/historique?search=raccordement');
+
+        $response->assertOk();
+        $response->assertSee("Ministère de l&#039;Intérieur", false);
+        $response->assertSee('Demande de raccordement eau');
+        $response->assertDontSee('Autre Citoyen');
+    }
+
     public function test_maire_index_shows_institution_name_objet_and_a_localized_date(): void
     {
         $maire = User::factory()->create(['role' => UserRole::Maire]);
@@ -246,6 +273,61 @@ class CircuitWorkflowTest extends TestCase
         $this->actingAs($serviceUser)
             ->post("/circuit/{$depot->id}/cloturer")
             ->assertForbidden();
+    }
+
+    public function test_a_service_user_cannot_send_a_demande_back_to_fatou(): void
+    {
+        $depot = $this->makeDepot();
+        $depot->update(['statut_circuit' => 'cloture']);
+        $serviceUser = User::factory()->create(['role' => UserRole::User, 'service' => 'Etat Civil']);
+
+        $this->actingAs($serviceUser)
+            ->post("/circuit/{$depot->id}/envoyer-fatou")
+            ->assertForbidden();
+
+        $this->assertSame('cloture', $depot->fresh()->statut_circuit);
+    }
+
+    public function test_cannot_send_a_demande_to_fatou_unless_it_is_still_at_accueil(): void
+    {
+        $accueil = User::factory()->create(['role' => UserRole::User]);
+        $depot = $this->makeDepot();
+        $depot->update(['statut_circuit' => 'cloture']);
+
+        $this->actingAs($accueil)
+            ->post("/circuit/{$depot->id}/envoyer-fatou")
+            ->assertForbidden();
+
+        $this->assertSame('cloture', $depot->fresh()->statut_circuit);
+    }
+
+    public function test_cannot_send_a_demande_to_maire_unless_it_is_at_fatou(): void
+    {
+        $fatou = User::factory()->create(['role' => UserRole::Fatou]);
+        $depot = $this->makeDepot();
+        $depot->update(['statut_circuit' => 'cloture']);
+
+        $this->actingAs($fatou)
+            ->post("/circuit/{$depot->id}/envoyer-maire")
+            ->assertForbidden();
+
+        $this->assertSame('cloture', $depot->fresh()->statut_circuit);
+    }
+
+    public function test_cannot_decide_on_a_demande_unless_it_is_at_maire(): void
+    {
+        $maire = User::factory()->create(['role' => UserRole::Maire]);
+        $depot = $this->makeDepot();
+        $depot->update(['statut_circuit' => 'cloture']);
+
+        $this->actingAs($maire)
+            ->post("/circuit/{$depot->id}/decider", [
+                'decision_maire' => 'accepte',
+                'service_destination' => 'Etat Civil',
+            ])
+            ->assertForbidden();
+
+        $this->assertSame('cloture', $depot->fresh()->statut_circuit);
     }
 
     public function test_accueil_cannot_send_directly_to_maire(): void
