@@ -354,4 +354,16 @@ class DepotTest extends TestCase
         $response->assertSessionHas('success', 'Demande de Ahmed Ould Sidi enregistrée avec succès.');
         $response->assertSessionMissing('succes');
     }
+
+    public function test_index_shows_an_empty_state_when_search_matches_nothing(): void
+    {
+        $user = User::factory()->create(['role' => UserRole::User]);
+        Tabdepot::create(['nom' => 'Ahmed', 'tel' => '22334455', 'daterecp' => now()->format('Y-m-d')]);
+
+        $response = $this->actingAs($user)->get('/depot?search=Introuvable');
+
+        $response->assertOk();
+        $response->assertSee('Aucune demande ne correspond');
+        $response->assertDontSee('Ahmed');
+    }
 }

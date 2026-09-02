@@ -44,7 +44,7 @@ class TabdepotController extends Controller
                       ->orWhere('reference', 'like', "%{$search}%");
             })
             ->orderby('id', 'desc')
-            ->paginate(10)
+            ->paginate(5)
             ->appends(['search' => $search]);
 
         return view('depot.index', compact('tabdepot', 'typedem', 'orientations', 'search'));
