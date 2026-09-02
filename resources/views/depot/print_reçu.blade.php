@@ -229,7 +229,7 @@
             <tr>
                 <td class="detail-label">Date</td>
                 <td class="detail-sep">:</td>
-                <td class="detail-value">{{ $detailf->daterecp ? \Carbon\Carbon::parse($detailf->daterecp)->format('d/m/Y') : '—' }}</td>
+                <td class="detail-value">{{ $detailf->daterecpFormatted() }}</td>
             </tr>
         </table>
     </div>

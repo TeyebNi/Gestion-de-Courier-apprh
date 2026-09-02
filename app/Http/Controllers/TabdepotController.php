@@ -216,7 +216,9 @@ class TabdepotController extends Controller
         'commentaire' => 'Informations de la demande modifiées par ' . auth()->user()->name . '.',
     ]);
 
-    return redirect()->route('depot.index')->with('success', "Demande de {$tabdepot->nom} modifiée avec succès.");
+    $nomAffiche = $tabdepot->nom ?: ($tabdepot->origine_detail ?: 'la demande');
+
+    return redirect()->route('depot.index')->with('success', "Demande de {$nomAffiche} modifiée avec succès.");
 }
 
     public function destroy(Tabdepot $tabdepot)
@@ -229,10 +231,10 @@ class TabdepotController extends Controller
         abort(403, "Cette demande a déjà été envoyée dans le circuit et ne peut plus être supprimée depuis l'accueil.");
     }
 
-    $nom = $tabdepot->nom;
+    $nomAffiche = $tabdepot->nom ?: ($tabdepot->origine_detail ?: 'la demande');
     $tabdepot->delete();
 
-    return redirect()->route('depot.index')->with('success', "Demande de {$nom} supprimée avec succès.");
+    return redirect()->route('depot.index')->with('success', "Demande de {$nomAffiche} supprimée avec succès.");
 }
 
     public function trashed(Request $request)
@@ -264,7 +266,9 @@ class TabdepotController extends Controller
         $tabdepot = Tabdepot::onlyTrashed()->findOrFail($id);
         $tabdepot->restore();
 
-        return redirect()->route('depot.trashed')->with('success', "Demande de {$tabdepot->nom} restaurée avec succès.");
+        $nomAffiche = $tabdepot->nom ?: ($tabdepot->origine_detail ?: 'la demande');
+
+        return redirect()->route('depot.trashed')->with('success', "Demande de {$nomAffiche} restaurée avec succès.");
     }
 
     public function forceDelete($id)
@@ -274,7 +278,7 @@ class TabdepotController extends Controller
         }
 
         $tabdepot = Tabdepot::onlyTrashed()->findOrFail($id);
-        $nom = $tabdepot->nom;
+        $nomAffiche = $tabdepot->nom ?: ($tabdepot->origine_detail ?: 'la demande');
 
         if ($tabdepot->piece_jointe) {
             \Illuminate\Support\Facades\Storage::disk('public')->delete($tabdepot->piece_jointe);
@@ -282,6 +286,6 @@ class TabdepotController extends Controller
 
         $tabdepot->forceDelete();
 
-        return redirect()->route('depot.trashed')->with('success', "Demande de {$nom} supprimée définitivement.");
+        return redirect()->route('depot.trashed')->with('success', "Demande de {$nomAffiche} supprimée définitivement.");
     }
 }

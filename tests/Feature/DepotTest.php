@@ -425,4 +425,76 @@ class DepotTest extends TestCase
 
         $this->assertStringContainsString("Ministère de l&#039;Intérieur", $html);
     }
+
+    public function test_daterecp_formatted_does_not_crash_on_malformed_legacy_data(): void
+    {
+        $demande = Tabdepot::create([
+            'nom' => 'Ahmed',
+            'tel' => '22334455',
+            'daterecp' => 'valeur-invalide',
+        ]);
+
+        $this->assertSame('valeur-invalide', $demande->daterecpFormatted());
+    }
+
+    private function makeInstitutionDemande(): Tabdepot
+    {
+        return Tabdepot::create([
+            'origine' => 'externe',
+            'type_expediteur' => 'institution',
+            'origine_detail' => 'Ministère des Finances',
+            'daterecp' => now()->format('Y-m-d'),
+        ]);
+    }
+
+    public function test_update_shows_institution_name_in_success_message_when_nom_is_empty(): void
+    {
+        $user = User::factory()->create(['role' => UserRole::User]);
+        $demande = $this->makeInstitutionDemande();
+
+        $response = $this->actingAs($user)->put("/depot/{$demande->id}", [
+            'origine' => 'externe',
+            'type_expediteur' => 'institution',
+            'origine_detail' => 'Ministère des Finances',
+            'piece_jointe' => \Illuminate\Http\UploadedFile::fake()->create('lettre.pdf', 100, 'application/pdf'),
+        ]);
+
+        $response->assertSessionHas('success', 'Demande de Ministère des Finances modifiée avec succès.');
+    }
+
+    public function test_destroy_shows_institution_name_in_success_message_when_nom_is_empty(): void
+    {
+        $user = User::factory()->create(['role' => UserRole::User]);
+        $demande = $this->makeInstitutionDemande();
+
+        $response = $this->actingAs($user)->delete("/depot/{$demande->id}");
+
+        $response->assertSessionHas('success', 'Demande de Ministère des Finances supprimée avec succès.');
+    }
+
+    public function test_restore_and_force_delete_show_institution_name_when_nom_is_empty(): void
+    {
+        $user = User::factory()->create(['role' => UserRole::User]);
+        $admin = User::factory()->create(['role' => UserRole::Admin]);
+        $demande = $this->makeInstitutionDemande();
+        $demande->delete();
+
+        $this->actingAs($user)->post("/depot-corbeille/{$demande->id}/restaurer")
+            ->assertSessionHas('success', 'Demande de Ministère des Finances restaurée avec succès.');
+
+        $demande->delete();
+
+        $this->actingAs($admin)->delete("/depot-corbeille/{$demande->id}")
+            ->assertSessionHas('success', 'Demande de Ministère des Finances supprimée définitivement.');
+    }
+
+    public function test_delete_confirmation_uses_institution_name_when_nom_is_empty(): void
+    {
+        $user = User::factory()->create(['role' => UserRole::User]);
+        $this->makeInstitutionDemande();
+
+        $response = $this->actingAs($user)->get('/depot');
+
+        $response->assertSee('data-nom="Ministère des Finances"', false);
+    }
 }

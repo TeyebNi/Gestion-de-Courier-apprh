@@ -21,6 +21,23 @@ class Tabdepot extends Model
         return $this->hasMany(DemandeHistorique::class, 'tabdepot_id')->orderByDesc('created_at');
     }
 
+    /**
+     * Date de réception affichée au format local, tolérante à une valeur
+     * historique mal formée plutôt que de faire planter la page.
+     */
+    public function daterecpFormatted(): string
+    {
+        if (! $this->daterecp) {
+            return '—';
+        }
+
+        try {
+            return \Carbon\Carbon::parse($this->daterecp)->format('d/m/Y');
+        } catch (\Exception $e) {
+            return $this->daterecp;
+        }
+    }
+
     public function statutLabel(): string
     {
         return match ($this->statut_circuit) {

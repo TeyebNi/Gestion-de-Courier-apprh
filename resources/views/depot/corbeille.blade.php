@@ -50,7 +50,7 @@ Corbeille - Dépôt des Demandes
                                     </form>
                                     @if(auth()->user()->isAdmin())
                                     <button type="button" class="btn btn-danger btn-sm force-delete-btn"
-                                        data-id="{{ $item->id }}" data-nom="{{ $item->nom }}"
+                                        data-id="{{ $item->id }}" data-nom="{{ $item->nom ?: ($item->origine_detail ?: 'cette demande') }}"
                                         data-toggle="modal" data-target="#forceDeleteModal" title="Supprimer définitivement">
                                         <i class="fas fa-trash"></i>
                                     </button>
