@@ -895,5 +895,27 @@ if (closeBtnDepot) {
         document.getElementById('successOverlay').style.display = 'none';
     });
 }
+
+$('#exampleModal').on('hidden.bs.modal', function () {
+    var form = this.querySelector('form');
+    if (!form) { return; }
+
+    form.reset();
+
+    form.querySelectorAll('.depot-invalid, .depot-valid').forEach(function (el) {
+        el.classList.remove('depot-invalid', 'depot-valid');
+    });
+    form.querySelectorAll('.depot-error-message').forEach(function (el) {
+        el.textContent = '';
+        el.classList.remove('visible');
+    });
+
+    var pieceLabel = form.querySelector('label[for="create_piece_jointe"]');
+    if (pieceLabel) {
+        pieceLabel.textContent = 'Scan / photo du document (PDF, JPG, PNG — max 10 Mo)';
+    }
+
+    toggleOrigineDetail(document.getElementById('create_origine'), 'create');
+});
 </script>
 @endsection

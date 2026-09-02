@@ -366,4 +366,31 @@ class DepotTest extends TestCase
         $response->assertSee('Aucune demande ne correspond');
         $response->assertDontSee('Ahmed');
     }
+
+    public function test_store_rejects_a_name_containing_digits(): void
+    {
+        $user = User::factory()->create(['role' => UserRole::User]);
+
+        $response = $this->actingAs($user)->post('/depot', [
+            'nom' => 'Ahmed2',
+            'tel' => '22334455',
+        ]);
+
+        $response->assertSessionHasErrors('nom');
+        $this->assertDatabaseCount('tabdepot', 0);
+    }
+
+    public function test_store_rejects_an_unknown_origine_value(): void
+    {
+        $user = User::factory()->create(['role' => UserRole::User]);
+
+        $response = $this->actingAs($user)->post('/depot', [
+            'nom' => 'Ahmed Ould Sidi',
+            'tel' => '22334455',
+            'origine' => 'autre',
+        ]);
+
+        $response->assertSessionHasErrors('origine');
+        $this->assertDatabaseCount('tabdepot', 0);
+    }
 }
