@@ -35,6 +35,14 @@ class AdminConfigTest extends TestCase
         $this->assertDatabaseCount('orientation', 0);
     }
 
+    public function test_non_admin_cannot_even_view_the_orientation_or_typedem_pages(): void
+    {
+        $user = User::factory()->create(['role' => UserRole::User]);
+
+        $this->actingAs($user)->get('/orientation')->assertForbidden();
+        $this->actingAs($user)->get('/typedem')->assertForbidden();
+    }
+
     public function test_admin_can_update_and_delete_an_orientation(): void
     {
         $admin = User::factory()->create(['role' => UserRole::Admin]);
@@ -74,6 +82,16 @@ class AdminConfigTest extends TestCase
             ->assertSessionHasErrors('name');
 
         $this->assertSame('Urbanisme', $urbanisme->fresh()->name);
+    }
+
+    public function test_can_rename_an_orientation_to_its_own_unchanged_name(): void
+    {
+        $admin = User::factory()->create(['role' => UserRole::Admin]);
+        $orientation = Orientation::create(['name' => 'Etat Civil']);
+
+        $this->actingAs($admin)
+            ->put("/orientation/{$orientation->id}", ['name' => 'Etat Civil'])
+            ->assertRedirect(route('orientation.index'));
     }
 
     public function test_non_admin_cannot_update_delete_or_export_an_orientation(): void
