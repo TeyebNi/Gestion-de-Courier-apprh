@@ -206,8 +206,10 @@ class CircuitController extends Controller
     public function suiviIndex(Request $request)
     {
         $search = $request->search;
+        $statut = $request->statut;
 
         $demandes = Tabdepot::where('statut_circuit', '!=', 'accueil')
+            ->when($statut, fn ($q) => $q->where('statut_circuit', $statut))
             ->when($search, function ($q) use ($search) {
                 $q->where(function ($sub) use ($search) {
                     $sub->where('nom', 'like', "%{$search}%")
@@ -222,7 +224,7 @@ class CircuitController extends Controller
             ->paginate(10)
             ->withQueryString();
 
-        return view('circuit.suivi', compact('demandes', 'search'));
+        return view('circuit.suivi', compact('demandes', 'search', 'statut'));
     }
 
     /**

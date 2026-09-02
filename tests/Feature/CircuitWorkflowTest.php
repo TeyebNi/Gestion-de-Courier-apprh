@@ -277,4 +277,21 @@ class CircuitWorkflowTest extends TestCase
         $byReference->assertSee('Citoyen Test');
         $byReference->assertDontSee('Autre Citoyen');
     }
+
+    public function test_suivi_can_be_filtered_by_statut(): void
+    {
+        $accueil = User::factory()->create(['role' => UserRole::User]);
+
+        $chezMaire = $this->makeDepot();
+        $chezMaire->update(['statut_circuit' => 'maire', 'nom' => 'Chez Maire']);
+
+        $chezFatou = $this->makeDepot();
+        $chezFatou->update(['statut_circuit' => 'fatou', 'nom' => 'Chez Fatou']);
+
+        $response = $this->actingAs($accueil)->get('/circuit/suivi?statut=maire');
+
+        $response->assertOk();
+        $response->assertSee('Chez Maire');
+        $response->assertDontSee('Chez Fatou');
+    }
 }

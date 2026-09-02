@@ -14,6 +14,13 @@ Suivi des Demandes
                     Suivi des Demandes
                 </h4>
                 <form method="GET" action="{{ route('circuit.suivi') }}" class="form-inline">
+                    <select name="statut" class="form-control form-control-sm mr-2" onchange="this.form.submit()">
+                        <option value="">Tous les statuts</option>
+                        <option value="fatou" @selected($statut === 'fatou')>{{ \App\Models\Tabdepot::circuitStepLabel('fatou') }}</option>
+                        <option value="maire" @selected($statut === 'maire')>{{ \App\Models\Tabdepot::circuitStepLabel('maire') }}</option>
+                        <option value="service" @selected($statut === 'service')>Chez un service</option>
+                        <option value="cloture" @selected($statut === 'cloture')>Clôturée</option>
+                    </select>
                     <div class="input-group input-group-sm">
                         <div class="input-group-prepend">
                             <span class="input-group-text"><i class="fas fa-barcode"></i></span>
