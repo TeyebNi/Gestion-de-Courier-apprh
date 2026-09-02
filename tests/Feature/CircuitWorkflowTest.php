@@ -43,6 +43,27 @@ class CircuitWorkflowTest extends TestCase
         $response->assertDontSee('Fatou');
     }
 
+    public function test_historique_view_shows_full_demande_details(): void
+    {
+        $accueil = User::factory()->create(['role' => UserRole::User]);
+        $depot = Tabdepot::create([
+            'nom' => 'Citoyen Test',
+            'tel' => '22222222',
+            'adresse' => 'Quartier Socogim, Nouakchott',
+            'daterecp' => now()->format('Y-m-d'),
+            'objet' => 'Raccordement eau',
+            'reference' => 'MI/2026/245',
+        ]);
+
+        $response = $this->actingAs($accueil)->get("/circuit/{$depot->id}/historique");
+
+        $response->assertOk();
+        $response->assertSee('Raccordement eau');
+        $response->assertSee('MI/2026/245');
+        $response->assertSee('22222222');
+        $response->assertSee('Quartier Socogim, Nouakchott');
+    }
+
     public function test_full_circuit_accueil_to_fatou_to_maire_to_service(): void
     {
         $accueil = User::factory()->create(['role' => UserRole::User]);

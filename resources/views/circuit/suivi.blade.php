@@ -44,16 +44,7 @@ Suivi des Demandes
                                 <td>{{ $d->typdm }}</td>
                                 <td>{{ $d->objet ?: '—' }}</td>
                                 <td>
-                                    @php
-                                        $badgeClass = match($d->statut_circuit) {
-                                            'fatou' => 'badge-info',
-                                            'maire' => 'badge-warning',
-                                            'service' => 'badge-primary',
-                                            'cloture' => 'badge-success',
-                                            default => 'badge-secondary',
-                                        };
-                                    @endphp
-                                    <span class="badge {{ $badgeClass }}">{{ $d->statutLabel() }}</span>
+                                    <span class="badge {{ \App\Models\Tabdepot::circuitStepBadgeClass($d->statut_circuit) }}">{{ $d->statutLabel() }}</span>
                                 </td>
                                 <td>
                                     @if($d->decision_maire === 'accepte')

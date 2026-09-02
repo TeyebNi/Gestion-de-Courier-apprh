@@ -48,4 +48,19 @@ class Tabdepot extends Model
             default => $step ? ucfirst($step) : '',
         };
     }
+
+    /**
+     * Classe de badge Bootstrap associée à une étape du circuit, réutilisée
+     * partout où le statut est affiché (Gestion des Demandes, Suivi, Historique).
+     */
+    public static function circuitStepBadgeClass(?string $step): string
+    {
+        return match ($step) {
+            'fatou' => 'badge-info',
+            'maire' => 'badge-warning',
+            'service' => 'badge-primary',
+            'cloture' => 'badge-success',
+            default => 'badge-secondary',
+        };
+    }
 }

@@ -36,13 +36,7 @@ Dashboard Courier
                         <tbody>
                           @foreach($tabdepot as $key=>$item)
                             @php
-                                $depotBadgeClass = match($item->statut_circuit ?? 'accueil') {
-                                    'fatou' => 'badge-info',
-                                    'maire' => 'badge-warning',
-                                    'service' => 'badge-primary',
-                                    'cloture' => 'badge-success',
-                                    default => 'badge-secondary',
-                                };
+                                $depotBadgeClass = \App\Models\Tabdepot::circuitStepBadgeClass($item->statut_circuit ?? 'accueil');
                             @endphp
                             <tr>
                                 <td>{{++$key}}</td>
