@@ -125,8 +125,6 @@ Historique de la Demande
                     <li class="list-group-item text-muted">Aucun historique pour le moment.</li>
                     @endforelse
                 </ul>
-
-                <a href="{{ route('circuit.suivi') }}" class="btn btn-secondary mt-4">Retour au suivi</a>
             </div>
         </div>
     </div>
