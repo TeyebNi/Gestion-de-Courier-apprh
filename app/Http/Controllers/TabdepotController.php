@@ -135,8 +135,9 @@ class TabdepotController extends Controller
             'type_expediteur' => $request->type_expediteur,
             'piece_jointe' => $pieceJointePath,
             'nom' => $request->nom,
-            // NNI et adresse n'ont pas de sens pour une demande interne (agent municipal).
-            'nni' => $isInterne ? null : $request->nni,
+            // NNI n'a de sens que pour un citoyen externe : ni pour une note interne,
+            // ni pour une institution (identifiée par son nom, pas par un NNI).
+            'nni' => ($isInterne || $isInstitution) ? null : $request->nni,
             'tel' => $request->tel,
             'adresse' => $isInterne ? null : $request->adresse,
             'daterecp' => $request->daterecp ?: now()->format('Y-m-d'),
@@ -198,6 +199,11 @@ class TabdepotController extends Controller
         // NNI et adresse n'ont pas de sens pour une demande interne (agent municipal).
         $data['nni'] = null;
         $data['adresse'] = null;
+    }
+
+    if ($isInstitution) {
+        // NNI n'a pas de sens pour une institution (identifiée par son nom, pas par un NNI).
+        $data['nni'] = null;
     }
 
     if ($request->hasFile('piece_jointe')) {

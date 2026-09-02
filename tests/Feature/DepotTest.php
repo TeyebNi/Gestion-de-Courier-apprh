@@ -219,6 +219,45 @@ class DepotTest extends TestCase
         $this->assertNull($demande->adresse);
     }
 
+    public function test_institution_demande_never_stores_nni(): void
+    {
+        $user = User::factory()->create(['role' => UserRole::User]);
+
+        $this->actingAs($user)->post('/depot', [
+            'origine' => 'externe',
+            'type_expediteur' => 'institution',
+            'origine_detail' => "Ministère de l'Intérieur",
+            'piece_jointe' => \Illuminate\Http\UploadedFile::fake()->create('lettre.pdf', 100, 'application/pdf'),
+            // Le NNI n'a aucun sens pour une institution, même si un client
+            // contournant le JS l'envoie quand même.
+            'nni' => '1234567890',
+        ]);
+
+        $demande = Tabdepot::firstOrFail();
+        $this->assertNull($demande->nni);
+    }
+
+    public function test_updating_a_demande_to_institution_clears_its_nni(): void
+    {
+        $user = User::factory()->create(['role' => UserRole::User]);
+        $demande = Tabdepot::create([
+            'nom' => 'Ahmed Ould Sidi',
+            'tel' => '22334455',
+            'nni' => '1234567890',
+            'daterecp' => now()->format('Y-m-d'),
+        ]);
+
+        $this->actingAs($user)->put("/depot/{$demande->id}", [
+            'origine' => 'externe',
+            'type_expediteur' => 'institution',
+            'origine_detail' => "Ministère de l'Intérieur",
+            'nni' => '1234567890',
+            'piece_jointe' => \Illuminate\Http\UploadedFile::fake()->create('lettre.pdf', 100, 'application/pdf'),
+        ]);
+
+        $this->assertNull($demande->fresh()->nni);
+    }
+
     public function test_index_search_matches_objet(): void
     {
         $user = User::factory()->create(['role' => UserRole::User]);

@@ -192,16 +192,16 @@ Dashboard Courier
       <input type="text" class="form-control" name="objet" placeholder="Résumé de la demande (ex: Demande de raccordement eau)" maxlength="255">
     </div>
       <br>
-      <div class="input-group">
+      <div class="input-group" id="create_reference_wrap" style="display:none;">
         <div class="input-group-prepend">
         <span class="input-group-text">N° référence</span>
       </div>
-      <input type="text" class="form-control" name="reference" placeholder="Référence du courrier de l'expéditeur (optionnel)" maxlength="100">
+      <input type="text" class="form-control" name="reference" id="create_reference" placeholder="Référence du courrier de l'expéditeur (optionnel)" maxlength="100" disabled>
     </div>
       <br>
       <div class="input-group" id="create_nni_wrap">
         <div class="input-group-prepend">
-        <span class="input-group-text" id="create_nni_label">NNI</span>
+        <span class="input-group-text" id="create_nni_label">NNI (optionnel)</span>
       </div>
       <input type="text" class="form-control" name="nni" id="create_nni" placeholder="Entrer NNI" oninput="this.value=this.value.replace(/[^0-9]/g,'').slice(0,10)" pattern="[0-9]{10}" minlength="10" maxlength="10" inputmode="numeric">
     </div>
@@ -288,23 +288,6 @@ function toggleOrigineDetail(selectEl, prefix) {
     var isInterne = value === 'interne';
     var isExterne = value === 'externe';
 
-    // NNI et adresse ne concernent qu'un expéditeur externe (citoyen/institution) :
-    // une demande interne entre agents municipaux n'en a pas besoin.
-    if (nniWrap) {
-        nniWrap.style.display = isInterne ? 'none' : '';
-        if (nniInput) {
-            nniInput.disabled = isInterne;
-            if (isInterne) { nniInput.value = ''; }
-        }
-    }
-    if (adresseWrap) {
-        adresseWrap.style.display = isInterne ? 'none' : '';
-        if (adresseInput) {
-            adresseInput.disabled = isInterne;
-            if (isInterne) { adresseInput.value = ''; }
-        }
-    }
-
     interneWrap.style.display = isInterne ? '' : 'none';
     interneSelect.disabled = !isInterne;
     if (!isInterne) { interneSelect.value = ''; }
@@ -318,7 +301,28 @@ function toggleOrigineDetail(selectEl, prefix) {
         typeExpediteurSelect.value = '';
     }
 
+    // Calcule d'abord l'état lié au type d'expéditeur (institution ou non),
+    // puis on applique la règle "interne" par-dessus : elle doit toujours
+    // avoir le dernier mot sur NNI/adresse, qui ne concernent jamais une
+    // note interne quel que soit l'état précédent du type d'expéditeur.
     toggleNniRequirement(prefix);
+
+    // NNI et adresse ne concernent qu'un expéditeur externe (citoyen/institution) :
+    // une demande interne entre agents municipaux n'en a besoin ni de l'un ni de l'autre.
+    if (nniWrap) {
+        nniWrap.style.display = isInterne ? 'none' : nniWrap.style.display;
+        if (nniInput) {
+            nniInput.disabled = isInterne || nniInput.disabled;
+            if (isInterne) { nniInput.value = ''; }
+        }
+    }
+    if (adresseWrap) {
+        adresseWrap.style.display = isInterne ? 'none' : '';
+        if (adresseInput) {
+            adresseInput.disabled = isInterne;
+            if (isInterne) { adresseInput.value = ''; }
+        }
+    }
 
     var typdmLabel = document.getElementById(prefix + '_typdm_label');
     if (typdmLabel) {
@@ -328,14 +332,16 @@ function toggleOrigineDetail(selectEl, prefix) {
 
 function toggleNniRequirement(prefix) {
     var typeExpediteurSelect = document.getElementById(prefix + '_type_expediteur');
+    var nniWrap = document.getElementById(prefix + '_nni_wrap');
     var nniInput = document.getElementById(prefix + '_nni');
-    var nniLabel = document.getElementById(prefix + '_nni_label');
     var nomWrap = document.getElementById(prefix + '_nom_wrap');
     var nomInput = document.getElementById(prefix + '_nom');
     var telInput = document.getElementById(prefix + '_tel');
     var telLabel = document.getElementById(prefix + '_tel_label');
     var institutionWrap = document.getElementById(prefix + '_origine_externe_wrap');
     var institutionInput = document.getElementById(prefix + '_origine_detail_text');
+    var referenceWrap = document.getElementById(prefix + '_reference_wrap');
+    var referenceInput = document.getElementById(prefix + '_reference');
     if (!nniInput) { return; }
 
     var isInstitution = typeExpediteurSelect && !typeExpediteurSelect.disabled && typeExpediteurSelect.value === 'institution';
@@ -350,15 +356,30 @@ function toggleNniRequirement(prefix) {
         }
     }
 
+    // Le N° référence ne concerne en pratique que le courrier officiel d'une
+    // institution (qui porte son propre numéro d'ordre) : masqué sinon pour
+    // ne pas alourdir la saisie d'un citoyen ou d'une note interne. La valeur
+    // n'est pas effacée (un champ désactivé n'est simplement pas soumis), au
+    // cas où une demande existante en aurait déjà une.
+    if (referenceWrap) {
+        referenceWrap.style.display = isInstitution ? '' : 'none';
+        if (referenceInput) { referenceInput.disabled = !isInstitution; }
+    }
+
     if (isInstitution) {
+        // NNI n'a aucun sens pour une institution : masqué comme Nom, plutôt
+        // que laissé visible avec une étiquette "non applicable" qui pouvait
+        // quand même être remplie et enregistrée par erreur.
+        if (nniWrap) { nniWrap.style.display = 'none'; }
+        nniInput.disabled = true;
         nniInput.value = '';
-        if (nniLabel) { nniLabel.textContent = 'NNI (non applicable)'; }
         if (nomWrap) { nomWrap.style.display = 'none'; }
         if (nomInput) { nomInput.disabled = true; nomInput.value = ''; }
         if (telInput) { telInput.removeAttribute('required'); }
         if (telLabel) { telLabel.textContent = 'Tel (optionnel)'; }
     } else {
-        if (nniLabel) { nniLabel.textContent = 'NNI (optionnel)'; }
+        if (nniWrap) { nniWrap.style.display = ''; }
+        nniInput.disabled = false;
         if (nomWrap) { nomWrap.style.display = ''; }
         if (nomInput) { nomInput.disabled = false; }
         if (telInput) { telInput.setAttribute('required', 'required'); }
@@ -745,7 +766,7 @@ document.addEventListener('DOMContentLoaded', function () {
       <input id="edit_objet" type="text" class="form-control" name="objet" placeholder="Résumé de la demande" maxlength="255">
     </div>
       <br>
-      <div class="input-group">
+      <div class="input-group" id="edit_reference_wrap" style="display:none;">
         <div class="input-group-prepend">
         <span class="input-group-text">N° référence</span>
       </div>
@@ -754,7 +775,7 @@ document.addEventListener('DOMContentLoaded', function () {
       <br>
       <div class="input-group" id="edit_nni_wrap">
         <div class="input-group-prepend">
-        <span class="input-group-text" id="edit_nni_label">NNI</span>
+        <span class="input-group-text" id="edit_nni_label">NNI (optionnel)</span>
       </div>
       <input id="edit_nni" type="text" class="form-control" name="nni" placeholder="Entrer NNI" maxlength="10" inputmode="numeric" pattern="[0-9]{10}" oninput="this.value=this.value.replace(/[^0-9]/g,'').slice(0,10)">
     </div>
