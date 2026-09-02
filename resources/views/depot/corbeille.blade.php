@@ -13,9 +13,12 @@ Corbeille - Dépôt des Demandes
                 <h4 class="card-title mb-0" style="font-weight: 700; color: #212529;">
                     Corbeille — Demandes supprimées
                 </h4>
-                <a href="{{ route('depot.index') }}" class="btn btn-secondary btn-sm">
-                    <i class="fas fa-arrow-left"></i> Retour au Dépôt
-                </a>
+                <div class="d-flex align-items-center flex-wrap">
+                    @include('partials.search-box', ['route' => 'depot.trashed', 'placeholder' => 'Rechercher par nom, objet...'])
+                    <a href="{{ route('depot.index') }}" class="btn btn-secondary btn-sm">
+                        <i class="fas fa-arrow-left"></i> Retour au Dépôt
+                    </a>
+                </div>
             </div>
             <div class="card-body">
                 <p class="text-muted">
@@ -38,7 +41,7 @@ Corbeille - Dépôt des Demandes
                             <tr>
                                 <td>{{ $item->id }}</td>
                                 <td>{{ $item->nom ?: ($item->origine_detail ?: '—') }}</td>
-                                <td>{{ $item->objet ?: '—' }}</td>
+                                <td class="text-truncate" style="max-width:220px;" title="{{ $item->objet }}">{{ $item->objet ?: '—' }}</td>
                                 <td>{{ $item->typdm ?: '—' }}</td>
                                 <td>{{ $item->deleted_at->format('d/m/Y H:i') }}</td>
                                 <td class="text-right">
@@ -59,7 +62,13 @@ Corbeille - Dépôt des Demandes
                             </tr>
                             @empty
                             <tr>
-                                <td colspan="6" class="text-center text-muted">La corbeille est vide.</td>
+                                <td colspan="6" class="text-center text-muted">
+                                    @if($search)
+                                        Aucune demande supprimée ne correspond à « {{ $search }} ».
+                                    @else
+                                        La corbeille est vide.
+                                    @endif
+                                </td>
                             </tr>
                             @endforelse
                         </tbody>

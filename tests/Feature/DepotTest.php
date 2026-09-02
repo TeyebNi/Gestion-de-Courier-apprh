@@ -354,6 +354,34 @@ class DepotTest extends TestCase
         $this->assertDatabaseHas('tabdepot', ['id' => $demande->id, 'deleted_at' => null]);
     }
 
+    public function test_trashed_search_filters_by_name_or_objet(): void
+    {
+        $user = User::factory()->create(['role' => UserRole::User]);
+        $ahmed = Tabdepot::create(['nom' => 'Ahmed', 'tel' => '22334455', 'daterecp' => now()->format('Y-m-d')]);
+        $ahmed->delete();
+        $fatimetou = Tabdepot::create(['nom' => 'Fatimetou', 'tel' => '22334456', 'daterecp' => now()->format('Y-m-d')]);
+        $fatimetou->delete();
+
+        $response = $this->actingAs($user)->get('/depot-corbeille?search=Ahmed');
+
+        $response->assertOk();
+        $response->assertSee('Ahmed');
+        $response->assertDontSee('Fatimetou');
+    }
+
+    public function test_trashed_shows_an_empty_state_when_search_matches_nothing(): void
+    {
+        $user = User::factory()->create(['role' => UserRole::User]);
+        $demande = Tabdepot::create(['nom' => 'Ahmed', 'tel' => '22334455', 'daterecp' => now()->format('Y-m-d')]);
+        $demande->delete();
+
+        $response = $this->actingAs($user)->get('/depot-corbeille?search=Introuvable');
+
+        $response->assertOk();
+        $response->assertSee('Aucune demande supprimée ne correspond');
+        $response->assertDontSee('Ahmed');
+    }
+
     public function test_non_admin_cannot_permanently_delete_a_trashed_demande(): void
     {
         $user = User::factory()->create(['role' => UserRole::User]);
