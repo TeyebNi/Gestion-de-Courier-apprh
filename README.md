@@ -23,7 +23,7 @@ Définis dans `App\Enums\UserRole` et appliqués via les middlewares `admin`, `f
 | Rôle | Accès |
 |---|---|
 | `admin` | Tout le système, y compris configuration (Orientation, Types de demande) et gestion des utilisateurs |
-| `user` | Dépôt, suivi, notifications ; ou file de son service (`circuit/service`) s'il a un `service` renseigné |
+| `user` | Dépôt, suivi ; ou file de son service (`circuit/service`) s'il a un `service` renseigné |
 | `fatou` | Pages de coordination (`circuit/fatou`), affichées "Cabinet" dans l'interface |
 | `maire` | Pages de décision (`circuit/maire`) |
 
@@ -59,7 +59,7 @@ Le seeder crée les comptes de démarrage suivants (mot de passe à changer apr�
 php artisan test
 ```
 
-Les tests tournent sur SQLite en mémoire (`phpunit.xml`) et couvrent le circuit complet de la demande, les permissions par rôle, le dépôt, la configuration admin, la gestion des utilisateurs et les notifications de service.
+Les tests tournent sur SQLite en mémoire (`phpunit.xml`) et couvrent le circuit complet de la demande, les permissions par rôle, le dépôt, la configuration admin et la gestion des utilisateurs.
 
 ## Déploiement — usage prévu
 
@@ -83,5 +83,6 @@ Avant de considérer le déploiement final terminé (au-delà des tests de déve
 - Les tables métier (`tabdepot`, `orientation`, `typedem`) utilisent des noms **singuliers**, contrairement à la convention Laravel — c'est voulu, ne pas renommer.
 - Les listes de travail (Dépôt) affichent les entrées les plus récentes en premier (tri par id décroissant).
 - L'ancien module "Affectation" (assignation manuelle d'une demande à un service) a été retiré du code et de l'interface : entièrement remplacé par le circuit Accueil → Cabinet → Maire → Service (`Tabdepot.service_assigne`). La table `affectation` et ses 39 entrées historiques (juillet 2026, avant l'existence du circuit) restent en base sans être utilisées, pour ne rien perdre.
+- Le module "Notifications" (page, badge de la barre latérale, KPI du dashboard) a été retiré pour la même raison : plus aucun code ne créait de `ServiceNotification` depuis la suppression d'Affectation (c'était son seul point de création), et le bouton "Répondre" qui prétendait envoyer un SMS n'était relié à aucune vue et n'envoyait en réalité aucun SMS. Les décisions du Maire (acceptée/refusée) et leur SMS au citoyen passent uniquement par `Tabdepot.decision_maire` via `CircuitController::decide()`. La table `service_notifications` et ses 23 entrées historiques (juillet 2026) restent en base sans être utilisées.
 - NNI et adresse ne sont demandés que pour une demande **externe** (citoyen/institution) — sans objet pour une note interne entre agents municipaux, ils sont masqués et jamais enregistrés dans ce cas. Le téléphone n'est pas obligatoire pour un expéditeur institution (courrier officiel scanné).
 - "Interne" (Origine) est réservé aux notes d'un service municipal vers un autre. Toute demande venant d'un citoyen — y compris une réclamation liée à un service interne comme les impôts — doit être classée "Externe → Citoyen", jamais "Interne".

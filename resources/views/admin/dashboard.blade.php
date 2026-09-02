@@ -413,13 +413,13 @@ Tableau de bord
                 <div class="row">
                     <div class="col-5 col-md-4">
                         <div class="icon-big text-center icon-warning">
-                            <i class="now-ui-icons ui-1_bell-53 text-danger"></i>
+                            <i class="now-ui-icons business_briefcase-24 text-danger"></i>
                         </div>
                     </div>
                     <div class="col-7 col-md-8">
                         <div class="numbers">
-                            <p class="card-category">Notifications Non Lues</p>
-                            <h4 class="card-title">{{ $totalUnread }}</h4>
+                            <p class="card-category">Demandes en Cours</p>
+                            <h4 class="card-title">{{ $totalEnCours }}</h4>
                         </div>
                     </div>
                 </div>
@@ -427,7 +427,7 @@ Tableau de bord
             <div class="card-footer">
                 <hr>
                 <div class="stats">
-                    <i class="now-ui-icons ui-1_email-85"></i> À traiter pour votre service
+                    <i class="now-ui-icons ui-1_email-85"></i> En attente de clôture par votre service
                 </div>
             </div>
         </div>
@@ -454,7 +454,7 @@ Tableau de bord
             <div class="card-footer">
                 <hr>
                 <div class="stats">
-                    <i class="now-ui-icons ui-1_bell-53"></i> {{ $totalEnAttente }} en attente de réponse
+                    <i class="now-ui-icons ui-1_check"></i> {{ $totalAcceptees + $totalRefusees }} demandes décidées au total
                 </div>
             </div>
         </div>
@@ -528,7 +528,7 @@ Tableau de bord
         <div class="card card-tasks">
             <div class="card-header">
                 <h5 class="card-category">Activité récente</h5>
-                <h4 class="card-title">{{ $isAdmin ? 'Dernières Demandes Déposées' : 'Dernières Notifications de votre Service' }}</h4>
+                <h4 class="card-title">{{ $isAdmin ? 'Dernières Demandes Déposées' : 'Dernières Demandes de votre Service' }}</h4>
             </div>
             <div class="card-body">
                 <div class="table-full-width table-responsive">
@@ -542,9 +542,9 @@ Tableau de bord
                         <tbody>
                             @forelse($recentDemandes as $d)
                             <tr>
-                                <td>{{ $d->nom }}</td>
-                                <td>{{ $d->typdm }}</td>
-                                <td>{{ $d->daterecp }}</td>
+                                <td>{{ $d->nom ?: ($d->origine_detail ?: '—') }}</td>
+                                <td>{{ $d->typdm ?: '—' }}</td>
+                                <td>{{ $d->daterecpFormatted() }}</td>
                             </tr>
                             @empty
                             <tr>
@@ -556,28 +556,22 @@ Tableau de bord
                     @else
                     <table class="table">
                         <thead class="text-primary">
-                            <th>Message</th>
+                            <th>Nom</th>
+                            <th>Objet</th>
                             <th>Statut</th>
                             <th>Date</th>
                         </thead>
                         <tbody>
-                            @forelse($recentNotifications as $n)
+                            @forelse($recentServiceDemandes as $d)
                             <tr>
-                                <td>{{ $n->message }}</td>
-                                <td>
-                                    @if($n->response === 'accepted')
-                                        <span class="badge badge-success">Acceptée</span>
-                                    @elseif($n->response === 'rejected')
-                                        <span class="badge badge-danger">Refusée</span>
-                                    @else
-                                        <span class="badge badge-warning">En attente</span>
-                                    @endif
-                                </td>
-                                <td>{{ $n->created_at->format('Y-m-d H:i') }}</td>
+                                <td>{{ $d->nom ?: ($d->origine_detail ?: '—') }}</td>
+                                <td class="text-truncate" style="max-width:180px;" title="{{ $d->objet }}">{{ $d->objet ?: '—' }}</td>
+                                <td><span class="badge {{ \App\Models\Tabdepot::circuitStepBadgeClass($d->statut_circuit) }}">{{ $d->statutLabel() }}</span></td>
+                                <td>{{ $d->daterecpFormatted() }}</td>
                             </tr>
                             @empty
                             <tr>
-                                <td colspan="3" class="text-center text-muted">Aucune notification pour le moment.</td>
+                                <td colspan="4" class="text-center text-muted">Aucune demande pour le moment.</td>
                             </tr>
                             @endforelse
                         </tbody>
@@ -632,7 +626,6 @@ document.addEventListener('DOMContentLoaded', function () {
     var serviceCounts = @json($serviceCounts);
     var totalAcceptees = {{ $totalAcceptees }};
     var totalRefusees = {{ $totalRefusees }};
-    var totalEnAttente = {{ $totalEnAttente }};
 
     var palette = ['#2CA8FF', '#FB404B', '#18ce0f', '#FFA534', '#9C27B0', '#00BCD4', '#FF5722', '#607D8B'];
 
@@ -677,10 +670,10 @@ document.addEventListener('DOMContentLoaded', function () {
     new Chart(document.getElementById('reponseChart'), {
         type: 'bar',
         data: {
-            labels: ['Acceptées', 'Refusées', 'En attente'],
+            labels: ['Acceptées', 'Refusées'],
             datasets: [{
-                data: [totalAcceptees, totalRefusees, totalEnAttente],
-                backgroundColor: ['#18ce0f', '#FB404B', '#FFA534'],
+                data: [totalAcceptees, totalRefusees],
+                backgroundColor: ['#18ce0f', '#FB404B'],
                 borderRadius: 6,
             }]
         },

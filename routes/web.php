@@ -5,7 +5,6 @@ use App\Http\Controllers\TabdepotController;
 use App\Http\Controllers\TypedemController;
 use App\Http\Controllers\OrientationController;
 use App\Http\Controllers\UserController;
-use App\Http\Controllers\ServiceNotificationController;
 use App\Http\Controllers\CircuitController;
 
 // Routes d'authentification (login, register, mot de passe oublié...)
@@ -33,10 +32,6 @@ Route::middleware('auth')->group(function () {
     Route::post('depot-corbeille/{id}/restaurer', [TabdepotController::class, 'restore'])->name('depot.restore');
     Route::delete('depot-corbeille/{id}', [TabdepotController::class, 'forceDelete'])->name('depot.force-delete');
 
-
-    Route::get('notifications', [ServiceNotificationController::class, 'index'])->name('notifications.index');
-    Route::patch('notifications/{notification}/read', [ServiceNotificationController::class, 'markRead'])->name('notifications.read');
-    Route::post('notifications/{notification}/respond', [ServiceNotificationController::class, 'respond'])->name('notifications.respond');
 
     // Circuit de la demande : Accueil -> Fatou -> Maire -> Fatou -> (Accueil ou Service)
     Route::post('circuit/{tabdepot}/envoyer-fatou', [CircuitController::class, 'sendToFatou'])->name('circuit.envoyer-fatou');

@@ -3,7 +3,6 @@
 namespace App\Http\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
-use App\Models\ServiceNotification;
 use App\Models\Tabdepot;
 use App\Models\Typedem;
 use Illuminate\Http\Request;
@@ -124,17 +123,20 @@ class DashboardController extends Controller
                 ->count('typdm');
         }
 
-        $notifQuery = ServiceNotification::query();
+        // "Acceptées/Refusées" reflète désormais la décision du Maire elle-même
+        // (Tabdepot.decision_maire), la seule source de vérité depuis que le
+        // circuit envoie le SMS directement au citoyen dans decide().
+        $decisionQuery = Tabdepot::whereNotNull('decision_maire');
         if (!$isAdmin) {
-            $notifQuery->where('service', $user->service);
+            $decisionQuery->where('service_assigne', $user->service);
         }
-        $totalAcceptees = (clone $notifQuery)->where('response', 'accepted')->count();
-        $totalRefusees = (clone $notifQuery)->where('response', 'rejected')->count();
-        $totalEnAttente = (clone $notifQuery)->whereNull('response')->count();
+        $totalAcceptees = (clone $decisionQuery)->where('decision_maire', 'accepte')->count();
+        $totalRefusees = (clone $decisionQuery)->where('decision_maire', 'refuse')->count();
         $totalReponses = $totalAcceptees + $totalRefusees;
         $tauxAcceptation = $totalReponses > 0 ? round(($totalAcceptees / $totalReponses) * 100) : 0;
 
-        $totalUnread = (clone $notifQuery)->where('is_read', false)->count();
+        // Demandes assignées à ce service mais pas encore clôturées par lui.
+        $totalEnCours = (clone $assignedQuery)->where('statut_circuit', 'service')->count();
 
         $moisFr = ['Jan', 'Fév', 'Mar', 'Avr', 'Mai', 'Juin', 'Juil', 'Août', 'Sep', 'Oct', 'Nov', 'Déc'];
 
@@ -160,7 +162,7 @@ class DashboardController extends Controller
                 ->get();
 
             $recentDemandes = Tabdepot::orderByDesc('id')->limit(5)->get();
-            $recentNotifications = collect();
+            $recentServiceDemandes = collect();
         } else {
             // ----- Évolution des demandes reçues par ce service (6 derniers mois) -----
             $months = [];
@@ -185,8 +187,8 @@ class DashboardController extends Controller
                 ->get();
 
             $recentDemandes = collect();
-            $recentNotifications = ServiceNotification::where('service', $user->service)
-                ->orderByDesc('created_at')
+            $recentServiceDemandes = (clone $assignedQuery)
+                ->orderByDesc('updated_at')
                 ->limit(5)
                 ->get();
         }
@@ -216,8 +218,7 @@ class DashboardController extends Controller
             'tauxAcceptation',
             'totalAcceptees',
             'totalRefusees',
-            'totalEnAttente',
-            'totalUnread',
+            'totalEnCours',
             'months',
             'monthCounts',
             'typeLabels',
@@ -225,7 +226,7 @@ class DashboardController extends Controller
             'serviceLabels',
             'serviceCounts',
             'recentDemandes',
-            'recentNotifications'
+            'recentServiceDemandes'
         ));
     }
 }

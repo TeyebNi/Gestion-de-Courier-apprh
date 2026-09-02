@@ -136,22 +136,6 @@
                             <p>Demandes du Circuit</p>
                         </a>
                     </li>
-                    @php
-                        $unreadNotifCount = auth()->user()->canAccessAllServices()
-                            ? \App\Models\ServiceNotification::where('is_read', false)->count()
-                            : \App\Models\ServiceNotification::where('service', auth()->user()->service)->where('is_read', false)->count();
-                    @endphp
-                    <li class="{{ request()->is('notifications*') ? 'active' : '' }}">
-                        <a href="{{ route('notifications.index') }}">
-                            <i class="now-ui-icons ui-1_bell-53"></i>
-                            <p>
-                                Notifications
-                                @if($unreadNotifCount > 0)
-                                    <span class="badge badge-danger">{{ $unreadNotifCount }}</span>
-                                @endif
-                            </p>
-                        </a>
-                    </li>
                     @endif
                     @if(auth()->user()->isAdmin() || (empty(auth()->user()->service) && !auth()->user()->isFatou() && !auth()->user()->isMaire()))
                     <li class="{{ request()->is('circuit/suivi*') ? 'active' : '' }}">
