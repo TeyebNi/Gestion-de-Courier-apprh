@@ -14,13 +14,7 @@ Orientation
                     <button class="btn btn-primary btn-sm ml-2" data-toggle="modal" data-target="#exampleModal">Nouvelle Orientation</button>
                 </h4>
                 <div class="d-flex align-items-center flex-wrap">
-                    <form method="GET" action="{{ route('orientation.index') }}" class="form-inline mr-2">
-                        <input type="text" name="search" class="form-control form-control-sm" placeholder="Rechercher une orientation..." value="{{ $search }}" style="min-width:260px;">
-                        <button type="submit" class="btn btn-primary btn-sm ml-2">Rechercher</button>
-                        @if($search)
-                        <a href="{{ route('orientation.index') }}" class="btn btn-outline-secondary btn-sm ml-2" title="Réinitialiser la recherche">&times;</a>
-                        @endif
-                    </form>
+                    @include('partials.search-box', ['route' => 'orientation.index', 'placeholder' => 'Rechercher une orientation...'])
                     <a href="{{ route('orientation.export') }}" class="btn btn-success btn-sm" title="Exporter en Excel"><i class="fas fa-file-excel"></i></a>
                 </div>
             </div>

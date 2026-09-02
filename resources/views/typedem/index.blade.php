@@ -14,13 +14,7 @@ Types de Demande
                     <button class="btn btn-primary btn-sm ml-2" data-toggle="modal" data-target="#exampleModal">Nouveau Type de Demande</button>
                 </h4>
                 <div class="d-flex align-items-center flex-wrap">
-                    <form method="GET" action="{{ route('typedem.index') }}" class="form-inline mr-2">
-                        <input type="text" name="search" class="form-control form-control-sm" placeholder="Rechercher un type de demande..." value="{{ $search }}" style="min-width:260px;">
-                        <button type="submit" class="btn btn-primary btn-sm ml-2">Rechercher</button>
-                        @if($search)
-                        <a href="{{ route('typedem.index') }}" class="btn btn-outline-secondary btn-sm ml-2" title="Réinitialiser la recherche">&times;</a>
-                        @endif
-                    </form>
+                    @include('partials.search-box', ['route' => 'typedem.index', 'placeholder' => 'Rechercher un type de demande...'])
                     <a href="{{ route('typedem.export') }}" class="btn btn-success btn-sm" title="Exporter en Excel"><i class="fas fa-file-excel"></i></a>
                 </div>
             </div>
