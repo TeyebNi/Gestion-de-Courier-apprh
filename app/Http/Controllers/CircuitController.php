@@ -212,6 +212,8 @@ class CircuitController extends Controller
                 $q->where(function ($sub) use ($search) {
                     $sub->where('nom', 'like', "%{$search}%")
                         ->orWhere('nni', 'like', "%{$search}%")
+                        ->orWhere('objet', 'like', "%{$search}%")
+                        ->orWhere('reference', 'like', "%{$search}%")
                         ->orWhere('id', 'like', "%{$search}%")
                         ->orWhere('id', ltrim($search, '0') ?: '0');
                 });

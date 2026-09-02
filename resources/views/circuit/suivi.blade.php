@@ -18,7 +18,7 @@ Suivi des Demandes
                         <div class="input-group-prepend">
                             <span class="input-group-text"><i class="fas fa-barcode"></i></span>
                         </div>
-                        <input type="text" name="search" id="scan_search" class="form-control" placeholder="Scannez le code-barres, ou tapez N°, nom, NNI..." value="{{ $search }}" autofocus autocomplete="off">
+                        <input type="text" name="search" id="scan_search" class="form-control" placeholder="Scannez le code-barres, ou tapez N°, nom, NNI, objet, référence..." value="{{ $search }}" autofocus autocomplete="off">
                     </div>
                     <button type="submit" class="btn btn-primary btn-sm ml-2">Rechercher</button>
                 </form>
@@ -30,8 +30,10 @@ Suivi des Demandes
                             <th>N°</th>
                             <th>Nom</th>
                             <th>Type</th>
+                            <th>Objet</th>
                             <th>Où se trouve la demande ?</th>
                             <th>Décision Maire</th>
+                            <th>Dernière mise à jour</th>
                             <th>Action</th>
                         </thead>
                         <tbody>
@@ -40,6 +42,7 @@ Suivi des Demandes
                                 <td>{{ $d->id }}</td>
                                 <td>{{ $d->nom }} @if($d->piece_jointe)<a href="{{ asset('storage/' . $d->piece_jointe) }}" target="_blank" title="Voir la pièce jointe"><i class="fas fa-paperclip text-info"></i></a>@endif</td>
                                 <td>{{ $d->typdm }}</td>
+                                <td>{{ $d->objet ?: '—' }}</td>
                                 <td>
                                     @php
                                         $badgeClass = match($d->statut_circuit) {
@@ -61,6 +64,7 @@ Suivi des Demandes
                                         <span class="text-muted">En attente</span>
                                     @endif
                                 </td>
+                                <td>{{ $d->updated_at->format('d/m/Y H:i') }}</td>
                                 <td>
                                     <a href="{{ route('circuit.historique', $d) }}" class="btn btn-info btn-sm" title="Voir l'historique complet">
                                         <i class="fas fa-history"></i> Historique
@@ -69,7 +73,7 @@ Suivi des Demandes
                             </tr>
                             @empty
                             <tr>
-                                <td colspan="5" class="text-center text-muted">Aucune demande engagée dans le circuit pour le moment.</td>
+                                <td colspan="8" class="text-center text-muted">Aucune demande engagée dans le circuit pour le moment.</td>
                             </tr>
                             @endforelse
                         </tbody>

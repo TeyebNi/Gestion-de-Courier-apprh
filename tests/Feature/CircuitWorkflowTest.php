@@ -198,4 +198,38 @@ class CircuitWorkflowTest extends TestCase
             return $demandes->contains('id', $depotForMe->id) && ! $demandes->contains('id', $depotForOther->id);
         });
     }
+
+    public function test_suivi_shows_objet_and_last_update_date(): void
+    {
+        $accueil = User::factory()->create(['role' => UserRole::User]);
+        $depot = $this->makeDepot();
+        $depot->update(['statut_circuit' => 'fatou', 'objet' => 'Raccordement eau quartier X']);
+
+        $response = $this->actingAs($accueil)->get('/circuit/suivi');
+
+        $response->assertOk();
+        $response->assertSee('Raccordement eau quartier X');
+        $response->assertSee($depot->fresh()->updated_at->format('d/m/Y'));
+    }
+
+    public function test_suivi_search_matches_objet_and_reference(): void
+    {
+        $accueil = User::factory()->create(['role' => UserRole::User]);
+        $depot = $this->makeDepot();
+        $depot->update([
+            'statut_circuit' => 'fatou',
+            'objet' => 'Raccordement eau',
+            'reference' => 'MI/2026/245',
+        ]);
+        $other = $this->makeDepot();
+        $other->update(['statut_circuit' => 'fatou', 'nom' => 'Autre Citoyen']);
+
+        $byObjet = $this->actingAs($accueil)->get('/circuit/suivi?search=Raccordement');
+        $byObjet->assertSee('Citoyen Test');
+        $byObjet->assertDontSee('Autre Citoyen');
+
+        $byReference = $this->actingAs($accueil)->get('/circuit/suivi?search=MI/2026/245');
+        $byReference->assertSee('Citoyen Test');
+        $byReference->assertDontSee('Autre Citoyen');
+    }
 }
