@@ -105,7 +105,7 @@ Historique de la Demande
 
                 <h5 class="mt-4 mb-3">Historique des transferts</h5>
                 <ul class="list-group timeline-list">
-                    @forelse($tabdepot->historiques as $h)
+                    @forelse($historiques as $h)
                     <li class="list-group-item d-flex align-items-start">
                         <span class="badge {{ \App\Models\Tabdepot::circuitStepBadgeClass($h->vers_statut) }} timeline-dot" title="{{ \App\Models\Tabdepot::circuitStepLabel($h->vers_statut) }}">
                             <i class="fas fa-circle"></i>
@@ -125,6 +125,9 @@ Historique de la Demande
                     <li class="list-group-item text-muted">Aucun historique pour le moment.</li>
                     @endforelse
                 </ul>
+                <div class="d-flex justify-content-center mt-3">
+                    {{ $historiques->links() }}
+                </div>
             </div>
         </div>
     </div>

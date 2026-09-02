@@ -230,8 +230,8 @@ class CircuitController extends Controller
      */
     public function historique(Tabdepot $tabdepot)
     {
-        $tabdepot->load('historiques.user');
+        $historiques = $tabdepot->historiques()->with('user')->paginate(10);
 
-        return view('circuit.historique', compact('tabdepot'));
+        return view('circuit.historique', compact('tabdepot', 'historiques'));
     }
 }

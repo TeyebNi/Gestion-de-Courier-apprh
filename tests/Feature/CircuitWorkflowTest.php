@@ -3,6 +3,7 @@
 namespace Tests\Feature;
 
 use App\Enums\UserRole;
+use App\Models\DemandeHistorique;
 use App\Models\Tabdepot;
 use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
@@ -62,6 +63,27 @@ class CircuitWorkflowTest extends TestCase
         $response->assertSee('MI/2026/245');
         $response->assertSee('22222222');
         $response->assertSee('Quartier Socogim, Nouakchott');
+    }
+
+    public function test_historique_transferts_are_paginated_by_ten(): void
+    {
+        $accueil = User::factory()->create(['role' => UserRole::User]);
+        $depot = $this->makeDepot();
+
+        foreach (range(1, 15) as $i) {
+            DemandeHistorique::create([
+                'tabdepot_id' => $depot->id,
+                'vers_statut' => 'fatou',
+                'commentaire' => "Entrée numéro {$i}",
+            ]);
+        }
+
+        $response = $this->actingAs($accueil)->get("/circuit/{$depot->id}/historique");
+
+        $response->assertOk();
+        $response->assertViewHas('historiques', function ($historiques) {
+            return $historiques->count() === 10 && $historiques->total() === 15;
+        });
     }
 
     public function test_full_circuit_accueil_to_fatou_to_maire_to_service(): void
