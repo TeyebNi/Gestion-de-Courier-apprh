@@ -25,7 +25,6 @@ class User extends Authenticatable
         'password',
         'role',
         'service',
-        'can_affectation',
         'can_manage_users',
         'can_access_cabinet',
         'can_access_maire',
@@ -53,7 +52,6 @@ class User extends Authenticatable
             'email_verified_at' => 'datetime',
             'password' => 'hashed',
             'role' => UserRole::class,
-            'can_affectation' => 'boolean',
             'can_manage_users' => 'boolean',
             'can_access_cabinet' => 'boolean',
             'can_access_maire' => 'boolean',
@@ -83,14 +81,6 @@ class User extends Authenticatable
     public function isMaire(): bool
     {
         return $this->role === UserRole::Maire;
-    }
-
-    /**
-     * Whether this user can access the Affectation module.
-     */
-    public function canAccessAffectation(): bool
-    {
-        return $this->isAdmin() || (bool) $this->can_affectation;
     }
 
     /**

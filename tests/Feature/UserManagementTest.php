@@ -11,7 +11,7 @@ class UserManagementTest extends TestCase
 {
     use RefreshDatabase;
 
-    public function test_admin_can_update_a_user_role_and_grant_affectation_access(): void
+    public function test_admin_can_update_a_user_role(): void
     {
         $admin = User::factory()->create(['role' => UserRole::Admin]);
         $target = User::factory()->create(['role' => UserRole::User, 'name' => 'Jean Dupont']);
@@ -20,7 +20,6 @@ class UserManagementTest extends TestCase
             'name' => 'Jean Dupont',
             'email' => $target->email,
             'role' => 'fatou',
-            'can_affectation' => '1',
         ])->assertRedirect(route('users.index'));
 
         $target->refresh();

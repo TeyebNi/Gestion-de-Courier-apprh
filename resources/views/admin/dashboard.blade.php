@@ -364,8 +364,8 @@ Tableau de bord
                     </div>
                     <div class="col-7 col-md-8">
                         <div class="numbers">
-                            <p class="card-category">Affectations</p>
-                            <h4 class="card-title">{{ $totalAffectations }}</h4>
+                            <p class="card-category">Demandes Assignées</p>
+                            <h4 class="card-title">{{ $totalDemandesAssignees }}</h4>
                         </div>
                     </div>
                 </div>
@@ -601,7 +601,7 @@ Tableau de bord
         <div class="card card-chart">
             <div class="card-header">
                 <h5 class="card-category">Charge de travail</h5>
-                <h4 class="card-title">Affectations par Service</h4>
+                <h4 class="card-title">Demandes par Service</h4>
             </div>
             <div class="card-body">
                 <div class="chart-area">
@@ -700,7 +700,7 @@ document.addEventListener('DOMContentLoaded', function () {
             data: {
                 labels: serviceLabels,
                 datasets: [{
-                    label: 'Affectations',
+                    label: 'Demandes',
                     data: serviceCounts,
                     backgroundColor: '#2CA8FF',
                     borderRadius: 6,

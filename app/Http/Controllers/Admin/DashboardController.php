@@ -3,7 +3,6 @@
 namespace App\Http\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
-use App\Models\Affectation;
 use App\Models\ServiceNotification;
 use App\Models\Tabdepot;
 use App\Models\Typedem;
@@ -59,11 +58,6 @@ class DashboardController extends Controller
 
         // ----- Utilisateur simple (pas de service) : dashboard minimal -----
         if ($isPlainUser) {
-            // Cas particulier : pas de service, mais acces Affectation accorde manuellement
-            // (case "Acces au module Affectation" cochee sur sa fiche utilisateur).
-            $hasAffectationAccess = (bool) $user->can_affectation;
-            $totalAffectationsGlobal = $hasAffectationAccess ? Affectation::count() : 0;
-
             $totalDemandesToday = Tabdepot::whereDate('daterecp', Carbon::today())->count();
             $totalDemandesWeek = Tabdepot::whereBetween('daterecp', [
                 Carbon::now()->startOfWeek(), Carbon::now()->endOfWeek(),
@@ -98,8 +92,6 @@ class DashboardController extends Controller
                 'isPlainUser',
                 'isCabinet',
                 'isMaireUser',
-                'hasAffectationAccess',
-                'totalAffectationsGlobal',
                 'totalDemandesToday',
                 'totalDemandesWeek',
                 'totalDemandesAll',
@@ -113,19 +105,20 @@ class DashboardController extends Controller
         }
 
         // ----- KPI cards -----
-        $affectationQuery = Affectation::query();
+        // "Demandes assignées" = demandes du circuit envoyées à un service
+        // (Tabdepot.service_assigne, renseigné par le Maire via decide()).
+        $assignedQuery = Tabdepot::whereNotNull('service_assigne');
         if (!$isAdmin) {
-            $affectationQuery->where('sevice', $user->service);
+            $assignedQuery->where('service_assigne', $user->service);
         }
-        $totalAffectations = (clone $affectationQuery)->count();
+        $totalDemandesAssignees = (clone $assignedQuery)->count();
 
         if ($isAdmin) {
             $totalDemandes = Tabdepot::count();
             $totalTypes = Typedem::count();
         } else {
-            $scopedDemandeIds = (clone $affectationQuery)->pluck('iddmd')->unique();
-            $totalDemandes = $scopedDemandeIds->count();
-            $totalTypes = Tabdepot::whereIn('id', $scopedDemandeIds)
+            $totalDemandes = $totalDemandesAssignees;
+            $totalTypes = (clone $assignedQuery)
                 ->whereNotNull('typdm')
                 ->distinct('typdm')
                 ->count('typdm');
@@ -169,23 +162,22 @@ class DashboardController extends Controller
             $recentDemandes = Tabdepot::orderByDesc('id')->limit(5)->get();
             $recentNotifications = collect();
         } else {
-            // ----- Évolution des affectations reçues par ce service (6 derniers mois) -----
+            // ----- Évolution des demandes reçues par ce service (6 derniers mois) -----
             $months = [];
             $monthCounts = [];
             for ($i = 5; $i >= 0; $i--) {
                 $date = Carbon::now()->subMonths($i);
                 $months[] = $moisFr[$date->month - 1] . ' ' . $date->format('Y');
-                $monthCounts[] = Affectation::where('sevice', $user->service)
-                    ->whereYear('dateaff', $date->year)
-                    ->whereMonth('dateaff', $date->month)
+                $monthCounts[] = Tabdepot::where('service_assigne', $user->service)
+                    ->whereYear('daterecp', $date->year)
+                    ->whereMonth('daterecp', $date->month)
                     ->count();
             }
 
-            // ----- Répartition par type des demandes affectées à ce service -----
-            $iddmdIds = Affectation::where('sevice', $user->service)->pluck('iddmd');
-            $typeStats = Tabdepot::select('typdm')
+            // ----- Répartition par type des demandes assignées à ce service -----
+            $typeStats = (clone $assignedQuery)
+                ->select('typdm')
                 ->selectRaw('count(*) as total')
-                ->whereIn('id', $iddmdIds)
                 ->whereNotNull('typdm')
                 ->groupBy('typdm')
                 ->orderByDesc('total')
@@ -202,15 +194,15 @@ class DashboardController extends Controller
         $typeLabels = $typeStats->pluck('typdm');
         $typeCounts = $typeStats->pluck('total');
 
-        // ----- Répartition des affectations par service -----
-        $serviceStats = (clone $affectationQuery)
-            ->select('sevice')
+        // ----- Répartition des demandes assignées par service -----
+        $serviceStats = (clone $assignedQuery)
+            ->select('service_assigne')
             ->selectRaw('count(*) as total')
-            ->groupBy('sevice')
+            ->groupBy('service_assigne')
             ->orderByDesc('total')
             ->limit(8)
             ->get();
-        $serviceLabels = $serviceStats->pluck('sevice');
+        $serviceLabels = $serviceStats->pluck('service_assigne');
         $serviceCounts = $serviceStats->pluck('total');
 
         return view('admin.dashboard', compact(
@@ -219,7 +211,7 @@ class DashboardController extends Controller
             'isCabinet',
             'isMaireUser',
             'totalDemandes',
-            'totalAffectations',
+            'totalDemandesAssignees',
             'totalTypes',
             'tauxAcceptation',
             'totalAcceptees',

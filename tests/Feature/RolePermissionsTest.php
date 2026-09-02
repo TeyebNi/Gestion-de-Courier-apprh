@@ -53,17 +53,6 @@ class RolePermissionsTest extends TestCase
         $this->actingAs($admin)->get('/utilisateurs')->assertOk();
     }
 
-    public function test_can_access_affectation_follows_admin_or_flag(): void
-    {
-        $admin = User::factory()->create(['role' => UserRole::Admin, 'can_affectation' => false]);
-        $plainUser = User::factory()->create(['role' => UserRole::User, 'can_affectation' => false]);
-        $grantedUser = User::factory()->create(['role' => UserRole::User, 'can_affectation' => true]);
-
-        $this->assertTrue($admin->canAccessAffectation());
-        $this->assertFalse($plainUser->canAccessAffectation());
-        $this->assertTrue($grantedUser->canAccessAffectation());
-    }
-
     public function test_admin_without_can_manage_users_keeps_other_admin_access(): void
     {
         $restrictedAdmin = User::factory()->create(['role' => UserRole::Admin, 'can_manage_users' => false]);

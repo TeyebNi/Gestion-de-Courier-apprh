@@ -50,7 +50,6 @@ Les Utilisateurs
                                        data-email="{{ $u->email }}"
                                        data-role="{{ $u->role->value }}"
                                        data-service="{{ $u->service }}"
-                                       data-can-affectation="{{ $u->can_affectation ? '1' : '0' }}"
                                        data-can-manage-users="{{ $u->can_manage_users !== false ? '1' : '0' }}"
                                        data-can-access-cabinet="{{ $u->can_access_cabinet !== false ? '1' : '0' }}"
                                        data-can-access-maire="{{ $u->can_access_maire !== false ? '1' : '0' }}"
@@ -132,10 +131,6 @@ Les Utilisateurs
                                 <option value="{{ $s }}">{{ $s }}</option>
                             @endforeach
                         </select>
-                    </div>
-                    <div class="form-check mt-3" id="edit_can_affectation_group">
-                        <input type="checkbox" class="form-check-input" name="can_affectation" id="edit_can_affectation" value="1">
-                        <label class="form-check-label" for="edit_can_affectation">Accès au module Affectation</label>
                     </div>
                     <div id="edit_admin_permissions_group" style="display:none;">
                         <hr>
@@ -265,7 +260,6 @@ $('#editUserModal').on('show.bs.modal', function (event) {
     $('#edit_email').val(button.data('email'));
     $('#edit_role').val(role);
     $('#edit_service').val(button.data('service'));
-    $('#edit_can_affectation').prop('checked', button.data('can-affectation') == 1);
     $('#edit_can_manage_users').prop('checked', button.data('can-manage-users') == 1);
     $('#edit_can_access_cabinet').prop('checked', button.data('can-access-cabinet') == 1);
     $('#edit_can_access_maire').prop('checked', button.data('can-access-maire') == 1);
@@ -285,12 +279,9 @@ function toggleServiceField(role) {
     if (role === 'admin') {
         $('#edit_service_group').hide();
         $('#edit_service').val('');
-        $('#edit_can_affectation_group').hide();
-        $('#edit_can_affectation').prop('checked', false);
         $('#edit_admin_permissions_group').show();
     } else {
         $('#edit_service_group').show();
-        $('#edit_can_affectation_group').show();
         $('#edit_admin_permissions_group').hide();
         $('#edit_can_manage_users').prop('checked', false);
         $('#edit_can_access_cabinet').prop('checked', false);

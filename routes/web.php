@@ -2,7 +2,6 @@
 use Barryvdh\DomPDF\Facade\Pdf;
 use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\TabdepotController;
-use App\Http\Controllers\AffectationController;
 use App\Http\Controllers\TypedemController;
 use App\Http\Controllers\OrientationController;
 use App\Http\Controllers\UserController;
@@ -28,11 +27,6 @@ Route::middleware('auth')->group(function () {
     Route::get('depot/export', [TabdepotController::class, 'exportExcel'])->name('depot.export');
     Route::post('depot', [TabdepotController::class, 'store'])->name('depot.store');
     Route::get('depot/print_reçu/{idt}',[TabdepotController::class,'print_facture'])->name('depot.print_reçu');
-    Route::get('affectation', [AffectationController::class, 'index'])->name('affectation.index');
-    Route::get('affectation/export', [AffectationController::class, 'exportExcel'])->name('affectation.export');
-    Route::post('affectation', [AffectationController::class, 'store'])->name('affectation.store');
-    Route::put('affectation/{affectation}', [AffectationController::class, 'update'])->name('affectation.update');
-    Route::delete('affectation/{affectation}', [AffectationController::class, 'destroy'])->name('affectation.destroy');
     Route::put('depot/{tabdepot}', [TabdepotController::class, 'update'])->name('depot.update');
     Route::delete('depot/{tabdepot}', [TabdepotController::class, 'destroy'])->name('depot.destroy');
     Route::get('depot-corbeille', [TabdepotController::class, 'trashed'])->name('depot.trashed');
