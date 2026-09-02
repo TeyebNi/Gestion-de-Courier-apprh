@@ -143,6 +143,12 @@ class TabdepotController extends Controller
             'daterecp' => $request->daterecp ?: now()->format('Y-m-d'),
         ]);
 
+        DemandeHistorique::create([
+            'tabdepot_id' => $demande->id,
+            'vers_statut' => 'accueil',
+            'user_id' => auth()->id(),
+        ]);
+
         if ($demande->tel) {
             $this->sms->send(
                 $demande->tel,

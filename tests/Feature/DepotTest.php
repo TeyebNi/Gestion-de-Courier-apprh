@@ -29,6 +29,23 @@ class DepotTest extends TestCase
         $this->assertSame(now()->format('Y-m-d'), $demande->daterecp);
     }
 
+    public function test_store_logs_who_registered_the_demande(): void
+    {
+        $user = User::factory()->create(['role' => UserRole::User, 'name' => 'Fatimetou Accueil']);
+
+        $this->actingAs($user)->post('/depot', [
+            'nom' => 'Ahmed Ould Sidi',
+            'tel' => '22334455',
+        ]);
+
+        $demande = Tabdepot::firstOrFail();
+        $historique = $demande->historiques()->first();
+
+        $this->assertNotNull($historique);
+        $this->assertSame('accueil', $historique->vers_statut);
+        $this->assertSame($user->id, $historique->user_id);
+    }
+
     public function test_store_requires_a_phone_number(): void
     {
         $user = User::factory()->create(['role' => UserRole::User]);
