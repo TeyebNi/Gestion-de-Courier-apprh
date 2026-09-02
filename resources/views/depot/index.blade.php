@@ -24,25 +24,22 @@ Dashboard Courier
                 <div class="table-responsive">
                     <table class="table">
                         <thead class=" text-primary">
-                           <th>N°</th>
                             <th>Code</th>
                             <th>Type de Demande</th>
                             <th>Objet</th>
                             <th>Origine</th>
                             <th>Nom</th>
-                            <th class="text-right">NNI</th>
                             <th class="text-right">Tel</th>
                              <th>Statut</th>
                             <th class="text-right">Date</th>
                             <th class="text-right">Action</th>
                         </thead>
                         <tbody>
-                          @forelse($tabdepot as $key=>$item)
+                          @forelse($tabdepot as $item)
                             @php
                                 $depotBadgeClass = \App\Models\Tabdepot::circuitStepBadgeClass($item->statut_circuit ?? 'accueil');
                             @endphp
                             <tr>
-                                <td>{{++$key}}</td>
                                 <td>{{$item->id}}</td>
                                 <td>{{ $item->typdm ?: '—' }}</td>
                                 <td class="text-truncate" style="max-width:220px;" title="{{ $item->objet }}">{{ $item->objet ?: '—' }}</td>
@@ -61,8 +58,12 @@ Dashboard Courier
                                         <span class="text-muted">—</span>
                                     @endif
                                 </td>
-                                <td class="text-right">{{ $item->nom ?: ($item->origine_detail ?: '—') }}</td>
-                                  <td class="text-right">{{ $item->nni ?: '—' }}</td>
+                                <td class="text-right">
+                                    {{ $item->nom ?: ($item->origine_detail ?: '—') }}
+                                    @if($item->nni)
+                                        <br><small class="text-muted">NNI: {{ $item->nni }}</small>
+                                    @endif
+                                </td>
                                 <td class="text-right">{{ $item->tel ?: '—' }}</td>
                                   <td><span class="badge {{ $depotBadgeClass }}">{{ $item->statutLabel() }}</span></td>
                                   <td class="text-right">{{ $item->daterecpFormatted() }}</td>
@@ -91,7 +92,7 @@ Dashboard Courier
                             </tr>
                             @empty
                             <tr>
-                                <td colspan="11" class="text-center text-muted">
+                                <td colspan="9" class="text-center text-muted">
                                     @if($search)
                                         Aucune demande ne correspond à « {{ $search }} ».
                                     @else
