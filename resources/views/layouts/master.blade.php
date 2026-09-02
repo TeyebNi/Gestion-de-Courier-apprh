@@ -165,7 +165,7 @@
                     <li class="{{ request()->is('typedem*') ? 'active' : '' }}">
                         <a href="{{ route('typedem.index') }}">
                             <i class="now-ui-icons design_bullet-list-67"></i>
-                            <p>Gestion de Demande</p>
+                            <p>Types de Demande</p>
                         </a>
                     </li>
                     @endif
