@@ -43,21 +43,7 @@ Dashboard Courier
                                 <td>{{$item->id}}</td>
                                 <td>{{ $item->typdm ?: '—' }}</td>
                                 <td class="text-truncate" style="max-width:220px;" title="{{ $item->objet }}">{{ $item->objet ?: '—' }}</td>
-                                <td>
-                                    @if($item->origine === 'interne')
-                                        <span class="badge badge-info">Interne</span>
-                                        @if($item->origine_detail)
-                                            <br><small class="text-muted">{{ $item->origine_detail }}</small>
-                                        @endif
-                                    @elseif($item->origine === 'externe')
-                                        <span class="badge badge-secondary">Externe</span>
-                                        @if($item->origine_detail)
-                                            <br><small class="text-muted">{{ $item->origine_detail }}</small>
-                                        @endif
-                                    @else
-                                        <span class="text-muted">—</span>
-                                    @endif
-                                </td>
+                                <td>@include('partials.origine-badge', ['demande' => $item])</td>
                                 <td class="text-right">
                                     {{ $item->nom ?: ($item->origine_detail ?: '—') }}
                                     @if($item->nni)

@@ -42,6 +42,7 @@ document.addEventListener('DOMContentLoaded', function () {
                         <thead class="text-primary">
                             <th>Nom</th>
                             <th>Type</th>
+                            <th>Objet</th>
                             <th>Origine</th>
                             <th>Date</th>
                             <th>Action</th>
@@ -49,10 +50,11 @@ document.addEventListener('DOMContentLoaded', function () {
                         <tbody>
                             @forelse($aEnvoyer as $d)
                             <tr>
-                                <td>{{ $d->nom }} @if($d->piece_jointe)<a href="{{ asset('storage/' . $d->piece_jointe) }}" target="_blank" title="Voir la pièce jointe"><i class="fas fa-paperclip text-info"></i></a>@endif</td>
-                                <td>{{ $d->typdm }}</td>
-                                <td>{{ $d->origine ?? '—' }}</td>
-                                <td>{{ $d->daterecp }}</td>
+                                <td>{{ $d->nom ?: ($d->origine_detail ?: '—') }} @if($d->piece_jointe)<a href="{{ asset('storage/' . $d->piece_jointe) }}" target="_blank" title="Voir la pièce jointe"><i class="fas fa-paperclip text-info"></i></a>@endif</td>
+                                <td>{{ $d->typdm ?: '—' }}</td>
+                                <td class="text-truncate" style="max-width:220px;" title="{{ $d->objet }}">{{ $d->objet ?: '—' }}</td>
+                                <td>@include('partials.origine-badge', ['demande' => $d])</td>
+                                <td>{{ $d->daterecpFormatted() }}</td>
                                 <td>
                                     <form action="{{ route('circuit.envoyer-maire', $d) }}" method="post" style="display:inline;">
                                         @csrf
@@ -62,7 +64,7 @@ document.addEventListener('DOMContentLoaded', function () {
                             </tr>
                             @empty
                             <tr>
-                                <td colspan="5" class="text-center text-muted">Aucune demande en attente.</td>
+                                <td colspan="6" class="text-center text-muted">Aucune demande en attente.</td>
                             </tr>
                             @endforelse
                         </tbody>

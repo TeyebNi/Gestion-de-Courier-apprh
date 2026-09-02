@@ -67,6 +67,27 @@ class CircuitWorkflowTest extends TestCase
         $response->assertSee('Etat Civil');
     }
 
+    public function test_fatou_index_shows_institution_name_objet_and_a_localized_date(): void
+    {
+        $fatou = User::factory()->create(['role' => UserRole::Fatou]);
+        Tabdepot::create([
+            'origine' => 'externe',
+            'type_expediteur' => 'institution',
+            'origine_detail' => "Ministère de l'Intérieur",
+            'objet' => 'Demande de raccordement eau',
+            'daterecp' => '2026-08-30',
+            'statut_circuit' => 'fatou',
+        ]);
+
+        $response = $this->actingAs($fatou)->get('/circuit/fatou');
+
+        $response->assertOk();
+        $response->assertSee("Ministère de l&#039;Intérieur", false);
+        $response->assertSee('Demande de raccordement eau');
+        $response->assertSee('30/08/2026');
+        $response->assertDontSee('2026-08-30');
+    }
+
     public function test_historique_transferts_are_paginated_by_ten(): void
     {
         $accueil = User::factory()->create(['role' => UserRole::User]);
