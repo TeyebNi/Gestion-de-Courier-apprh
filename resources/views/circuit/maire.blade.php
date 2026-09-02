@@ -45,12 +45,16 @@ document.addEventListener('DOMContentLoaded', function () {
                     <div class="card-body">
                         <div class="row">
                             <div class="col-md-8">
-                                <p><strong>Nom :</strong> {{ $d->nom }}</p>
-                                <p><strong>Type de demande :</strong> {{ $d->typdm }}</p>
-                                <p><strong>Origine :</strong> {{ $d->origine ?? '—' }} @if($d->origine_detail) ({{ $d->origine_detail }}) @endif</p>
-                                <p><strong>NNI :</strong> {{ $d->nni }} — <strong>Tel :</strong> {{ $d->tel }}</p>
-                                <p><strong>Adresse :</strong> {{ $d->adresse }}</p>
-                                <p><strong>Date de réception :</strong> {{ $d->daterecp }}</p>
+                                <p><strong>Nom :</strong> {{ $d->nom ?: ($d->origine_detail ?: '—') }}</p>
+                                <p><strong>Objet :</strong> {{ $d->objet ?: '—' }}</p>
+                                <p><strong>Type de demande :</strong> {{ $d->typdm ?: '—' }}</p>
+                                @if($d->reference)
+                                <p><strong>N° référence :</strong> {{ $d->reference }}</p>
+                                @endif
+                                <p><strong>Origine :</strong> @include('partials.origine-badge', ['demande' => $d])</p>
+                                <p><strong>NNI :</strong> {{ $d->nni ?: '—' }} — <strong>Tel :</strong> {{ $d->tel ?: '—' }}</p>
+                                <p><strong>Adresse :</strong> {{ $d->adresse ?: '—' }}</p>
+                                <p><strong>Date de réception :</strong> {{ $d->daterecpFormatted() }}</p>
                                 @if($d->piece_jointe)
                                 <p>
                                     <a href="{{ asset('storage/' . $d->piece_jointe) }}" target="_blank" class="btn btn-info btn-sm">
