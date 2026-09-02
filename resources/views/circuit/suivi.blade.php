@@ -49,7 +49,7 @@ Suivi des Demandes
                                 <td>{{ $d->id }}</td>
                                 <td>{{ $d->nom }} @if($d->piece_jointe)<a href="{{ asset('storage/' . $d->piece_jointe) }}" target="_blank" title="Voir la pièce jointe"><i class="fas fa-paperclip text-info"></i></a>@endif</td>
                                 <td>{{ $d->typdm }}</td>
-                                <td>{{ $d->objet ?: '—' }}</td>
+                                <td class="text-truncate" style="max-width:220px;" title="{{ $d->objet }}">{{ $d->objet ?: '—' }}</td>
                                 <td>
                                     <span class="badge {{ \App\Models\Tabdepot::circuitStepBadgeClass($d->statut_circuit) }}">{{ $d->statutLabel() }}</span>
                                 </td>

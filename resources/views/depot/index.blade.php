@@ -15,7 +15,7 @@ Dashboard Courier
                     <button class="btn btn-primary btn-sm ml-2" data-toggle="modal" data-target="#exampleModal">Nouvelle Demande</button>
                 </h4>
                 <div class="d-flex align-items-center flex-wrap">
-                    @include('partials.search-box', ['route' => 'depot.index', 'placeholder' => 'Rechercher par nom, NNI, tel, objet, référence...'])
+                    @include('partials.search-box', ['route' => 'depot.index', 'placeholder' => 'Rechercher par nom, NNI, tel, objet, référence...', 'minWidth' => 340])
                     <a href="{{ route('depot.export') }}" class="btn btn-success btn-sm" title="Exporter en Excel"><i class="fas fa-file-excel"></i></a>
                 </div>
             </div>
@@ -45,7 +45,7 @@ Dashboard Courier
                                 <td>{{++$key}}</td>
                                 <td>{{$item->id}}</td>
                                 <td>{{ $item->typdm ?: '—' }}</td>
-                                <td>{{ $item->objet ?: '—' }}</td>
+                                <td class="text-truncate" style="max-width:220px;" title="{{ $item->objet }}">{{ $item->objet ?: '—' }}</td>
                                 <td>
                                     @if($item->origine === 'interne')
                                         <span class="badge badge-info">Interne</span>
