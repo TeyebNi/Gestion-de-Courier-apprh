@@ -117,6 +117,57 @@ class AdminConfigTest extends TestCase
             ->assertRedirect(route('typedem.index'));
     }
 
+    public function test_admin_can_rename_a_type_de_demande_to_a_new_name(): void
+    {
+        $admin = User::factory()->create(['role' => UserRole::Admin]);
+        $typedem = Typedem::create(['name' => 'Autorisation']);
+
+        $this->actingAs($admin)
+            ->put("/typedem/{$typedem->id}", ['name' => 'Autorisation renouvelée'])
+            ->assertRedirect(route('typedem.index'));
+
+        $this->assertSame('Autorisation renouvelée', $typedem->fresh()->name);
+    }
+
+    public function test_admin_can_delete_a_type_de_demande(): void
+    {
+        $admin = User::factory()->create(['role' => UserRole::Admin]);
+        $typedem = Typedem::create(['name' => 'Autorisation']);
+
+        $this->actingAs($admin)
+            ->delete("/typedem/{$typedem->id}")
+            ->assertRedirect(route('typedem.index'));
+
+        $this->assertDatabaseMissing('typedem', ['id' => $typedem->id]);
+    }
+
+    public function test_non_admin_cannot_update_delete_or_export_a_type_de_demande(): void
+    {
+        $user = User::factory()->create(['role' => UserRole::User]);
+        $typedem = Typedem::create(['name' => 'Autorisation']);
+
+        $this->actingAs($user)->put("/typedem/{$typedem->id}", ['name' => 'Autre'])->assertForbidden();
+        $this->actingAs($user)->delete("/typedem/{$typedem->id}")->assertForbidden();
+        $this->actingAs($user)->get('/typedem/export')->assertForbidden();
+
+        $this->assertSame('Autorisation', $typedem->fresh()->name);
+    }
+
+    public function test_typedem_export_returns_a_csv_of_all_types(): void
+    {
+        $admin = User::factory()->create(['role' => UserRole::Admin]);
+        Typedem::create(['name' => 'Autorisation']);
+        Typedem::create(['name' => 'Reclamation']);
+
+        $response = $this->actingAs($admin)->get('/typedem/export');
+
+        $response->assertOk();
+        $response->assertHeader('content-type', 'text/csv; charset=UTF-8');
+        $csv = $response->streamedContent();
+        $this->assertStringContainsString('Autorisation', $csv);
+        $this->assertStringContainsString('Reclamation', $csv);
+    }
+
     public function test_typedem_index_shows_an_empty_state_when_search_matches_nothing(): void
     {
         $admin = User::factory()->create(['role' => UserRole::Admin]);
