@@ -81,4 +81,63 @@ class AdminConfigTest extends TestCase
             ->post('/typedem', ['name' => ''])
             ->assertSessionHasErrors('name');
     }
+
+    public function test_cannot_create_a_duplicate_type_de_demande(): void
+    {
+        $admin = User::factory()->create(['role' => UserRole::Admin]);
+        Typedem::create(['name' => 'Autorisation']);
+
+        $this->actingAs($admin)
+            ->post('/typedem', ['name' => 'Autorisation'])
+            ->assertSessionHasErrors('name');
+
+        $this->assertDatabaseCount('typedem', 1);
+    }
+
+    public function test_cannot_rename_a_type_de_demande_to_an_existing_name(): void
+    {
+        $admin = User::factory()->create(['role' => UserRole::Admin]);
+        Typedem::create(['name' => 'Autorisation']);
+        $reclamation = Typedem::create(['name' => 'Reclamation']);
+
+        $this->actingAs($admin)
+            ->put("/typedem/{$reclamation->id}", ['name' => 'Autorisation'])
+            ->assertSessionHasErrors('name');
+
+        $this->assertSame('Reclamation', $reclamation->fresh()->name);
+    }
+
+    public function test_can_rename_a_type_de_demande_to_its_own_unchanged_name(): void
+    {
+        $admin = User::factory()->create(['role' => UserRole::Admin]);
+        $typedem = Typedem::create(['name' => 'Autorisation']);
+
+        $this->actingAs($admin)
+            ->put("/typedem/{$typedem->id}", ['name' => 'Autorisation'])
+            ->assertRedirect(route('typedem.index'));
+    }
+
+    public function test_typedem_index_shows_an_empty_state_when_search_matches_nothing(): void
+    {
+        $admin = User::factory()->create(['role' => UserRole::Admin]);
+        Typedem::create(['name' => 'Certificat de résidence']);
+
+        $response = $this->actingAs($admin)->get('/typedem?search=Introuvable');
+
+        $response->assertOk();
+        $response->assertSee('Aucun type de demande ne correspond');
+        $response->assertDontSee('Certificat de résidence');
+    }
+
+    public function test_typedem_index_search_filters_by_name(): void
+    {
+        $admin = User::factory()->create(['role' => UserRole::Admin]);
+        Typedem::create(['name' => 'Certificat de résidence']);
+        Typedem::create(['name' => 'Passeport']);
+
+        $response = $this->actingAs($admin)->get('/typedem?search=Certificat');
+
+        $response->assertSee('Certificat de résidence');
+        $response->assertDontSee('Passeport');
+    }
 }

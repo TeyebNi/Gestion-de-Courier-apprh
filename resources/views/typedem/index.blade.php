@@ -13,7 +13,16 @@ Types de Demande
                     Types de Demande
                     <button class="btn btn-primary btn-sm ml-2" data-toggle="modal" data-target="#exampleModal">Nouveau Type de Demande</button>
                 </h4>
-                <a href="{{ route('typedem.export') }}" class="btn btn-success btn-sm" title="Exporter en Excel"><i class="fas fa-file-excel"></i></a>
+                <div class="d-flex align-items-center flex-wrap">
+                    <form method="GET" action="{{ route('typedem.index') }}" class="form-inline mr-2">
+                        <input type="text" name="search" class="form-control form-control-sm" placeholder="Rechercher un type de demande..." value="{{ $search }}">
+                        <button type="submit" class="btn btn-primary btn-sm ml-2">Rechercher</button>
+                        @if($search)
+                        <a href="{{ route('typedem.index') }}" class="btn btn-outline-secondary btn-sm ml-2" title="Réinitialiser la recherche">&times;</a>
+                        @endif
+                    </form>
+                    <a href="{{ route('typedem.export') }}" class="btn btn-success btn-sm" title="Exporter en Excel"><i class="fas fa-file-excel"></i></a>
+                </div>
             </div>
             <div class="card-body">
 
@@ -35,7 +44,7 @@ Types de Demande
                             <th class="text-right">Action</th>
                         </thead>
                         <tbody>
-                            @foreach($typedem as $key => $c)
+                            @forelse($typedem as $key => $c)
                             <tr>
                                 <td>{{ $typedem->firstItem() + $key }}</td>
                                 <td>{{ $c->name }}</td>
@@ -44,7 +53,17 @@ Types de Demande
                                     <a data-id="{{ $c->id }}" data-toggle="modal" data-target="#exampleModal-delete" class="btn btn-danger btn-sm" title="Supprimer"><svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"></polyline><path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"></path><path d="M10 11v6"></path><path d="M14 11v6"></path><path d="M9 6V4a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v2"></path></svg></a>
                                 </td>
                             </tr>
-                            @endforeach
+                            @empty
+                            <tr>
+                                <td colspan="3" class="text-center text-muted">
+                                    @if($search)
+                                        Aucun type de demande ne correspond à « {{ $search }} ».
+                                    @else
+                                        Aucun type de demande enregistré pour le moment.
+                                    @endif
+                                </td>
+                            </tr>
+                            @endforelse
                         </tbody>
                     </table>
                 </div>
@@ -79,7 +98,7 @@ Types de Demande
           <div class="input-group-prepend">
             <span class="input-group-text">Type</span>
           </div>
-          <input type="text" class="form-control" id="typedem_name" name="name" placeholder="Entrer Nom">
+          <input type="text" class="form-control" id="typedem_name" name="name" placeholder="Ex: Autorisation, Réclamation, Aide sociale..." maxlength="255">
           <span class="text-danger" data-error-for="name"></span>
         </div>
 
@@ -111,7 +130,7 @@ Types de Demande
             <div class="input-group-prepend">
               <span class="input-group-text">Type</span>
             </div>
-            <input type="text" class="form-control" id="edit_typedem_name" name="name" placeholder="Entrer Nom">
+            <input type="text" class="form-control" id="edit_typedem_name" name="name" placeholder="Ex: Autorisation, Réclamation, Aide sociale..." maxlength="255">
           </div>
         </div>
         <div class="modal-footer">

@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use App\Models\Typedem;
 use App\Http\Controllers\Controller;
 use Illuminate\Http\Request;
+use Illuminate\Validation\Rule;
 
 use App\Traits\ExportsCsv;
 
@@ -50,9 +51,10 @@ class TypedemController extends Controller
     public function store(Request $request)
     {
         $request->validate([
-            'name' => ['required', 'string', 'max:255'],
+            'name' => ['required', 'string', 'max:255', Rule::unique('typedem', 'name')],
         ], [
             'name.required' => "Veuillez entrer le type de demande.",
+            'name.unique' => "Ce type de demande existe déjà.",
         ]);
 
         $typedem = Typedem::create([
@@ -67,37 +69,7 @@ class TypedemController extends Controller
             ]);
         }
 
-        session()->flash('success', 'les donnees successfully enregistre.');
-
-        return redirect()->route('typedem.index')->with('succes', ' Type Demande saved');
-    }
-   
-    /**
-     * Show the form for creating a new resource.
-     */
-    public function create()
-    {
-        //
-    }
-
-    /**
-     * Store a newly created resource in storage.
-     */
-    
-    /**
-     * Display the specified resource.
-     */
-    public function show(Typedem $typedem)
-    {
-        //
-    }
-
-    /**
-     * Show the form for editing the specified resource.
-     */
-    public function edit(Typedem $typedem)
-    {
-        //
+        return redirect()->route('typedem.index')->with('success', "Le type de demande « {$typedem->name} » a été ajouté avec succès.");
     }
 
     /**
@@ -106,9 +78,10 @@ class TypedemController extends Controller
     public function update(Request $request, Typedem $typedem)
     {
         $request->validate([
-            'name' => ['required', 'string', 'max:255'],
+            'name' => ['required', 'string', 'max:255', Rule::unique('typedem', 'name')->ignore($typedem->id)],
         ], [
             'name.required' => "Veuillez entrer le type de demande.",
+            'name.unique' => "Ce type de demande existe déjà.",
         ]);
 
         $typedem->update([
