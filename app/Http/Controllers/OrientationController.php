@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use App\Models\Orientation;
 use App\Http\Controllers\Controller;
 use Illuminate\Http\Request;
+use Illuminate\Validation\Rule;
 
 use App\Traits\ExportsCsv;
 
@@ -38,9 +39,10 @@ class OrientationController extends Controller
     public function store(Request $request)
     {
         $request->validate([
-            'name' => ['required', 'string', 'max:255'],
+            'name' => ['required', 'string', 'max:255', Rule::unique('orientation', 'name')],
         ], [
             'name.required' => "Veuillez entrer le nom de l'orientation.",
+            'name.unique' => "Cette orientation existe déjà.",
         ]);
 
         $orientation = Orientation::create([
@@ -55,26 +57,16 @@ class OrientationController extends Controller
             ]);
         }
 
-        session()->flash('success', 'les donnees successfully enregistre.');
-        return redirect()->route('orientation.index')->with('succes', ' Orientation saved');
-    }
-
-    public function show(Orientation $orientation)
-    {
-        //
-    }
-
-    public function edit(Orientation $orientation)
-    {
-        //
+        return redirect()->route('orientation.index')->with('success', "L'orientation « {$orientation->name} » a été ajoutée avec succès.");
     }
 
     public function update(Request $request, Orientation $orientation)
     {
         $request->validate([
-            'name' => ['required', 'string', 'max:255'],
+            'name' => ['required', 'string', 'max:255', Rule::unique('orientation', 'name')->ignore($orientation->id)],
         ], [
             'name.required' => "Veuillez entrer le nom de l'orientation.",
+            'name.unique' => "Cette orientation existe déjà.",
         ]);
 
         $orientation->update([
