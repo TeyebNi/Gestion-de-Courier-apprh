@@ -54,6 +54,7 @@ class CircuitWorkflowTest extends TestCase
             'daterecp' => now()->format('Y-m-d'),
             'objet' => 'Raccordement eau',
             'reference' => 'MI/2026/245',
+            'service_assigne' => 'Etat Civil',
         ]);
 
         $response = $this->actingAs($accueil)->get("/circuit/{$depot->id}/historique");
@@ -63,6 +64,7 @@ class CircuitWorkflowTest extends TestCase
         $response->assertSee('MI/2026/245');
         $response->assertSee('22222222');
         $response->assertSee('Quartier Socogim, Nouakchott');
+        $response->assertSee('Etat Civil');
     }
 
     public function test_historique_transferts_are_paginated_by_ten(): void

@@ -91,6 +91,12 @@ Historique de la Demande
                         <strong>{{ $tabdepot->remarque_maire }}</strong>
                     </div>
                     @endif
+                    @if($tabdepot->service_assigne)
+                    <div class="col-md-4 mb-3">
+                        <small class="text-muted d-block">Service assigné</small>
+                        <strong>{{ $tabdepot->service_assigne }}</strong>
+                    </div>
+                    @endif
                 </div>
 
                 @if($tabdepot->piece_jointe)
