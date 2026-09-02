@@ -187,37 +187,49 @@
             <tr>
                 <td class="detail-label">Type de demande</td>
                 <td class="detail-sep">:</td>
-                <td class="detail-value">{{ $detailf->typdm }}</td>
+                <td class="detail-value">{{ $detailf->typdm ?: '—' }}</td>
             </tr>
 
             <tr>
-                <td class="detail-label">Nom et Prénom</td>
+                <td class="detail-label">Objet</td>
                 <td class="detail-sep">:</td>
-                <td class="detail-value">{{ $detailf->nom }} {{ $detailf->prenom }}</td>
+                <td class="detail-value">{{ $detailf->objet ?: '—' }}</td>
+            </tr>
+
+            <tr>
+                <td class="detail-label">N° référence</td>
+                <td class="detail-sep">:</td>
+                <td class="detail-value">{{ $detailf->reference ?: '—' }}</td>
+            </tr>
+
+            <tr>
+                <td class="detail-label">Nom</td>
+                <td class="detail-sep">:</td>
+                <td class="detail-value">{{ $detailf->nom ?: ($detailf->origine_detail ?: '—') }}</td>
             </tr>
 
             <tr>
                 <td class="detail-label">NNI</td>
                 <td class="detail-sep">:</td>
-                <td class="detail-value">{{ $detailf->nni }}</td>
+                <td class="detail-value">{{ $detailf->nni ?: '—' }}</td>
             </tr>
 
             <tr>
                 <td class="detail-label">Téléphone</td>
                 <td class="detail-sep">:</td>
-                <td class="detail-value">{{ $detailf->tel }}</td>
+                <td class="detail-value">{{ $detailf->tel ?: '—' }}</td>
             </tr>
 
             <tr>
                 <td class="detail-label">Adresse</td>
                 <td class="detail-sep">:</td>
-                <td class="detail-value">{{ $detailf->adresse }}</td>
+                <td class="detail-value">{{ $detailf->adresse ?: '—' }}</td>
             </tr>
 
             <tr>
                 <td class="detail-label">Date</td>
                 <td class="detail-sep">:</td>
-                <td class="detail-value">{{ $detailf->daterecp }}</td>
+                <td class="detail-value">{{ $detailf->daterecp ? \Carbon\Carbon::parse($detailf->daterecp)->format('d/m/Y') : '—' }}</td>
             </tr>
         </table>
     </div>

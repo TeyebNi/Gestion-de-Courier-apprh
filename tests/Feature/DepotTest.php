@@ -393,4 +393,36 @@ class DepotTest extends TestCase
         $response->assertSessionHasErrors('origine');
         $this->assertDatabaseCount('tabdepot', 0);
     }
+
+    public function test_receipt_shows_objet_reference_and_a_localized_date(): void
+    {
+        $demande = Tabdepot::create([
+            'nom' => 'Ahmed Ould Sidi',
+            'tel' => '22334455',
+            'daterecp' => '2026-08-30',
+            'objet' => 'Raccordement eau',
+            'reference' => 'MI/2026/245',
+        ]);
+
+        $html = view('depot.print_reçu', ['detailf' => $demande])->render();
+
+        $this->assertStringContainsString('Raccordement eau', $html);
+        $this->assertStringContainsString('MI/2026/245', $html);
+        $this->assertStringContainsString('30/08/2026', $html);
+        $this->assertStringNotContainsString('2026-08-30', $html);
+    }
+
+    public function test_receipt_shows_institution_name_when_nom_is_empty(): void
+    {
+        $demande = Tabdepot::create([
+            'origine' => 'externe',
+            'type_expediteur' => 'institution',
+            'origine_detail' => "Ministère de l'Intérieur",
+            'daterecp' => now()->format('Y-m-d'),
+        ]);
+
+        $html = view('depot.print_reçu', ['detailf' => $demande])->render();
+
+        $this->assertStringContainsString("Ministère de l&#039;Intérieur", $html);
+    }
 }

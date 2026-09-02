@@ -57,7 +57,7 @@ Historique de la Demande
                     </div>
                     <div class="col-md-4 mb-3">
                         <small class="text-muted d-block">Date de réception</small>
-                        <strong>{{ $tabdepot->daterecp ?: '—' }}</strong>
+                        <strong>{{ $tabdepot->daterecp ? \Carbon\Carbon::parse($tabdepot->daterecp)->format('d/m/Y') : '—' }}</strong>
                     </div>
                     @if($tabdepot->nni)
                     <div class="col-md-4 mb-3">
