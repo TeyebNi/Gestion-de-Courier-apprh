@@ -27,8 +27,6 @@ Route::middleware('auth')->group(function () {
     Route::get('depot', [TabdepotController::class, 'index'])->name('depot.index');
     Route::get('depot/export', [TabdepotController::class, 'exportExcel'])->name('depot.export');
     Route::post('depot', [TabdepotController::class, 'store'])->name('depot.store');
-    Route::get('/export-pdf', [TabdepotController::class, 'exportPDF1']);
-    Route::get('invoice', [TabdepotController::class, 'exportPDF']);
     Route::get('depot/print_reçu/{idt}',[TabdepotController::class,'print_facture'])->name('depot.print_reçu');
     Route::get('affectation', [AffectationController::class, 'index'])->name('affectation.index');
     Route::get('affectation/export', [AffectationController::class, 'exportExcel'])->name('affectation.export');

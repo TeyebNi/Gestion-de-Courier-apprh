@@ -320,4 +320,38 @@ class DepotTest extends TestCase
 
         $this->assertDatabaseMissing('tabdepot', ['id' => $demande->id]);
     }
+
+    public function test_index_search_matches_objet_and_reference(): void
+    {
+        $user = User::factory()->create(['role' => UserRole::User]);
+        Tabdepot::create([
+            'nom' => 'Ahmed',
+            'tel' => '22334455',
+            'daterecp' => now()->format('Y-m-d'),
+            'objet' => 'Raccordement eau',
+            'reference' => 'MI/2026/245',
+        ]);
+        Tabdepot::create(['nom' => 'Fatimetou', 'tel' => '22334456', 'daterecp' => now()->format('Y-m-d')]);
+
+        $byObjet = $this->actingAs($user)->get('/depot?search=Raccordement');
+        $byObjet->assertSee('Ahmed');
+        $byObjet->assertDontSee('Fatimetou');
+
+        $byReference = $this->actingAs($user)->get('/depot?search=MI/2026/245');
+        $byReference->assertSee('Ahmed');
+        $byReference->assertDontSee('Fatimetou');
+    }
+
+    public function test_store_shows_a_clean_success_message(): void
+    {
+        $user = User::factory()->create(['role' => UserRole::User]);
+
+        $response = $this->actingAs($user)->post('/depot', [
+            'nom' => 'Ahmed Ould Sidi',
+            'tel' => '22334455',
+        ]);
+
+        $response->assertSessionHas('success', 'Demande de Ahmed Ould Sidi enregistrée avec succès.');
+        $response->assertSessionMissing('succes');
+    }
 }

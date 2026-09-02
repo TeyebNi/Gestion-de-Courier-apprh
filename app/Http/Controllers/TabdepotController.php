@@ -9,7 +9,6 @@ use App\Models\Orientation;
 use App\Http\Controllers\Controller;
 use App\Services\SmsService;
 use Illuminate\Http\Request;
-use Barryvdh\DomPDF\Facade\Pdf;
 
 use App\Traits\ExportsCsv;
 
@@ -45,7 +44,7 @@ class TabdepotController extends Controller
                       ->orWhere('reference', 'like', "%{$search}%");
             })
             ->orderby('id', 'desc')
-            ->paginate(5)
+            ->paginate(10)
             ->appends(['search' => $search]);
 
         return view('depot.index', compact('tabdepot', 'typedem', 'orientations', 'search'));
@@ -84,27 +83,6 @@ class TabdepotController extends Controller
 
         return response($mpdf->Output('recu_depot_' . $detailf->id . '.pdf', \Mpdf\Output\Destination::DOWNLOAD), 200)
             ->header('Content-Type', 'application/pdf');
-    }
-
-    public function exportPDF()
-    {
-        $data = Tabdepot::all();
-        $pdf = Pdf::loadView('invoice', ['data' => $data]);
-        return $pdf->download('invoice.pdf');
-    }
-
-    public function exportPDF1()
-    {
-        $pdf = Pdf::loadView('report', [
-            'title' => 'Rapport de Test',
-            'author' => 'Mohamed'
-        ]);
-        return $pdf->download('report.pdf');
-    }
-
-    public function create()
-    {
-        //
     }
 
     public function store(Request $request)
@@ -168,19 +146,9 @@ class TabdepotController extends Controller
             );
         }
 
-        session()->flash('success', 'les donnees successfully enregistre.');
+        $nomAffiche = $demande->nom ?: ($demande->origine_detail ?: 'la demande');
 
-        return redirect()->route('depot.index')->with('succes', ' Demande saved');
-    }
-
-    public function show(Tabdepot $tabdepot)
-    {
-        //
-    }
-
-    public function edit(Tabdepot $tabdepot)
-    {
-        //
+        return redirect()->route('depot.index')->with('success', "Demande de {$nomAffiche} enregistrée avec succès.");
     }
 
     public function update(Request $request, Tabdepot $tabdepot)
