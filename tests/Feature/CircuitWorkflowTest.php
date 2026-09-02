@@ -88,6 +88,41 @@ class CircuitWorkflowTest extends TestCase
         $response->assertDontSee('2026-08-30');
     }
 
+    public function test_service_index_shows_institution_name_objet_and_a_localized_date(): void
+    {
+        $serviceUser = User::factory()->create(['role' => UserRole::User, 'service' => 'Etat Civil']);
+        $pending = Tabdepot::create([
+            'origine' => 'externe',
+            'type_expediteur' => 'institution',
+            'origine_detail' => "Ministère de l'Intérieur",
+            'objet' => 'Demande de raccordement eau',
+            'daterecp' => '2026-08-30',
+            'statut_circuit' => 'service',
+            'service_assigne' => 'Etat Civil',
+        ]);
+        $treated = Tabdepot::create([
+            'origine' => 'externe',
+            'type_expediteur' => 'institution',
+            'origine_detail' => 'Ministère des Finances',
+            'objet' => 'Demande de subvention',
+            'daterecp' => '2026-08-15',
+            'statut_circuit' => 'cloture',
+            'service_assigne' => 'Etat Civil',
+        ]);
+
+        $response = $this->actingAs($serviceUser)->get('/circuit/service');
+
+        $response->assertOk();
+        $response->assertSee("Ministère de l&#039;Intérieur", false);
+        $response->assertSee('Demande de raccordement eau');
+        $response->assertSee('30/08/2026');
+        $response->assertSee('Ministère des Finances');
+        $response->assertSee('Demande de subvention');
+        $response->assertSee('15/08/2026');
+        $response->assertDontSee('2026-08-30');
+        $response->assertDontSee('2026-08-15');
+    }
+
     public function test_maire_historique_shows_institution_name_and_objet_and_search_matches_objet(): void
     {
         $maire = User::factory()->create(['role' => UserRole::Maire]);
