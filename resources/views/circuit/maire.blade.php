@@ -83,7 +83,7 @@ document.addEventListener('DOMContentLoaded', function () {
                                         <select name="service_destination" class="form-control" required>
                                             <option value="">Sélectionner le service</option>
                                             @foreach($orientations as $o)
-                                                <option value="{{ $o->name }}">{{ $o->name }}</option>
+                                                <option value="{{ $o->name }}" {{ $d->origine === 'interne' && $d->origine_detail === $o->name ? 'selected' : '' }}>{{ $o->name }}</option>
                                             @endforeach
                                         </select>
                                     </div>

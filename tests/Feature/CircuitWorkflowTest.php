@@ -4,6 +4,7 @@ namespace Tests\Feature;
 
 use App\Enums\UserRole;
 use App\Models\DemandeHistorique;
+use App\Models\Orientation;
 use App\Models\Tabdepot;
 use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
@@ -148,6 +149,27 @@ class CircuitWorkflowTest extends TestCase
         $response->assertSee("Ministère de l&#039;Intérieur", false);
         $response->assertSee('Demande de raccordement eau');
         $response->assertDontSee('Autre Citoyen');
+    }
+
+    public function test_maire_form_preselects_service_for_an_internal_demande(): void
+    {
+        $maire = User::factory()->create(['role' => UserRole::Maire]);
+        Orientation::create(['name' => 'Informatique']);
+        Orientation::create(['name' => 'Etat Civil']);
+        Tabdepot::create([
+            'nom' => 'Agent Test',
+            'tel' => '22222222',
+            'daterecp' => now()->format('Y-m-d'),
+            'origine' => 'interne',
+            'origine_detail' => 'Informatique',
+            'statut_circuit' => 'maire',
+        ]);
+
+        $response = $this->actingAs($maire)->get('/circuit/maire');
+
+        $response->assertOk();
+        $response->assertSee('<option value="Informatique" selected>Informatique</option>', false);
+        $response->assertSee('<option value="Etat Civil" >Etat Civil</option>', false);
     }
 
     public function test_maire_index_shows_institution_name_objet_and_a_localized_date(): void
