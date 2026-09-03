@@ -154,6 +154,31 @@ class RolePermissionsTest extends TestCase
         $maireResponse->assertDontSee('Dernières Demandes Déposées');
     }
 
+    public function test_maire_mini_dashboard_shows_accepted_and_rejected_totals(): void
+    {
+        $maire = User::factory()->create(['role' => UserRole::Maire]);
+        Tabdepot::create(['nom' => 'A', 'tel' => '22222222', 'daterecp' => now()->format('Y-m-d'), 'decision_maire' => 'accepte']);
+        Tabdepot::create(['nom' => 'B', 'tel' => '22222223', 'daterecp' => now()->format('Y-m-d'), 'decision_maire' => 'accepte']);
+        Tabdepot::create(['nom' => 'C', 'tel' => '22222224', 'daterecp' => now()->format('Y-m-d'), 'decision_maire' => 'refuse']);
+
+        $response = $this->actingAs($maire)->get('/');
+
+        $response->assertOk();
+        $response->assertSee('Mes décisions');
+        $response->assertSee('2 acceptées');
+        $response->assertSee('1 refusées');
+    }
+
+    public function test_cabinet_mini_dashboard_does_not_show_decision_totals(): void
+    {
+        $cabinet = User::factory()->create(['role' => UserRole::Fatou]);
+
+        $response = $this->actingAs($cabinet)->get('/');
+
+        $response->assertOk();
+        $response->assertDontSee('Mes décisions');
+    }
+
     public function test_maire_mini_dashboard_shows_institution_name_objet_and_a_localized_date(): void
     {
         $maire = User::factory()->create(['role' => UserRole::Maire]);

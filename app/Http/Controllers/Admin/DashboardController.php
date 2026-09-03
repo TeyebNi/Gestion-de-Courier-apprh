@@ -24,6 +24,9 @@ class DashboardController extends Controller
 
         // ----- Cabinet / Maire : dashboard minimal centré sur leur file d'attente -----
         if ($isCabinet || $isMaireUser) {
+            $totalAcceptees = null;
+            $totalRefusees = null;
+
             if ($isCabinet) {
                 $pendingCount = Tabdepot::where('statut_circuit', 'fatou')->whereNull('decision_maire')->count();
                 $recentQueue = Tabdepot::where('statut_circuit', 'fatou')
@@ -41,6 +44,11 @@ class DashboardController extends Controller
                     ->get();
                 $queueRoute = route('circuit.maire.index');
                 $queueLabel = 'En attente de décision';
+
+                // Aucune page n'affiche ce total ailleurs : même "Historique de mes
+                // décisions" ne montre qu'une liste, jamais un compte global.
+                $totalAcceptees = Tabdepot::where('decision_maire', 'accepte')->count();
+                $totalRefusees = Tabdepot::where('decision_maire', 'refuse')->count();
             }
 
             return view('admin.dashboard', compact(
@@ -51,7 +59,9 @@ class DashboardController extends Controller
                 'pendingCount',
                 'recentQueue',
                 'queueRoute',
-                'queueLabel'
+                'queueLabel',
+                'totalAcceptees',
+                'totalRefusees'
             ));
         }
 
