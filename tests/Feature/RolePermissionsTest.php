@@ -154,6 +154,29 @@ class RolePermissionsTest extends TestCase
         $maireResponse->assertDontSee('Dernières Demandes Déposées');
     }
 
+    public function test_maire_sees_suivi_des_demandes_link_and_can_access_it(): void
+    {
+        $maire = User::factory()->create(['role' => UserRole::Maire]);
+
+        $response = $this->actingAs($maire)->get('/');
+
+        $response->assertOk();
+        $response->assertSee(route('circuit.suivi'), false);
+        $response->assertSee('Suivi des Demandes');
+
+        $this->actingAs($maire)->get('/circuit/suivi')->assertOk();
+    }
+
+    public function test_cabinet_does_not_see_suivi_des_demandes_link(): void
+    {
+        $cabinet = User::factory()->create(['role' => UserRole::Fatou]);
+
+        $response = $this->actingAs($cabinet)->get('/');
+
+        $response->assertOk();
+        $response->assertDontSee('Suivi des Demandes');
+    }
+
     public function test_maire_mini_dashboard_shows_accepted_and_rejected_totals(): void
     {
         $maire = User::factory()->create(['role' => UserRole::Maire]);

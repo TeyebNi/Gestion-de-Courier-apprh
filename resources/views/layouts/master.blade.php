@@ -137,7 +137,7 @@
                         </a>
                     </li>
                     @endif
-                    @if(auth()->user()->isAdmin() || (empty(auth()->user()->service) && !auth()->user()->isFatou() && !auth()->user()->isMaire()))
+                    @if(auth()->user()->isAdmin() || auth()->user()->isMaire() || (empty(auth()->user()->service) && !auth()->user()->isFatou() && !auth()->user()->isMaire()))
                     <li class="{{ request()->is('circuit/suivi*') ? 'active' : '' }}">
                         <a href="{{ route('circuit.suivi') }}">
                             <i class="now-ui-icons ui-1_zoom-bold"></i>
