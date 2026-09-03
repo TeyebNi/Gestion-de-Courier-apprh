@@ -3,6 +3,7 @@
 namespace App\Http\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
+use App\Models\DemandeHistorique;
 use App\Models\Tabdepot;
 use App\Models\Typedem;
 use Illuminate\Http\Request;
@@ -26,6 +27,7 @@ class DashboardController extends Controller
         if ($isCabinet || $isMaireUser) {
             $totalAcceptees = null;
             $totalRefusees = null;
+            $totalEnvoyeesMaire = null;
 
             if ($isCabinet) {
                 $pendingCount = Tabdepot::where('statut_circuit', 'fatou')->whereNull('decision_maire')->count();
@@ -36,6 +38,11 @@ class DashboardController extends Controller
                     ->get();
                 $queueRoute = route('circuit.fatou.index');
                 $queueLabel = 'En attente au Cabinet';
+
+                // Chaque transfert vers le Maire est journalisé dans l'historique de la
+                // demande : un compte simple du travail accompli, sans rien exposer de
+                // plus que ce qui concerne le Cabinet lui-même.
+                $totalEnvoyeesMaire = DemandeHistorique::where('vers_statut', 'maire')->count();
             } else {
                 $pendingCount = Tabdepot::where('statut_circuit', 'maire')->count();
                 $recentQueue = Tabdepot::where('statut_circuit', 'maire')
@@ -61,7 +68,8 @@ class DashboardController extends Controller
                 'queueRoute',
                 'queueLabel',
                 'totalAcceptees',
-                'totalRefusees'
+                'totalRefusees',
+                'totalEnvoyeesMaire'
             ));
         }
 

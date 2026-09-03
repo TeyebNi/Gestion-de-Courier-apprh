@@ -154,6 +154,26 @@ class RolePermissionsTest extends TestCase
         $maireResponse->assertDontSee('Dernières Demandes Déposées');
     }
 
+    public function test_cabinet_mini_dashboard_shows_total_sent_to_maire(): void
+    {
+        $accueil = User::factory()->create(['role' => UserRole::User]);
+        $cabinet = User::factory()->create(['role' => UserRole::Fatou]);
+
+        $depotA = Tabdepot::create(['nom' => 'A', 'tel' => '22222222', 'daterecp' => now()->format('Y-m-d')]);
+        $depotB = Tabdepot::create(['nom' => 'B', 'tel' => '22222223', 'daterecp' => now()->format('Y-m-d')]);
+
+        $this->actingAs($accueil)->post("/circuit/{$depotA->id}/envoyer-fatou");
+        $this->actingAs($accueil)->post("/circuit/{$depotB->id}/envoyer-fatou");
+        $this->actingAs($cabinet)->post("/circuit/{$depotA->id}/envoyer-maire");
+        $this->actingAs($cabinet)->post("/circuit/{$depotB->id}/envoyer-maire");
+
+        $response = $this->actingAs($cabinet)->get('/');
+
+        $response->assertOk();
+        $response->assertSee('Envoyées au Maire');
+        $response->assertSee('2');
+    }
+
     public function test_maire_sees_suivi_des_demandes_link_and_can_access_it(): void
     {
         $maire = User::factory()->create(['role' => UserRole::Maire]);
