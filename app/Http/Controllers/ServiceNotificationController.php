@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Models\ServiceNotification;
+use App\Models\Tabdepot;
 
 class ServiceNotificationController extends Controller
 {
@@ -15,7 +16,14 @@ class ServiceNotificationController extends Controller
             ->orderByDesc('created_at')
             ->paginate(10);
 
-        return view('notifications.index', compact('notifications', 'userService'));
+        // D'anciennes notifications (avant le circuit actuel) ont un iddmd
+        // invalide (nom de type, vide, ou demande depuis supprimée) : ne
+        // proposer le lien que vers une demande qui existe réellement.
+        $validDemandeIds = Tabdepot::whereIn('id', $notifications->pluck('iddmd')->filter(fn ($id) => is_numeric($id)))
+            ->pluck('id')
+            ->all();
+
+        return view('notifications.index', compact('notifications', 'userService', 'validDemandeIds'));
     }
 
     public function markRead(ServiceNotification $notification)

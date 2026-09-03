@@ -42,7 +42,7 @@ Notifications
                                     @endif
                                 </td>
                                 <td class="text-right">
-                                    @if($n->iddmd)
+                                    @if($n->iddmd && is_numeric($n->iddmd) && in_array((int) $n->iddmd, $validDemandeIds))
                                     <a href="{{ route('circuit.historique', $n->iddmd) }}" class="btn btn-secondary btn-sm" title="Voir la demande">
                                         <i class="fas fa-eye"></i> Voir la demande
                                     </a>

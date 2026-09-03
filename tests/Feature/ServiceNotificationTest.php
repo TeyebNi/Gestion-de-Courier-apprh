@@ -69,6 +69,20 @@ class ServiceNotificationTest extends TestCase
         $response->assertSee(route('circuit.historique', $demande->id), false);
     }
 
+    public function test_notification_with_a_stale_or_invalid_iddmd_shows_no_broken_link(): void
+    {
+        $user = User::factory()->create(['role' => UserRole::User, 'service' => 'Etat Civil']);
+        // Reproduit des notifications historiques réelles : iddmd contenant
+        // un nom de type au lieu d'un id, ou un id de demande supprimée.
+        ServiceNotification::create(['service' => 'Etat Civil', 'iddmd' => 'Reclamation', 'message' => 'Ancienne notif 1']);
+        ServiceNotification::create(['service' => 'Etat Civil', 'iddmd' => '999999', 'message' => 'Ancienne notif 2']);
+
+        $response = $this->actingAs($user)->get('/notifications');
+
+        $response->assertOk();
+        $response->assertDontSee('Voir la demande');
+    }
+
     public function test_admin_sees_notifications_from_every_service(): void
     {
         $admin = User::factory()->create(['role' => UserRole::Admin]);
