@@ -517,7 +517,9 @@ Tableau de bord
             <div class="card-footer">
                 <hr>
                 <div class="stats">
-                    <i class="now-ui-icons ui-1_check"></i> {{ $totalAcceptees + $totalRefusees }} demandes décidées au total
+                    <i class="now-ui-icons ui-1_check text-success"></i> {{ $totalAcceptees }} acceptées
+                    &nbsp;·&nbsp;
+                    <i class="now-ui-icons ui-1_simple-remove text-danger"></i> {{ $totalRefusees }} refusées
                 </div>
             </div>
         </div>
