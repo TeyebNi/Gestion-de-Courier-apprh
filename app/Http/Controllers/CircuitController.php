@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Models\DemandeHistorique;
 use App\Models\Orientation;
+use App\Models\ServiceNotification;
 use App\Models\Tabdepot;
 use App\Services\SmsService;
 use Illuminate\Http\Request;
@@ -157,6 +158,12 @@ class CircuitController extends Controller
                 . ($request->remarque_maire ? ' — ' . $request->remarque_maire : '')
                 . ' — Envoyée vers ' . $request->service_destination
         );
+
+        ServiceNotification::create([
+            'service' => $request->service_destination,
+            'iddmd' => $tabdepot->id,
+            'message' => "Nouvelle demande affectée à votre service (Code demande : {$tabdepot->id}).",
+        ]);
 
         if ($tabdepot->tel) {
             $decisionLabel = $request->decision_maire === 'accepte' ? 'acceptée' : 'refusée';

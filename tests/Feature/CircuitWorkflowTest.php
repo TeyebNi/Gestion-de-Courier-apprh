@@ -266,6 +266,24 @@ class CircuitWorkflowTest extends TestCase
         });
     }
 
+    public function test_decide_notifies_the_assigned_service(): void
+    {
+        $maire = User::factory()->create(['role' => UserRole::Maire]);
+        $depot = $this->makeDepot();
+        $depot->update(['statut_circuit' => 'maire']);
+
+        $this->actingAs($maire)->post("/circuit/{$depot->id}/decider", [
+            'decision_maire' => 'accepte',
+            'service_destination' => 'Etat Civil',
+        ]);
+
+        $this->assertDatabaseHas('service_notifications', [
+            'service' => 'Etat Civil',
+            'iddmd' => $depot->id,
+            'is_read' => false,
+        ]);
+    }
+
     public function test_only_the_assigned_service_can_close_a_demande(): void
     {
         $depot = $this->makeDepot();
