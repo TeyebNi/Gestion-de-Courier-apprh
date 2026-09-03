@@ -42,11 +42,16 @@ Notifications
                                     @endif
                                 </td>
                                 <td class="text-right">
+                                    @if($n->iddmd)
+                                    <a href="{{ route('circuit.historique', $n->iddmd) }}" class="btn btn-secondary btn-sm" title="Voir la demande">
+                                        <i class="fas fa-eye"></i> Voir la demande
+                                    </a>
+                                    @endif
                                     @if(!$n->is_read)
                                     <form method="POST" action="{{ route('notifications.read', $n->id) }}" style="display:inline;">
                                         @csrf
                                         @method('PATCH')
-                                        <button type="submit" class="btn btn-info btn-sm" title="Marquer lue"><i class="fa fa-eye"></i></button>
+                                        <button type="submit" class="btn btn-info btn-sm" title="Marquer lue"><i class="fa fa-check"></i> Marquer lue</button>
                                     </form>
                                     @endif
                                 </td>

@@ -49,6 +49,26 @@ class ServiceNotificationTest extends TestCase
         $this->assertTrue($notification->fresh()->is_read);
     }
 
+    public function test_notification_links_directly_to_the_related_demande(): void
+    {
+        $user = User::factory()->create(['role' => UserRole::User, 'service' => 'Etat Civil']);
+        $demande = \App\Models\Tabdepot::create([
+            'nom' => 'Ahmed Ould Sidi',
+            'tel' => '22334455',
+            'daterecp' => now()->format('Y-m-d'),
+        ]);
+        ServiceNotification::create([
+            'service' => 'Etat Civil',
+            'iddmd' => $demande->id,
+            'message' => 'Nouvelle demande affectée à votre service.',
+        ]);
+
+        $response = $this->actingAs($user)->get('/notifications');
+
+        $response->assertOk();
+        $response->assertSee(route('circuit.historique', $demande->id), false);
+    }
+
     public function test_admin_sees_notifications_from_every_service(): void
     {
         $admin = User::factory()->create(['role' => UserRole::Admin]);
