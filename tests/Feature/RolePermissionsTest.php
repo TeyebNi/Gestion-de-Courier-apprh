@@ -3,6 +3,7 @@
 namespace Tests\Feature;
 
 use App\Enums\UserRole;
+use App\Models\Tabdepot;
 use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Tests\TestCase;
@@ -151,5 +152,52 @@ class RolePermissionsTest extends TestCase
         $maireResponse->assertOk();
         $maireResponse->assertSee('En attente de décision');
         $maireResponse->assertDontSee('Dernières Demandes Déposées');
+    }
+
+    public function test_maire_mini_dashboard_shows_institution_name_objet_and_a_localized_date(): void
+    {
+        $maire = User::factory()->create(['role' => UserRole::Maire]);
+        Tabdepot::create([
+            'origine' => 'externe',
+            'type_expediteur' => 'institution',
+            'origine_detail' => "Ministère de l'Intérieur",
+            'objet' => 'Demande de raccordement eau',
+            'daterecp' => '2026-08-30',
+            'statut_circuit' => 'maire',
+        ]);
+
+        $response = $this->actingAs($maire)->get('/');
+
+        $response->assertOk();
+        $response->assertSee("Ministère de l&#039;Intérieur", false);
+        $response->assertSee('Demande de raccordement eau');
+        $response->assertSee('30/08/2026');
+        $response->assertDontSee('2026-08-30');
+    }
+
+    public function test_accueil_mini_dashboard_shows_institution_name_objet_and_a_localized_date(): void
+    {
+        $accueilLikeAdmin = User::factory()->create([
+            'role' => UserRole::Admin,
+            'can_manage_users' => false,
+            'can_access_cabinet' => false,
+            'can_access_maire' => false,
+            'can_access_all_services' => false,
+        ]);
+        Tabdepot::create([
+            'origine' => 'externe',
+            'type_expediteur' => 'institution',
+            'origine_detail' => "Ministère de l'Intérieur",
+            'objet' => 'Demande de raccordement eau',
+            'daterecp' => '2026-08-30',
+        ]);
+
+        $response = $this->actingAs($accueilLikeAdmin)->get('/');
+
+        $response->assertOk();
+        $response->assertSee("Ministère de l&#039;Intérieur", false);
+        $response->assertSee('Demande de raccordement eau');
+        $response->assertSee('30/08/2026');
+        $response->assertDontSee('2026-08-30');
     }
 }

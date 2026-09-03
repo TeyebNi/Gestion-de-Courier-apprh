@@ -219,7 +219,7 @@ Tableau de bord
                     <table class="table">
                         <thead class="text-primary">
                             <th>Nom</th>
-                            <th>NNI</th>
+                            <th>Objet</th>
                             <th>Téléphone</th>
                             <th>Type</th>
                             <th>Date</th>
@@ -227,11 +227,16 @@ Tableau de bord
                         <tbody>
                             @forelse($recentDemandesUser as $d)
                             <tr>
-                                <td>{{ $d->nom }}</td>
-                                <td>{{ $d->nni }}</td>
-                                <td>{{ $d->tel }}</td>
-                                <td>{{ $d->typdm }}</td>
-                                <td>{{ $d->daterecp }}</td>
+                                <td>
+                                    {{ $d->nom ?: ($d->origine_detail ?: '—') }}
+                                    @if($d->nni)
+                                        <br><small class="text-muted">NNI: {{ $d->nni }}</small>
+                                    @endif
+                                </td>
+                                <td class="text-truncate" style="max-width:220px;" title="{{ $d->objet }}">{{ $d->objet ?: '—' }}</td>
+                                <td>{{ $d->tel ?: '—' }}</td>
+                                <td>{{ $d->typdm ?: '—' }}</td>
+                                <td>{{ $d->daterecpFormatted() }}</td>
                             </tr>
                             @empty
                             <tr>
@@ -301,18 +306,20 @@ Tableau de bord
                         <thead class="text-primary">
                             <th>Nom</th>
                             <th>Type</th>
+                            <th>Objet</th>
                             <th>Date</th>
                         </thead>
                         <tbody>
                             @forelse($recentQueue as $d)
                             <tr>
-                                <td>{{ $d->nom }}</td>
-                                <td>{{ $d->typdm }}</td>
-                                <td>{{ $d->daterecp }}</td>
+                                <td>{{ $d->nom ?: ($d->origine_detail ?: '—') }}</td>
+                                <td>{{ $d->typdm ?: '—' }}</td>
+                                <td class="text-truncate" style="max-width:220px;" title="{{ $d->objet }}">{{ $d->objet ?: '—' }}</td>
+                                <td>{{ $d->daterecpFormatted() }}</td>
                             </tr>
                             @empty
                             <tr>
-                                <td colspan="3" class="text-center text-muted">Aucune demande en attente.</td>
+                                <td colspan="4" class="text-center text-muted">Aucune demande en attente.</td>
                             </tr>
                             @endforelse
                         </tbody>
