@@ -35,8 +35,8 @@ document.addEventListener('DOMContentLoaded', function () {
                 <h4 class="card-title mb-0" style="font-weight: 700; color: #212529;">
                     Demandes en attente de décision
                 </h4>
-                <a href="{{ route('circuit.maire.historique') }}" class="btn btn-outline-info btn-sm">
-                    <i class="fas fa-history"></i> Historique de mes décisions
+                <a href="{{ route('circuit.suivi') }}" class="btn btn-outline-info btn-sm">
+                    <i class="fas fa-history"></i> Suivi de mes décisions
                 </a>
             </div>
             <div class="card-body">

@@ -124,31 +124,20 @@ class CircuitWorkflowTest extends TestCase
         $response->assertDontSee('2026-08-15');
     }
 
-    public function test_maire_historique_shows_institution_name_and_objet_and_search_matches_objet(): void
+    public function test_suivi_shows_the_maires_remark(): void
     {
-        $maire = User::factory()->create(['role' => UserRole::Maire]);
-        Tabdepot::create([
-            'origine' => 'externe',
-            'type_expediteur' => 'institution',
-            'origine_detail' => "Ministère de l'Intérieur",
-            'objet' => 'Demande de raccordement eau',
+        $accueil = User::factory()->create(['role' => UserRole::User]);
+        $depot = $this->makeDepot();
+        $depot->update([
+            'statut_circuit' => 'service',
             'decision_maire' => 'accepte',
-            'statut_circuit' => 'service',
-            'daterecp' => now()->format('Y-m-d'),
-        ]);
-        Tabdepot::create([
-            'nom' => 'Autre Citoyen',
-            'decision_maire' => 'refuse',
-            'statut_circuit' => 'service',
-            'daterecp' => now()->format('Y-m-d'),
+            'remarque_maire' => 'Dossier prioritaire, à traiter rapidement.',
         ]);
 
-        $response = $this->actingAs($maire)->get('/circuit/maire/historique?search=raccordement');
+        $response = $this->actingAs($accueil)->get('/circuit/suivi');
 
         $response->assertOk();
-        $response->assertSee("Ministère de l&#039;Intérieur", false);
-        $response->assertSee('Demande de raccordement eau');
-        $response->assertDontSee('Autre Citoyen');
+        $response->assertSee('Dossier prioritaire, à traiter rapidement.');
     }
 
     public function test_maire_form_preselects_service_for_an_internal_demande(): void

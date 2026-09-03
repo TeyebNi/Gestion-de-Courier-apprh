@@ -100,30 +100,6 @@ class CircuitController extends Controller
     }
 
     /**
-     * Maire : historique des demandes déjà décidées (accepté/refusé), avec leurs remarques.
-     */
-    public function maireHistoriqueIndex(Request $request)
-    {
-        $search = $request->search;
-
-        $demandes = Tabdepot::whereNotNull('decision_maire')
-            ->when($search, function ($q) use ($search) {
-                $q->where(function ($sub) use ($search) {
-                    $sub->where('nom', 'like', "%{$search}%")
-                        ->orWhere('nni', 'like', "%{$search}%")
-                        ->orWhere('objet', 'like', "%{$search}%")
-                        ->orWhere('reference', 'like', "%{$search}%")
-                        ->orWhere('id', 'like', "%{$search}%");
-                });
-            })
-            ->orderByDesc('updated_at')
-            ->paginate(15)
-            ->withQueryString();
-
-        return view('circuit.maire-historique', compact('demandes', 'search'));
-    }
-
-    /**
      * Maire : envoyer directement vers un service, sans passer par une décision d'accepter/refuser.
      */
     /**

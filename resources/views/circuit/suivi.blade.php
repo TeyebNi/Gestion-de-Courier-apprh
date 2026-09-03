@@ -40,6 +40,7 @@ Suivi des Demandes
                             <th>Objet</th>
                             <th>Où se trouve la demande ?</th>
                             <th>Décision Maire</th>
+                            <th>Remarque Maire</th>
                             <th>Dernière mise à jour</th>
                             <th>Action</th>
                         </thead>
@@ -47,8 +48,8 @@ Suivi des Demandes
                             @forelse($demandes as $d)
                             <tr>
                                 <td>{{ $d->id }}</td>
-                                <td>{{ $d->nom }} @if($d->piece_jointe)<a href="{{ asset('storage/' . $d->piece_jointe) }}" target="_blank" title="Voir la pièce jointe"><i class="fas fa-paperclip text-info"></i></a>@endif</td>
-                                <td>{{ $d->typdm }}</td>
+                                <td>{{ $d->nom ?: ($d->origine_detail ?: '—') }} @if($d->piece_jointe)<a href="{{ asset('storage/' . $d->piece_jointe) }}" target="_blank" title="Voir la pièce jointe"><i class="fas fa-paperclip text-info"></i></a>@endif</td>
+                                <td>{{ $d->typdm ?: '—' }}</td>
                                 <td class="text-truncate" style="max-width:220px;" title="{{ $d->objet }}">{{ $d->objet ?: '—' }}</td>
                                 <td>
                                     <span class="badge {{ \App\Models\Tabdepot::circuitStepBadgeClass($d->statut_circuit) }}">{{ $d->statutLabel() }}</span>
@@ -62,6 +63,7 @@ Suivi des Demandes
                                         <span class="text-muted">En attente</span>
                                     @endif
                                 </td>
+                                <td class="text-truncate" style="max-width:220px;" title="{{ $d->remarque_maire }}">{{ $d->remarque_maire ?: '—' }}</td>
                                 <td>{{ $d->updated_at->format('d/m/Y H:i') }}</td>
                                 <td>
                                     <a href="{{ route('circuit.historique', $d) }}" class="btn btn-info btn-sm" title="Voir l'historique complet">
@@ -71,7 +73,7 @@ Suivi des Demandes
                             </tr>
                             @empty
                             <tr>
-                                <td colspan="8" class="text-center text-muted">Aucune demande engagée dans le circuit pour le moment.</td>
+                                <td colspan="9" class="text-center text-muted">Aucune demande engagée dans le circuit pour le moment.</td>
                             </tr>
                             @endforelse
                         </tbody>

@@ -47,7 +47,6 @@ Route::middleware('auth')->group(function () {
 
     Route::middleware('maire')->group(function () {
         Route::get('circuit/maire', [CircuitController::class, 'maireIndex'])->name('circuit.maire.index');
-        Route::get('circuit/maire/historique', [CircuitController::class, 'maireHistoriqueIndex'])->name('circuit.maire.historique');
         Route::post('circuit/{tabdepot}/decider', [CircuitController::class, 'decide'])->name('circuit.decider');
     });
 
@@ -55,7 +54,7 @@ Route::middleware('auth')->group(function () {
     Route::post('circuit/{tabdepot}/cloturer', [CircuitController::class, 'closeDemande'])->name('circuit.cloturer');
 
     // Cette route générique doit rester APRÈS toutes les routes littérales ci-dessus
-    // (circuit/suivi, circuit/fatou, circuit/maire, circuit/maire/historique, circuit/service),
+    // (circuit/suivi, circuit/fatou, circuit/maire, circuit/service),
     // sinon Laravel essaierait de les faire correspondre à {tabdepot} en premier.
     Route::get('circuit/{tabdepot}/historique', [CircuitController::class, 'historique'])->name('circuit.historique');
 
