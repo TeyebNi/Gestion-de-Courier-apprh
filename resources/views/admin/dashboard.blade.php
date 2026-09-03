@@ -735,6 +735,7 @@ document.addEventListener('DOMContentLoaded', function () {
         data: {
             labels: ['Acceptées', 'Refusées'],
             datasets: [{
+                label: 'Demandes',
                 data: [totalAcceptees, totalRefusees],
                 backgroundColor: ['#18ce0f', '#FB404B'],
                 borderRadius: 6,
