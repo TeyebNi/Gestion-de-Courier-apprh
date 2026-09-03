@@ -284,7 +284,7 @@ Tableau de bord
                 <hr>
                 <div class="stats">
                     <a href="{{ $queueRoute }}">
-                        <i class="now-ui-icons arrows-1_share-66"></i>
+                        <i class="now-ui-icons {{ $isCabinet ? 'arrows-1_share-66' : 'ui-1_check' }}"></i>
                         {{ $isCabinet ? 'Aller au Cabinet' : 'Aller aux décisions' }}
                     </a>
                 </div>
