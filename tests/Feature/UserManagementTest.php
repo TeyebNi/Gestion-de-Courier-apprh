@@ -11,6 +11,104 @@ class UserManagementTest extends TestCase
 {
     use RefreshDatabase;
 
+    public function test_admin_can_create_a_new_user(): void
+    {
+        $admin = User::factory()->create(['role' => UserRole::Admin]);
+
+        $response = $this->actingAs($admin)->post('/utilisateurs', [
+            'name' => 'Fatimetou Mint Ahmed',
+            'email' => 'fatimetou@commune.mr',
+            'password' => 'motdepasse123',
+            'password_confirmation' => 'motdepasse123',
+            'role' => 'user',
+            'service' => 'Etat Civil',
+        ]);
+
+        $response->assertRedirect(route('users.index'));
+
+        $newUser = User::where('email', 'fatimetou@commune.mr')->firstOrFail();
+        $this->assertSame('Etat Civil', $newUser->service);
+        $this->assertTrue(\Illuminate\Support\Facades\Hash::check('motdepasse123', $newUser->password));
+    }
+
+    public function test_admin_can_create_a_restricted_admin_account(): void
+    {
+        $admin = User::factory()->create(['role' => UserRole::Admin]);
+
+        $this->actingAs($admin)->post('/utilisateurs', [
+            'name' => 'Accueil Bis',
+            'email' => 'accueil-bis@commune.mr',
+            'password' => 'motdepasse123',
+            'password_confirmation' => 'motdepasse123',
+            'role' => 'admin',
+            // Aucune case de permission cochée : doit rester restreint, pas admin plein.
+        ])->assertRedirect(route('users.index'));
+
+        $newAdmin = User::where('email', 'accueil-bis@commune.mr')->firstOrFail();
+        $this->assertTrue($newAdmin->isAdmin());
+        $this->assertFalse($newAdmin->isUnrestrictedAdmin());
+        $this->assertNull($newAdmin->service);
+    }
+
+    public function test_cannot_create_a_user_with_a_duplicate_email(): void
+    {
+        $admin = User::factory()->create(['role' => UserRole::Admin]);
+        User::factory()->create(['email' => 'existant@commune.mr']);
+
+        $this->actingAs($admin)->post('/utilisateurs', [
+            'name' => 'Doublon Test',
+            'email' => 'existant@commune.mr',
+            'password' => 'motdepasse123',
+            'password_confirmation' => 'motdepasse123',
+            'role' => 'user',
+        ])->assertSessionHasErrors('email');
+
+        $this->assertSame(1, User::where('email', 'existant@commune.mr')->count());
+    }
+
+    public function test_create_user_requires_matching_password_confirmation(): void
+    {
+        $admin = User::factory()->create(['role' => UserRole::Admin]);
+
+        $this->actingAs($admin)->post('/utilisateurs', [
+            'name' => 'Test User',
+            'email' => 'test-user@commune.mr',
+            'password' => 'motdepasse123',
+            'password_confirmation' => 'autre-chose',
+            'role' => 'user',
+        ])->assertSessionHasErrors('password');
+
+        $this->assertDatabaseMissing('users', ['email' => 'test-user@commune.mr']);
+    }
+
+    public function test_non_admin_cannot_create_a_user(): void
+    {
+        $user = User::factory()->create(['role' => UserRole::User]);
+
+        $this->actingAs($user)->post('/utilisateurs', [
+            'name' => 'Test User',
+            'email' => 'test-user@commune.mr',
+            'password' => 'motdepasse123',
+            'password_confirmation' => 'motdepasse123',
+            'role' => 'user',
+        ])->assertForbidden();
+
+        $this->assertDatabaseMissing('users', ['email' => 'test-user@commune.mr']);
+    }
+
+    public function test_users_index_search_filters_by_name_or_email(): void
+    {
+        $admin = User::factory()->create(['role' => UserRole::Admin]);
+        User::factory()->create(['name' => 'Ahmed Ould Sidi', 'email' => 'ahmed@commune.mr']);
+        User::factory()->create(['name' => 'Fatimetou Mint', 'email' => 'fatimetou@commune.mr']);
+
+        $response = $this->actingAs($admin)->get('/utilisateurs?search=Ahmed');
+
+        $response->assertOk();
+        $response->assertSee('Ahmed Ould Sidi');
+        $response->assertDontSee('Fatimetou Mint');
+    }
+
     public function test_admin_can_update_a_user_role(): void
     {
         $admin = User::factory()->create(['role' => UserRole::Admin]);

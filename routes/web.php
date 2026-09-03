@@ -75,6 +75,7 @@ Route::middleware('auth')->group(function () {
 
         Route::get('utilisateurs', [UserController::class, 'index'])->name('users.index');
         Route::get('utilisateurs/export', [UserController::class, 'exportExcel'])->name('users.export');
+        Route::post('utilisateurs', [UserController::class, 'store'])->name('users.store');
         Route::put('utilisateurs/{user}', [UserController::class, 'update'])->name('users.update');
         Route::put('utilisateurs/{user}/mot-de-passe', [UserController::class, 'resetPassword'])->name('users.reset-password');
         Route::delete('utilisateurs/{user}', [UserController::class, 'destroy'])->name('users.destroy');

@@ -34,6 +34,44 @@ class UserController extends Controller
     return view('users.index', compact('users', 'services', 'adminCount', 'search'));
 }
 
+    public function store(Request $request)
+    {
+        if (! auth()->user()->canManageUsers()) {
+            abort(403, "Cette page est réservée aux administrateurs habilités à gérer les comptes.");
+        }
+
+        $request->validate([
+            'name' => ['required', 'string', 'max:255', 'regex:/^[\pL\s]+$/u'],
+            'email' => ['required', 'email', 'max:255', Rule::unique('users', 'email')],
+            'password' => ['required', 'string', 'min:8', 'confirmed'],
+            'role' => ['required', 'in:admin,user,fatou,maire'],
+            'service' => ['nullable', 'string', 'max:255'],
+            'can_manage_users' => ['nullable', 'boolean'],
+            'can_access_cabinet' => ['nullable', 'boolean'],
+            'can_access_maire' => ['nullable', 'boolean'],
+            'can_access_all_services' => ['nullable', 'boolean'],
+        ], [
+            'name.regex' => 'Le nom ne doit contenir que des lettres.',
+            'email.unique' => 'Cet email est déjà utilisé par un autre utilisateur.',
+        ]);
+
+        $service = in_array($request->role, ['admin', 'fatou', 'maire']) ? null : $request->service;
+
+        $user = User::create([
+            'name' => $request->name,
+            'email' => $request->email,
+            'password' => bcrypt($request->password),
+            'role' => UserRole::from($request->role),
+            'service' => $service,
+            'can_manage_users' => $request->role === 'admin' ? $request->boolean('can_manage_users') : true,
+            'can_access_cabinet' => $request->role === 'admin' ? $request->boolean('can_access_cabinet') : true,
+            'can_access_maire' => $request->role === 'admin' ? $request->boolean('can_access_maire') : true,
+            'can_access_all_services' => $request->role === 'admin' ? $request->boolean('can_access_all_services') : true,
+        ]);
+
+        return redirect()->route('users.index')->with('success', "Compte de {$user->name} créé avec succès.");
+    }
+
     public function exportExcel()
     {
         if (! auth()->user()->canManageUsers()) {

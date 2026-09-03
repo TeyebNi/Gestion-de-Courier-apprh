@@ -11,8 +11,12 @@ Les Utilisateurs
             <div class="card-header d-flex justify-content-between align-items-center flex-wrap">
                 <h4 class="card-title mb-0" style="font-weight: 700; color: #212529;">
                     Gestion des Comptes Utilisateurs
+                    <button class="btn btn-primary btn-sm ml-2" data-toggle="modal" data-target="#createUserModal">Nouvel Utilisateur</button>
                 </h4>
-                <a href="{{ route('users.export') }}" class="btn btn-success btn-sm" title="Exporter en Excel"><i class="fas fa-file-excel"></i></a>
+                <div class="d-flex align-items-center flex-wrap">
+                    @include('partials.search-box', ['route' => 'users.index', 'placeholder' => 'Rechercher par nom ou email...'])
+                    <a href="{{ route('users.export') }}" class="btn btn-success btn-sm" title="Exporter en Excel"><i class="fas fa-file-excel"></i></a>
+                </div>
             </div>
             <div class="card-body">
 
@@ -32,7 +36,7 @@ Les Utilisateurs
                             <th class="text-right">Action</th>
                         </thead>
                         <tbody>
-                            @foreach($users as $key => $u)
+                            @forelse($users as $key => $u)
                             <tr>
                                 <td>{{ $users->firstItem() + $key }}</td>
                                 <td>{{ $u->name }}</td>
@@ -43,7 +47,7 @@ Les Utilisateurs
                                     </span>
                                 </td>
                                 <td>{{ $u->service ?: '—' }}</td>
-                                <td>{{ $u->created_at?->format('Y-m-d') }}</td>
+                                <td>{{ $u->created_at?->format('d/m/Y') }}</td>
                                 <td class="text-right">
                                     <a data-id="{{ $u->id }}"
                                        data-name="{{ $u->name }}"
@@ -70,7 +74,17 @@ Les Utilisateurs
                                     @endif
                                 </td>
                             </tr>
-                            @endforeach
+                            @empty
+                            <tr>
+                                <td colspan="7" class="text-center text-muted">
+                                    @if($search)
+                                        Aucun utilisateur ne correspond à « {{ $search }} ».
+                                    @else
+                                        Aucun utilisateur enregistré pour le moment.
+                                    @endif
+                                </td>
+                            </tr>
+                            @endforelse
                         </tbody>
                     </table>
                 </div>
@@ -80,6 +94,104 @@ Les Utilisateurs
                 </div>
 
             </div>
+        </div>
+    </div>
+</div>
+
+<!-- Modal Créer -->
+<div class="modal fade" id="createUserModal" tabindex="-1" role="dialog" aria-hidden="true">
+    <div class="modal-dialog modal-notify modal-lg modal-right modal-success" role="document">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Nouvel utilisateur</h5>
+                <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                    <span aria-hidden="true">&times;</span>
+                </button>
+            </div>
+            <form id="createUserForm" method="POST" action="{{ route('users.store') }}">
+                @csrf
+                <div class="modal-body">
+                    @if ($errors->any())
+                        <div class="alert alert-danger">
+                            <ul class="mb-0">
+                                @foreach ($errors->all() as $error)
+                                    <li>{{ $error }}</li>
+                                @endforeach
+                            </ul>
+                        </div>
+                    @endif
+                    <div class="input-group mb-3">
+                        <div class="input-group-prepend">
+                            <span class="input-group-text">Nom</span>
+                        </div>
+                        <input type="text" class="form-control" name="name" required>
+                    </div>
+                    <div class="input-group mb-3">
+                        <div class="input-group-prepend">
+                            <span class="input-group-text">Email</span>
+                        </div>
+                        <input type="email" class="form-control" name="email" required>
+                    </div>
+                    <div class="input-group mb-3">
+                        <div class="input-group-prepend">
+                            <span class="input-group-text">Mot de passe</span>
+                        </div>
+                        <input type="password" class="form-control" name="password" minlength="8" required autocomplete="new-password">
+                    </div>
+                    <div class="input-group mb-3">
+                        <div class="input-group-prepend">
+                            <span class="input-group-text">Confirmer</span>
+                        </div>
+                        <input type="password" class="form-control" name="password_confirmation" minlength="8" required autocomplete="new-password">
+                    </div>
+                    <div class="input-group mb-3">
+                        <div class="input-group-prepend">
+                            <span class="input-group-text">Rôle</span>
+                        </div>
+                        <select class="form-control" name="role" id="create_role">
+                            <option value="user">User</option>
+                            <option value="admin">Admin</option>
+                            <option value="fatou">Cabinet (Coordination)</option>
+                            <option value="maire">Maire</option>
+                        </select>
+                    </div>
+                    <div class="input-group" id="create_service_group">
+                        <div class="input-group-prepend">
+                            <span class="input-group-text">Service</span>
+                        </div>
+                        <select class="form-control" name="service" id="create_service">
+                            <option value="">Aucun</option>
+                            @foreach($services as $s)
+                                <option value="{{ $s }}">{{ $s }}</option>
+                            @endforeach
+                        </select>
+                    </div>
+                    <div id="create_admin_permissions_group" style="display:none;">
+                        <hr>
+                        <p class="text-muted mb-2" style="font-size:0.85em;">Droits admin supplémentaires (décochez pour restreindre ce compte, ex: Accueil) :</p>
+                        <div class="form-check mt-2">
+                            <input type="checkbox" class="form-check-input" name="can_manage_users" id="create_can_manage_users" value="1">
+                            <label class="form-check-label" for="create_can_manage_users">Peut gérer "Les Utilisateurs" (voir/modifier/supprimer des comptes)</label>
+                        </div>
+                        <div class="form-check mt-2">
+                            <input type="checkbox" class="form-check-input" name="can_access_cabinet" id="create_can_access_cabinet" value="1">
+                            <label class="form-check-label" for="create_can_access_cabinet">Accès aux pages Cabinet (coordination)</label>
+                        </div>
+                        <div class="form-check mt-2">
+                            <input type="checkbox" class="form-check-input" name="can_access_maire" id="create_can_access_maire" value="1">
+                            <label class="form-check-label" for="create_can_access_maire">Accès aux pages Maire (décision)</label>
+                        </div>
+                        <div class="form-check mt-2">
+                            <input type="checkbox" class="form-check-input" name="can_access_all_services" id="create_can_access_all_services" value="1">
+                            <label class="form-check-label" for="create_can_access_all_services">Voit les demandes de tous les services (Suivi du Circuit / Notifications)</label>
+                        </div>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-warning" data-dismiss="modal" title="Fermer"><svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg></button>
+                    <button type="submit" class="btn btn-success" title="Créer"><svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"></polyline></svg></button>
+                </div>
+            </form>
         </div>
     </div>
 </div>
@@ -268,27 +380,37 @@ $('#editUserModal').on('show.bs.modal', function (event) {
     var isLastAdmin = (role === 'admin' && {{ $adminCount }} <= 1);
     $('#edit_role option[value="user"]').prop('disabled', isLastAdmin);
 
-    toggleServiceField(role);
+    toggleServiceField(role, 'edit');
 });
 
 $('#edit_role').on('change', function () {
-    toggleServiceField($(this).val());
+    toggleServiceField($(this).val(), 'edit');
 });
 
-function toggleServiceField(role) {
+$('#create_role').on('change', function () {
+    toggleServiceField($(this).val(), 'create');
+});
+
+function toggleServiceField(role, prefix) {
     if (role === 'admin') {
-        $('#edit_service_group').hide();
-        $('#edit_service').val('');
-        $('#edit_admin_permissions_group').show();
+        $('#' + prefix + '_service_group').hide();
+        $('#' + prefix + '_service').val('');
+        $('#' + prefix + '_admin_permissions_group').show();
     } else {
-        $('#edit_service_group').show();
-        $('#edit_admin_permissions_group').hide();
-        $('#edit_can_manage_users').prop('checked', false);
-        $('#edit_can_access_cabinet').prop('checked', false);
-        $('#edit_can_access_maire').prop('checked', false);
-        $('#edit_can_access_all_services').prop('checked', false);
+        $('#' + prefix + '_service_group').show();
+        $('#' + prefix + '_admin_permissions_group').hide();
+        $('#' + prefix + '_can_manage_users').prop('checked', false);
+        $('#' + prefix + '_can_access_cabinet').prop('checked', false);
+        $('#' + prefix + '_can_access_maire').prop('checked', false);
+        $('#' + prefix + '_can_access_all_services').prop('checked', false);
     }
 }
+
+$('#createUserModal').on('hidden.bs.modal', function () {
+    var form = this.querySelector('form');
+    if (form) { form.reset(); }
+    toggleServiceField('user', 'create');
+});
 
 $('#resetPasswordModal').on('show.bs.modal', function (event) {
     var button = $(event.relatedTarget);
