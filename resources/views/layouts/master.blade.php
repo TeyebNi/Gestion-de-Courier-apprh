@@ -136,22 +136,6 @@
                             <p>Demandes du Circuit</p>
                         </a>
                     </li>
-                    @php
-                        $unreadNotifCount = auth()->user()->canAccessAllServices()
-                            ? \App\Models\ServiceNotification::where('is_read', false)->count()
-                            : \App\Models\ServiceNotification::where('service', auth()->user()->service)->where('is_read', false)->count();
-                    @endphp
-                    <li class="{{ request()->is('notifications*') ? 'active' : '' }}">
-                        <a href="{{ route('notifications.index') }}">
-                            <i class="now-ui-icons ui-1_bell-53"></i>
-                            <p>
-                                Notifications
-                                @if($unreadNotifCount > 0)
-                                    <span class="badge badge-danger">{{ $unreadNotifCount }}</span>
-                                @endif
-                            </p>
-                        </a>
-                    </li>
                     @endif
                     @if(auth()->user()->isAdmin() || (empty(auth()->user()->service) && !auth()->user()->isFatou() && !auth()->user()->isMaire()))
                     <li class="{{ request()->is('circuit/suivi*') ? 'active' : '' }}">
@@ -209,6 +193,39 @@
                             </div>
                         </form>
                         <ul class="navbar-nav">
+                            @if(!empty(auth()->user()->service) || auth()->user()->canAccessAllServices())
+                            @php
+                                $notifBaseQuery = auth()->user()->canAccessAllServices()
+                                    ? \App\Models\ServiceNotification::query()
+                                    : \App\Models\ServiceNotification::where('service', auth()->user()->service);
+                                $unreadNotifCount = (clone $notifBaseQuery)->where('is_read', false)->count();
+                                $recentNotifs = (clone $notifBaseQuery)->where('is_read', false)->orderByDesc('created_at')->limit(5)->get();
+                            @endphp
+                            <li class="nav-item dropdown">
+                                <a class="nav-link dropdown-toggle" href="#" id="notifBellDropdown" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false" style="position:relative;">
+                                    <i class="now-ui-icons ui-1_bell-53"></i>
+                                    @if($unreadNotifCount > 0)
+                                        <span class="badge badge-danger" style="position:absolute; top:2px; right:2px; font-size:10px; padding:3px 5px;">{{ $unreadNotifCount }}</span>
+                                    @endif
+                                </a>
+                                <div class="dropdown-menu dropdown-menu-right" aria-labelledby="notifBellDropdown" style="min-width:320px;">
+                                    <span class="dropdown-item-text"><strong>Notifications</strong></span>
+                                    <div class="dropdown-divider"></div>
+                                    @forelse($recentNotifs as $n)
+                                        <a class="dropdown-item" href="{{ route('notifications.index') }}" style="white-space:normal;">
+                                            <span class="badge badge-primary">{{ $n->service }}</span>
+                                            <div>{{ $n->message }}</div>
+                                            <small class="text-muted">{{ $n->created_at->format('d/m/Y H:i') }}</small>
+                                        </a>
+                                        <div class="dropdown-divider"></div>
+                                    @empty
+                                        <span class="dropdown-item-text text-muted">Aucune nouvelle notification.</span>
+                                        <div class="dropdown-divider"></div>
+                                    @endforelse
+                                    <a class="dropdown-item text-center" href="{{ route('notifications.index') }}"><strong>Voir toutes les notifications</strong></a>
+                                </div>
+                            </li>
+                            @endif
                             <li class="nav-item dropdown">
                                 <a class="nav-link dropdown-toggle" href="#" id="userAccountDropdown" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
                                     <i class="now-ui-icons users_single-02"></i>

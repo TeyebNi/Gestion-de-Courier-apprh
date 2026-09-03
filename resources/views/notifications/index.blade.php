@@ -10,7 +10,14 @@ Notifications
         <div class="card">
             <div class="card-header">
                 <p class="category">
-                    Notifications @if($userService) — Service : <strong>{{ $userService }}</strong> @else <span class="text-danger">(aucun service ne vous est assigné, contactez un administrateur)</span> @endif
+                    Notifications
+                    @if($userService)
+                        — Service : <strong>{{ $userService }}</strong>
+                    @elseif(auth()->user()->canAccessAllServices())
+                        — <strong>Tous les services</strong>
+                    @else
+                        <span class="text-danger">(aucun service ne vous est assigné, contactez un administrateur)</span>
+                    @endif
                 </p>
             </div>
             <div class="card-body">

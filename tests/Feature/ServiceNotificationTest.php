@@ -83,6 +83,17 @@ class ServiceNotificationTest extends TestCase
         $response->assertDontSee('Voir la demande');
     }
 
+    public function test_admin_does_not_see_the_no_service_warning(): void
+    {
+        $admin = User::factory()->create(['role' => UserRole::Admin]);
+
+        $response = $this->actingAs($admin)->get('/notifications');
+
+        $response->assertOk();
+        $response->assertSee('Tous les services');
+        $response->assertDontSee('contactez un administrateur');
+    }
+
     public function test_admin_sees_notifications_from_every_service(): void
     {
         $admin = User::factory()->create(['role' => UserRole::Admin]);
@@ -96,7 +107,7 @@ class ServiceNotificationTest extends TestCase
         $response->assertSee('Message B');
     }
 
-    public function test_sidebar_shows_unread_notification_count_for_service_user(): void
+    public function test_navbar_bell_shows_unread_notification_count_for_service_user(): void
     {
         $user = User::factory()->create(['role' => UserRole::User, 'service' => 'Etat Civil']);
         ServiceNotification::create(['service' => 'Etat Civil', 'message' => 'Non lue', 'is_read' => false]);
