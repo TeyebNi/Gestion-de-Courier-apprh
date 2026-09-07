@@ -142,11 +142,6 @@
             margin-top: 15px;
         }
 
-        .qr-block .qr-number {
-            font-size: 14px;
-            font-weight: 700;
-            margin-top: 2px;
-        }
     </style>
 </head>
 <body>
@@ -244,7 +239,6 @@
 
     <div class="qr-block">
         <barcode code="{{ str_pad($detailf->id, 6, '0', STR_PAD_LEFT) }}" type="QR" size="1" error="M" />
-        <div class="qr-number">N° {{ $detailf->id }}</div>
     </div>
 
 </body>
