@@ -8,7 +8,6 @@ class Typedem extends Model
 {
     use HasFactory;
     protected $table ='typedem';
-    protected $fillable = [
-        'name','created_at','updated_at'];
+    protected $fillable = ['name'];
     protected $hidden=['created_at' ,'updated_at'];
 }

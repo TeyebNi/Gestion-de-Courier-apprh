@@ -12,8 +12,7 @@ class Tabdepot extends Model
     protected $table ='tabdepot';
     protected $fillable = [
         'typdm', 'objet', 'reference', 'origine', 'origine_detail', 'type_expediteur', 'piece_jointe', 'nom', 'nni','tel','adresse', 'daterecp',
-        'statut_circuit', 'decision_maire', 'remarque_maire', 'service_assigne',
-        'created_at','updated_at'];
+        'statut_circuit', 'decision_maire', 'remarque_maire', 'service_assigne'];
     protected $hidden=['created_at' ,'updated_at'];
 
     public function historiques()
