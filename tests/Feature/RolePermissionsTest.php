@@ -126,6 +126,23 @@ class RolePermissionsTest extends TestCase
         $response->assertSee('Guichet');
     }
 
+    public function test_admin_missing_only_can_manage_users_still_sees_the_full_dashboard(): void
+    {
+        // Manquer uniquement can_manage_users ne retire rien côté Cabinet/Maire/
+        // Services : ce n'est pas un profil "Accueil" et ne doit pas être réduit
+        // au dashboard minimal.
+        $admin = User::factory()->create([
+            'role' => UserRole::Admin,
+            'can_manage_users' => false,
+        ]);
+
+        $response = $this->actingAs($admin)->get('/');
+
+        $response->assertOk();
+        $response->assertDontSee('Guichet');
+        $response->assertSee('Nombre de Demandes');
+    }
+
     public function test_unrestricted_admin_still_sees_the_full_dashboard(): void
     {
         $admin = User::factory()->create(['role' => UserRole::Admin]);

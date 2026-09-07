@@ -17,11 +17,13 @@ class DashboardController extends Controller
         $isAdmin = $user->isAdmin();
         $isCabinet = !$isAdmin && $user->isFatou();
         $isMaireUser = !$isAdmin && $user->isMaire();
-        // Un admin restreint (ex: Accueil, qui n'a pas Cabinet/Maire/Utilisateurs/
-        // toutes les services) reçoit le dashboard minimal plutôt que la vue admin
-        // complète, cohérent avec ce qu'il peut réellement voir ailleurs.
+        // Un admin restreint (ex: Accueil, qui n'a ni Cabinet, ni Maire, ni l'accès
+        // à toutes les services) reçoit le dashboard minimal plutôt que la vue admin
+        // complète, cohérent avec ce qu'il peut réellement voir ailleurs. Manquer
+        // uniquement "can_manage_users" ne doit pas dégrader le dashboard : ça ne
+        // change rien à ce qu'il peut voir en matière de demandes/circuit.
         $isPlainUser = (!$isAdmin && !$isCabinet && !$isMaireUser && empty($user->service))
-            || ($isAdmin && ! $user->isUnrestrictedAdmin());
+            || ($isAdmin && ! $user->canAccessCabinet() && ! $user->canAccessMaire() && ! $user->canAccessAllServices());
 
         // ----- Cabinet / Maire : dashboard minimal centré sur leur file d'attente -----
         if ($isCabinet || $isMaireUser) {
