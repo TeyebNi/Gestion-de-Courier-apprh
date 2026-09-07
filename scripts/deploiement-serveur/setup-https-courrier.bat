@@ -6,7 +6,7 @@
 ::
 :: Ce script :
 :: 1) Genere un certificat auto-signe pour "courrier" (valable
-::    10 ans) DIRECTEMENT sur ce serveur (la cle privee ne
+::    100 ans) DIRECTEMENT sur ce serveur (la cle privee ne
 ::    quitte jamais cette machine).
 :: 2) Ajoute un VirtualHost HTTPS (443) pour "courrier" dans
 ::    httpd-vhosts.conf, a cote du VirtualHost HTTP existant.
@@ -61,7 +61,7 @@ echo Generation du certificat pour "courrier"...
     echo IP.2 = 192.168.1.150
 ) > "%TEMP%\courrier-ssl.cnf"
 
-"%APACHE%\bin\openssl.exe" req -x509 -nodes -days 3650 -newkey rsa:2048 ^
+"%APACHE%\bin\openssl.exe" req -x509 -nodes -days 36500 -newkey rsa:2048 ^
     -keyout "%APACHE%\conf\ssl.key\courrier.key" ^
     -out "%APACHE%\conf\ssl.crt\courrier.crt" ^
     -config "%TEMP%\courrier-ssl.cnf" -extensions v3_req
@@ -80,9 +80,23 @@ findstr /C:"VirtualHost \*:443" "%APACHE%\conf\extra\httpd-vhosts.conf" | findst
 findstr /C:"ServerName courrier" "%APACHE%\conf\extra\httpd-vhosts.conf" >nul
 echo.
 echo ============================================================
-echo Ajoutez maintenant CE BLOC a la fin de :
+echo 1) REMPLACEZ le VirtualHost *:80 existant de "courrier" par
+echo    une simple redirection vers https (evite de dependre de
+echo    ce que le navigateur tente en premier, ou d'un vieux
+echo    favori/historique enregistre en http://) :
+echo ============================================================
+echo.
+echo # Gestion de Courrier : http://courrier redirige vers https://courrier
+echo ^<VirtualHost *:80^>
+echo     ServerName courrier
+echo     Redirect permanent / https://courrier/
+echo     ErrorLog "logs/courrier-error.log"
+echo     CustomLog "logs/courrier-access.log" common
+echo ^</VirtualHost^>
+echo.
+echo ============================================================
+echo 2) AJOUTEZ ce nouveau bloc HTTPS a la fin de :
 echo   %APACHE%\conf\extra\httpd-vhosts.conf
-echo (sauf s'il y est deja) :
 echo ============================================================
 echo.
 echo # Gestion de Courrier : https://courrier
