@@ -8,8 +8,11 @@ use App\Http\Controllers\UserController;
 use App\Http\Controllers\ServiceNotificationController;
 use App\Http\Controllers\CircuitController;
 
-// Routes d'authentification (login, register, mot de passe oublié...)
-Auth::routes();
+// Routes d'authentification (login uniquement : les comptes sont créés par un
+// administrateur depuis "Les Utilisateurs", pas par auto-inscription publique ;
+// la réinitialisation par email est désactivée, aucun SMTP réel n'est configuré
+// — un administrateur réinitialise le mot de passe depuis "Les Utilisateurs").
+Auth::routes(['register' => false, 'reset' => false]);
 
 // Toutes les routes ci-dessous nécessitent d'être connecté
 Route::middleware('auth')->group(function () {
