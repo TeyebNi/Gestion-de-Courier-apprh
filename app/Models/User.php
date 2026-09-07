@@ -93,6 +93,17 @@ class User extends Authenticatable
     }
 
     /**
+     * Whether this user can access "Suivi des Demandes" (cross-service tracking
+     * of every demande in the circuit). Accueil, admins and the Maire need the
+     * full picture; Cabinet (purely transactional) and service users (scoped to
+     * their own queue) do not.
+     */
+    public function canAccessSuivi(): bool
+    {
+        return $this->canAccessDepot() || $this->isMaire();
+    }
+
+    /**
      * Whether this admin can access "Les Utilisateurs" (user account management).
      * Lets a specific admin (ex: le compte Accueil) keep the rest of the admin
      * rights (Orientation, Types de demande...) without seeing/managing accounts.

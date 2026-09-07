@@ -68,6 +68,10 @@ class TabdepotController extends Controller
 
     public function print_facture($idt)
     {
+        if (! auth()->user()->canAccessDepot()) {
+            abort(403, "Cette page est réservée à l'accueil et aux administrateurs.");
+        }
+
         $detailf = Tabdepot::where('id', $idt)->firstOrFail();
 
         $html = view('depot.print_reçu', compact('detailf'))->render();

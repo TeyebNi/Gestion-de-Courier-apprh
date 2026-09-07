@@ -206,6 +206,10 @@ class CircuitController extends Controller
      */
     public function suiviIndex(Request $request)
     {
+        if (! auth()->user()->canAccessSuivi()) {
+            abort(403, "Cette page est réservée à l'accueil, au Maire et aux administrateurs.");
+        }
+
         $search = $request->search;
         $statut = $request->statut;
 
@@ -233,6 +237,13 @@ class CircuitController extends Controller
      */
     public function historique(Tabdepot $tabdepot)
     {
+        $user = auth()->user();
+        $estSonPropreService = $tabdepot->service_assigne && $tabdepot->service_assigne === $user->service;
+
+        if (! $user->canAccessSuivi() && ! $estSonPropreService) {
+            abort(403, "Vous n'avez pas accès à l'historique de cette demande.");
+        }
+
         $historiques = $tabdepot->historiques()->with('user')->paginate(10);
 
         return view('circuit.historique', compact('tabdepot', 'historiques'));

@@ -581,4 +581,28 @@ class DepotTest extends TestCase
 
         $response->assertSee('data-nom="Ministère des Finances"', false);
     }
+
+    public function test_accueil_can_print_a_receipt(): void
+    {
+        $user = User::factory()->create(['role' => UserRole::User]);
+        $demande = Tabdepot::create(['nom' => 'Ahmed Ould Sidi', 'tel' => '22334455', 'daterecp' => now()->format('Y-m-d')]);
+
+        $this->actingAs($user)->get("/depot/print_re%C3%A7u/{$demande->id}")->assertOk();
+    }
+
+    public function test_a_service_user_cannot_print_a_receipt_for_a_citizens_demande(): void
+    {
+        $serviceUser = User::factory()->create(['role' => UserRole::User, 'service' => 'Etat Civil']);
+        $demande = Tabdepot::create(['nom' => 'Ahmed Ould Sidi', 'tel' => '22334455', 'daterecp' => now()->format('Y-m-d')]);
+
+        $this->actingAs($serviceUser)->get("/depot/print_re%C3%A7u/{$demande->id}")->assertForbidden();
+    }
+
+    public function test_cabinet_cannot_print_a_receipt(): void
+    {
+        $cabinet = User::factory()->create(['role' => UserRole::Fatou]);
+        $demande = Tabdepot::create(['nom' => 'Ahmed Ould Sidi', 'tel' => '22334455', 'daterecp' => now()->format('Y-m-d')]);
+
+        $this->actingAs($cabinet)->get("/depot/print_re%C3%A7u/{$demande->id}")->assertForbidden();
+    }
 }

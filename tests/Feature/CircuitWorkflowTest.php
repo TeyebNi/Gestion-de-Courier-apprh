@@ -484,4 +484,44 @@ class CircuitWorkflowTest extends TestCase
         $response->assertSee('Chez Maire');
         $response->assertDontSee('Chez Fatou');
     }
+
+    public function test_cabinet_cannot_access_suivi_directly_by_url(): void
+    {
+        $cabinet = User::factory()->create(['role' => UserRole::Fatou]);
+
+        $this->actingAs($cabinet)->get('/circuit/suivi')->assertForbidden();
+    }
+
+    public function test_service_user_cannot_access_suivi_directly_by_url(): void
+    {
+        $serviceUser = User::factory()->create(['role' => UserRole::User, 'service' => 'Etat Civil']);
+
+        $this->actingAs($serviceUser)->get('/circuit/suivi')->assertForbidden();
+    }
+
+    public function test_service_user_cannot_view_the_historique_of_a_demande_assigned_to_another_service(): void
+    {
+        $serviceUser = User::factory()->create(['role' => UserRole::User, 'service' => 'Etat Civil']);
+        $depot = $this->makeDepot();
+        $depot->update(['statut_circuit' => 'service', 'service_assigne' => 'Urbanisme']);
+
+        $this->actingAs($serviceUser)->get("/circuit/{$depot->id}/historique")->assertForbidden();
+    }
+
+    public function test_service_user_can_view_the_historique_of_their_own_services_demande(): void
+    {
+        $serviceUser = User::factory()->create(['role' => UserRole::User, 'service' => 'Etat Civil']);
+        $depot = $this->makeDepot();
+        $depot->update(['statut_circuit' => 'service', 'service_assigne' => 'Etat Civil']);
+
+        $this->actingAs($serviceUser)->get("/circuit/{$depot->id}/historique")->assertOk();
+    }
+
+    public function test_cabinet_cannot_view_an_arbitrary_demandes_historique(): void
+    {
+        $cabinet = User::factory()->create(['role' => UserRole::Fatou]);
+        $depot = $this->makeDepot();
+
+        $this->actingAs($cabinet)->get("/circuit/{$depot->id}/historique")->assertForbidden();
+    }
 }
