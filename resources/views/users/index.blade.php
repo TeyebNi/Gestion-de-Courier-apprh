@@ -15,6 +15,7 @@ Les Utilisateurs
                 </h4>
                 <div class="d-flex align-items-center flex-wrap">
                     @include('partials.search-box', ['route' => 'users.index', 'placeholder' => 'Rechercher par nom ou email...'])
+                    <a href="{{ route('users.audit-log') }}" class="btn btn-secondary btn-sm mr-2" title="Journal des actions sur les comptes"><i class="fas fa-history"></i> Journal</a>
                     <a href="{{ route('users.export') }}" class="btn btn-success btn-sm" title="Exporter en Excel"><i class="fas fa-file-excel"></i></a>
                 </div>
             </div>

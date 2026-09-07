@@ -208,4 +208,114 @@ class UserManagementTest extends TestCase
             'password_confirmation' => 'nouveau-mdp-123',
         ])->assertForbidden();
     }
+
+    public function test_creating_a_user_is_logged_in_the_audit_log(): void
+    {
+        $admin = User::factory()->create(['role' => UserRole::Admin, 'name' => 'Admin Principal']);
+
+        $this->actingAs($admin)->post('/utilisateurs', [
+            'name' => 'Fatimetou Mint Ahmed',
+            'email' => 'fatimetou-audit@commune.mr',
+            'password' => 'motdepasse123',
+            'password_confirmation' => 'motdepasse123',
+            'role' => 'user',
+            'service' => 'Etat Civil',
+        ]);
+
+        $newUser = \App\Models\User::where('email', 'fatimetou-audit@commune.mr')->firstOrFail();
+        $this->assertDatabaseHas('user_audit_logs', [
+            'actor_name' => 'Admin Principal',
+            'target_user_id' => $newUser->id,
+            'target_name' => 'Fatimetou Mint Ahmed',
+            'action' => 'created',
+        ]);
+    }
+
+    public function test_updating_a_user_is_logged_in_the_audit_log(): void
+    {
+        $admin = User::factory()->create(['role' => UserRole::Admin, 'name' => 'Admin Principal']);
+        $target = User::factory()->create(['role' => UserRole::User, 'name' => 'Jean Dupont']);
+
+        $this->actingAs($admin)->put("/utilisateurs/{$target->id}", [
+            'name' => 'Jean Dupont',
+            'email' => $target->email,
+            'role' => 'fatou',
+        ]);
+
+        $this->assertDatabaseHas('user_audit_logs', [
+            'actor_name' => 'Admin Principal',
+            'target_user_id' => $target->id,
+            'target_name' => 'Jean Dupont',
+            'action' => 'updated',
+        ]);
+    }
+
+    public function test_resetting_a_password_is_logged_in_the_audit_log(): void
+    {
+        $admin = User::factory()->create(['role' => UserRole::Admin, 'name' => 'Admin Principal']);
+        $target = User::factory()->create(['role' => UserRole::User, 'name' => 'Jean Dupont']);
+
+        $this->actingAs($admin)->put("/utilisateurs/{$target->id}/mot-de-passe", [
+            'password' => 'nouveau-mdp-123',
+            'password_confirmation' => 'nouveau-mdp-123',
+        ]);
+
+        $this->assertDatabaseHas('user_audit_logs', [
+            'actor_name' => 'Admin Principal',
+            'target_user_id' => $target->id,
+            'target_name' => 'Jean Dupont',
+            'action' => 'password_reset',
+        ]);
+    }
+
+    public function test_deleting_a_user_is_logged_and_survives_the_deletion(): void
+    {
+        $admin = User::factory()->create(['role' => UserRole::Admin, 'name' => 'Admin Principal']);
+        $target = User::factory()->create(['role' => UserRole::User, 'name' => 'Jean Dupont']);
+        $targetId = $target->id;
+
+        $this->actingAs($admin)->delete("/utilisateurs/{$target->id}");
+
+        $this->assertDatabaseMissing('users', ['id' => $targetId]);
+        $this->assertDatabaseHas('user_audit_logs', [
+            'actor_name' => 'Admin Principal',
+            'target_user_id' => $targetId,
+            'target_name' => 'Jean Dupont',
+            'action' => 'deleted',
+        ]);
+
+        // Le journal doit rester lisible malgre la suppression du compte cible.
+        $response = $this->actingAs($admin)->get('/utilisateurs/journal');
+        $response->assertOk();
+        $response->assertSee('Jean Dupont');
+    }
+
+    public function test_non_admin_cannot_view_the_audit_log(): void
+    {
+        $user = User::factory()->create(['role' => UserRole::User]);
+
+        $this->actingAs($user)->get('/utilisateurs/journal')->assertForbidden();
+    }
+
+    public function test_audit_log_search_filters_by_target_name(): void
+    {
+        $admin = User::factory()->create(['role' => UserRole::Admin, 'name' => 'Admin Principal']);
+        $targetA = User::factory()->create(['role' => UserRole::User, 'name' => 'Jean Dupont']);
+        $targetB = User::factory()->create(['role' => UserRole::User, 'name' => 'Autre Personne']);
+
+        $this->actingAs($admin)->put("/utilisateurs/{$targetA->id}/mot-de-passe", [
+            'password' => 'nouveau-mdp-123',
+            'password_confirmation' => 'nouveau-mdp-123',
+        ]);
+        $this->actingAs($admin)->put("/utilisateurs/{$targetB->id}/mot-de-passe", [
+            'password' => 'nouveau-mdp-123',
+            'password_confirmation' => 'nouveau-mdp-123',
+        ]);
+
+        $response = $this->actingAs($admin)->get('/utilisateurs/journal?search=Jean');
+
+        $response->assertOk();
+        $response->assertSee('Jean Dupont');
+        $response->assertDontSee('Autre Personne');
+    }
 }

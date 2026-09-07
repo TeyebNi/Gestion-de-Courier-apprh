@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use App\Enums\UserRole;
 use App\Models\User;
 use App\Models\Orientation;
+use App\Models\UserAuditLog;
 use Illuminate\Http\Request;
 use Illuminate\Validation\Rule;
 
@@ -13,6 +14,24 @@ use App\Traits\ExportsCsv;
 class UserController extends Controller
 {
     use ExportsCsv;
+
+    /**
+     * Journalise une action sur un compte utilisateur (créer/modifier/supprimer/
+     * réinitialiser un mot de passe), pour la traçabilité et l'imputabilité —
+     * l'acteur et la cible sont capturés par leur nom (pas seulement leur id),
+     * pour que le journal reste lisible même après la suppression d'un compte.
+     */
+    private function logAudit(string $action, User $target, ?string $details = null): void
+    {
+        UserAuditLog::create([
+            'actor_id' => auth()->id(),
+            'actor_name' => auth()->user()->name,
+            'target_user_id' => $target->id,
+            'target_name' => $target->name,
+            'action' => $action,
+            'details' => $details,
+        ]);
+    }
 
     public function index(Request $request)
 {
@@ -69,7 +88,29 @@ class UserController extends Controller
             'can_access_all_services' => $request->role === 'admin' ? $request->boolean('can_access_all_services') : true,
         ]);
 
+        $this->logAudit('created', $user, 'Rôle : ' . ($user->isAdmin() ? 'Admin' : ucfirst($request->role)) . '. Service : ' . ($user->service ?: 'Aucun') . '.');
+
         return redirect()->route('users.index')->with('success', "Compte de {$user->name} créé avec succès.");
+    }
+
+    public function auditLog(Request $request)
+    {
+        if (! auth()->user()->canManageUsers()) {
+            abort(403, "Cette page est réservée aux administrateurs habilités à gérer les comptes.");
+        }
+
+        $search = $request->input('search');
+        $query = UserAuditLog::orderByDesc('created_at');
+        if ($search) {
+            $query->where(function ($q) use ($search) {
+                $q->where('actor_name', 'like', "%{$search}%")
+                  ->orWhere('target_name', 'like', "%{$search}%")
+                  ->orWhere('details', 'like', "%{$search}%");
+            });
+        }
+        $logs = $query->paginate(15)->appends(['search' => $search]);
+
+        return view('users.audit-log', compact('logs', 'search'));
     }
 
     public function exportExcel()
@@ -137,6 +178,8 @@ class UserController extends Controller
 
     $roleLabel = $user->isAdmin() ? 'Administrateur' : 'Utilisateur';
 
+    $this->logAudit('updated', $user, 'Rôle : ' . ($user->isAdmin() ? 'Admin' : 'User') . '. Service : ' . ($user->service ?: 'Aucun') . '.');
+
     return redirect()->route('users.index')->with('success', "{$roleLabel} {$user->name} mis à jour avec succès. Nouveau rôle : " . ($user->isAdmin() ? 'Admin' : 'User') . ". Service : " . ($user->service ?: 'Aucun') . ".");
 }
     public function resetPassword(Request $request, User $user)
@@ -150,6 +193,8 @@ class UserController extends Controller
         ]);
 
         $user->update(['password' => bcrypt($request->password)]);
+
+        $this->logAudit('password_reset', $user);
 
         return redirect()->route('users.index')->with('success', "Mot de passe de {$user->name} réinitialisé avec succès.");
     }
@@ -167,6 +212,8 @@ class UserController extends Controller
         if ($user->isAdmin()) {
             return redirect()->route('users.index')->with('error', 'Impossible de supprimer un compte administrateur.');
         }
+
+        $this->logAudit('deleted', $user);
 
         $name = $user->name;
         $user->delete();

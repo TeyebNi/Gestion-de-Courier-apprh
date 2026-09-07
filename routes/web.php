@@ -77,6 +77,7 @@ Route::middleware('auth')->group(function () {
         Route::delete('typedem/{typedem}', [TypedemController::class, 'destroy'])->name('typedem.destroy');
 
         Route::get('utilisateurs', [UserController::class, 'index'])->name('users.index');
+        Route::get('utilisateurs/journal', [UserController::class, 'auditLog'])->name('users.audit-log');
         Route::get('utilisateurs/export', [UserController::class, 'exportExcel'])->name('users.export');
         Route::post('utilisateurs', [UserController::class, 'store'])->name('users.store');
         Route::put('utilisateurs/{user}', [UserController::class, 'update'])->name('users.update');
