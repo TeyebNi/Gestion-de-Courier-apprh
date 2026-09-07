@@ -517,6 +517,17 @@ class CircuitWorkflowTest extends TestCase
         $this->actingAs($serviceUser)->get("/circuit/{$depot->id}/historique")->assertOk();
     }
 
+    public function test_suivi_page_includes_the_camera_qr_scanner(): void
+    {
+        $accueil = User::factory()->create(['role' => UserRole::User]);
+
+        $response = $this->actingAs($accueil)->get('/circuit/suivi');
+
+        $response->assertOk();
+        $response->assertSee('qrScannerModal', false);
+        $response->assertSee(asset('vendor/html5-qrcode/html5-qrcode.min.js'), false);
+    }
+
     public function test_cabinet_cannot_view_an_arbitrary_demandes_historique(): void
     {
         $cabinet = User::factory()->create(['role' => UserRole::Fatou]);
