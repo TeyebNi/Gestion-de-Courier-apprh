@@ -23,3 +23,6 @@ Homestead.json
 Homestead.yaml
 Thumbs.db
 .env.backup*
+scripts/test.txt
+scripts/test-output.txt
+scripts/test-simple.ps1
