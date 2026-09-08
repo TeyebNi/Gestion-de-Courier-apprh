@@ -27,9 +27,6 @@ Suivi des Demandes
                         <input type="text" name="search" id="scan_search" class="form-control" placeholder="Scannez le code-barres, ou tapez le code, l'objet..." value="{{ $search }}" autofocus autocomplete="off">
                     </div>
                     <button type="submit" class="btn btn-primary btn-sm ml-2">Rechercher</button>
-                    <button type="button" class="btn btn-secondary btn-sm ml-2" data-toggle="modal" data-target="#qrScannerModal">
-                        <i class="fas fa-camera"></i> Scanner avec la caméra
-                    </button>
                 </form>
             </div>
             <div class="card-body">
@@ -75,78 +72,12 @@ Suivi des Demandes
     </div>
 </div>
 
-<div class="modal fade" id="qrScannerModal" tabindex="-1" role="dialog" aria-labelledby="qrScannerModalLabel" aria-hidden="true">
-    <div class="modal-dialog modal-dialog-centered" role="document">
-        <div class="modal-content">
-            <div class="modal-header">
-                <h5 class="modal-title" id="qrScannerModalLabel">Scanner le QR code du reçu</h5>
-                <button type="button" class="close" data-dismiss="modal" aria-label="Fermer">
-                    <span aria-hidden="true">&times;</span>
-                </button>
-            </div>
-            <div class="modal-body">
-                <div id="qr-reader" style="width: 100%;"></div>
-                <div id="qr-reader-error" class="alert alert-danger mt-2" style="display:none;"></div>
-                <p class="text-muted small mt-2 mb-0">Placez le reçu imprimé face à la caméra, bien éclairé.</p>
-            </div>
-        </div>
-    </div>
-</div>
-
-<script src="{{ asset('vendor/html5-qrcode/html5-qrcode.min.js') }}"></script>
 <script>
 document.addEventListener('DOMContentLoaded', function () {
     var input = document.getElementById('scan_search');
     if (input) {
         input.focus();
         input.select();
-    }
-
-    var modalEl = document.getElementById('qrScannerModal');
-    var errorBox = document.getElementById('qr-reader-error');
-    var html5QrCode = null;
-
-    function showError(message) {
-        errorBox.textContent = message;
-        errorBox.style.display = 'block';
-    }
-
-    function stopScanner() {
-        if (!html5QrCode) {
-            return;
-        }
-        var instance = html5QrCode;
-        html5QrCode = null;
-        instance.stop().then(function () {
-            instance.clear();
-        }).catch(function () {
-            // La caméra était déjà arrêtée (ex: modal fermée avant la fin du démarrage) : rien à faire.
-        });
-    }
-
-    if (modalEl && window.Html5Qrcode) {
-        $(modalEl).on('shown.bs.modal', function () {
-            errorBox.style.display = 'none';
-            html5QrCode = new Html5Qrcode('qr-reader');
-            html5QrCode.start(
-                { facingMode: 'environment' },
-                { fps: 10, qrbox: 250 },
-                function (decodedText) {
-                    // Le QR encode l'id de la demande sur 6 chiffres (ex: 000051) :
-                    // on retire les zéros de tête, comme le fait déjà la recherche manuelle.
-                    input.value = decodedText.replace(/^0+/, '') || '0';
-                    $(modalEl).modal('hide');
-                    input.form.submit();
-                },
-                function () {
-                    // Aucun QR détecté sur cette image : normal tant que le reçu n'est pas bien cadré.
-                }
-            ).catch(function (err) {
-                showError("Impossible d'accéder à la caméra : " + err);
-            });
-        });
-
-        $(modalEl).on('hidden.bs.modal', stopScanner);
     }
 });
 </script>
