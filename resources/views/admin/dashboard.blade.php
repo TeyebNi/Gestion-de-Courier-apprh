@@ -206,6 +206,70 @@ Tableau de bord
     </div>
 </div>
 
+<!-- Évolution + Type de demande -->
+<div class="row">
+    <div class="col-lg-8">
+        <div class="card card-chart">
+            <div class="card-header">
+                <h5 class="card-category">Suivi dans le temps</h5>
+                <h4 class="card-title">Évolution des Demandes (6 derniers mois)</h4>
+            </div>
+            <div class="card-body">
+                <div class="chart-area">
+                    <canvas id="evolutionChart"></canvas>
+                </div>
+            </div>
+            <div class="card-footer">
+                <div class="stats">
+                    <i class="now-ui-icons arrows-1_refresh-69"></i> Basé sur la date de réception des demandes
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="col-lg-4">
+        <div class="card card-chart">
+            <div class="card-header">
+                <h5 class="card-category">Répartition</h5>
+                <h4 class="card-title">Type de Demande</h4>
+            </div>
+            <div class="card-body">
+                <div class="chart-area">
+                    <canvas id="typeChart"></canvas>
+                </div>
+            </div>
+            <div class="card-footer">
+                <div class="stats">
+                    <i class="now-ui-icons design_bullet-list-67"></i> {{ $typeLabels->count() }} types au total
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Acceptées / Refusées -->
+<div class="row">
+    <div class="col-md-12">
+        <div class="card card-chart">
+            <div class="card-header">
+                <h5 class="card-category">Traitement des demandes</h5>
+                <h4 class="card-title">Acceptées / Refusées</h4>
+            </div>
+            <div class="card-body">
+                <div class="chart-area">
+                    <canvas id="reponseChart"></canvas>
+                </div>
+            </div>
+            <div class="card-footer">
+                <div class="stats">
+                    <i class="now-ui-icons ui-1_check text-success"></i> {{ $totalAcceptees }} acceptées
+                    &nbsp;·&nbsp;
+                    <i class="now-ui-icons ui-1_simple-remove text-danger"></i> {{ $totalRefusees }} refusées
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
 <!-- Dernières demandes -->
 <div class="row">
     <div class="col-md-12">
@@ -786,6 +850,77 @@ document.addEventListener('DOMContentLoaded', function () {
         });
     }
     @endif
+});
+</script>
+@elseif($isPlainUser)
+<script src="{{ asset('assets/js/plugins/chartjs.min.js') }}"></script>
+<script>
+document.addEventListener('DOMContentLoaded', function () {
+    var months = @json($months);
+    var monthCounts = @json($monthCounts);
+    var typeLabels = @json($typeLabels);
+    var typeCounts = @json($typeCounts);
+    var totalAcceptees = {{ $totalAcceptees }};
+    var totalRefusees = {{ $totalRefusees }};
+
+    var palette = ['#2CA8FF', '#FB404B', '#18ce0f', '#FFA534', '#9C27B0', '#00BCD4', '#FF5722', '#607D8B'];
+
+    new Chart(document.getElementById('evolutionChart'), {
+        type: 'line',
+        data: {
+            labels: months,
+            datasets: [{
+                label: 'Demandes',
+                data: monthCounts,
+                borderColor: '#e8862c',
+                backgroundColor: 'rgba(232,134,44,0.15)',
+                fill: true,
+                tension: 0.35,
+                pointBackgroundColor: '#e8862c',
+            }]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            scales: { y: { beginAtZero: true, ticks: { precision: 0 } } },
+            plugins: { legend: { display: false } }
+        }
+    });
+
+    new Chart(document.getElementById('typeChart'), {
+        type: 'doughnut',
+        data: {
+            labels: typeLabels,
+            datasets: [{
+                data: typeCounts,
+                backgroundColor: palette,
+            }]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: { legend: { position: 'bottom', labels: { boxWidth: 12 } } }
+        }
+    });
+
+    new Chart(document.getElementById('reponseChart'), {
+        type: 'bar',
+        data: {
+            labels: ['Acceptées', 'Refusées'],
+            datasets: [{
+                label: 'Demandes',
+                data: [totalAcceptees, totalRefusees],
+                backgroundColor: ['#18ce0f', '#FB404B'],
+                borderRadius: 6,
+            }]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            scales: { y: { beginAtZero: true, ticks: { precision: 0 } } },
+            plugins: { legend: { display: false } }
+        }
+    });
 });
 </script>
 @endif

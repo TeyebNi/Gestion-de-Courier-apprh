@@ -348,6 +348,22 @@ class RolePermissionsTest extends TestCase
         $response->assertDontSee('circuitBellDropdown', false);
     }
 
+    public function test_accueil_mini_dashboard_shows_the_type_and_acceptance_charts(): void
+    {
+        $accueil = User::factory()->create(['role' => UserRole::User]);
+        Tabdepot::create(['nom' => 'A', 'tel' => '22222222', 'daterecp' => now()->format('Y-m-d'), 'decision_maire' => 'accepte']);
+        Tabdepot::create(['nom' => 'B', 'tel' => '22222223', 'daterecp' => now()->format('Y-m-d'), 'decision_maire' => 'refuse']);
+
+        $response = $this->actingAs($accueil)->get('/');
+
+        $response->assertOk();
+        $response->assertSee('Type de Demande');
+        $response->assertSee('Acceptées / Refusées');
+        $response->assertSee('Évolution des Demandes');
+        $response->assertSee('1 acceptées');
+        $response->assertSee('1 refusées');
+    }
+
     public function test_accueil_mini_dashboard_shows_origine_badge_and_piece_jointe_link(): void
     {
         $accueilLikeAdmin = User::factory()->create([
