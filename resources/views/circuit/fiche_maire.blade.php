@@ -125,34 +125,11 @@
         }
 
         .annotation-title {
-            font-size: 16px;
+            font-size: 13px;
             font-weight: 700;
-            margin-bottom: 15px;
             border-top: 1px solid #000;
             padding-top: 12px;
-        }
-
-        .annotation-line {
-            border-bottom: 1px solid #000;
-            height: 28px;
-        }
-
-        .service-block {
-            margin-top: 25px;
-            margin-left: 10px;
-            font-size: 14px;
-        }
-
-        .signature-block {
-            margin-top: 40px;
-            font-size: 14px;
-            color: #000;
-            margin-left: 10px;
-        }
-
-        .signature-title {
-            font-weight: 700;
-            margin-bottom: 40px;
+            color: #444;
         }
     </style>
 </head>
@@ -256,20 +233,7 @@
     </div>
 
     <div class="annotation-block">
-        <div class="annotation-title">Annotations du Maire</div>
-        <div class="annotation-line">&nbsp;</div>
-        <div class="annotation-line">&nbsp;</div>
-        <div class="annotation-line">&nbsp;</div>
-        <div class="annotation-line">&nbsp;</div>
-        <div class="annotation-line">&nbsp;</div>
-    </div>
-
-    <div class="service-block">
-        Service concerné (le cas échéant) : ______________________________
-    </div>
-
-    <div class="signature-block">
-        <div class="signature-title">Signature du Maire :</div>
+        <div class="annotation-title">À porter au Maire pour ses annotations (données oralement, saisies ensuite par le Cabinet dans l'application)</div>
     </div>
 
 </body>

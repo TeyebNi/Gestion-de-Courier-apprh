@@ -77,8 +77,7 @@ class CircuitController extends Controller
 
     /**
      * Cabinet de Maire : imprime la fiche de la demande, à porter à la main au
-     * Maire (avec un espace pour ses annotations manuscrites), avant de les
-     * ressaisir via decide().
+     * Maire, avant de saisir ses annotations (données oralement) via decide().
      */
     public function printFicheMaire(Tabdepot $tabdepot)
     {
@@ -96,9 +95,11 @@ class CircuitController extends Controller
             'autoLangToFont' => true,
         ]);
         $mpdf->WriteHTML($html);
+        $pdf = $mpdf->Output('fiche_maire_' . $tabdepot->id . '.pdf', \Mpdf\Output\Destination::STRING_RETURN);
 
-        return response($mpdf->Output('fiche_maire_' . $tabdepot->id . '.pdf', \Mpdf\Output\Destination::DOWNLOAD), 200)
-            ->header('Content-Type', 'application/pdf');
+        return response($pdf, 200)
+            ->header('Content-Type', 'application/pdf')
+            ->header('Content-Disposition', 'inline; filename="fiche_maire_' . $tabdepot->id . '.pdf"');
     }
 
     /**
