@@ -274,30 +274,6 @@ Tableau de bord
     </div>
 </div>
 
-<!-- Acceptées / Refusées -->
-<div class="row">
-    <div class="col-md-12">
-        <div class="card card-chart">
-            <div class="card-header">
-                <h5 class="card-category">Traitement des demandes</h5>
-                <h4 class="card-title">Acceptées / Refusées</h4>
-            </div>
-            <div class="card-body">
-                <div class="chart-area">
-                    <canvas id="reponseChart"></canvas>
-                </div>
-            </div>
-            <div class="card-footer">
-                <div class="stats">
-                    <i class="now-ui-icons ui-1_check text-success"></i> {{ $totalAcceptees }} acceptées
-                    &nbsp;·&nbsp;
-                    <i class="now-ui-icons ui-1_simple-remove text-danger"></i> {{ $totalRefusees }} refusées
-                </div>
-            </div>
-        </div>
-    </div>
-</div>
-
 <!-- Dernières demandes -->
 <div class="row">
     <div class="col-md-12">
@@ -551,6 +527,7 @@ Tableau de bord
     </div>
     @endif
 
+    @if($isAdmin)
     <div class="col-lg-3 col-md-6">
         <div class="card card-stats">
             <div class="card-body">
@@ -578,6 +555,7 @@ Tableau de bord
             </div>
         </div>
     </div>
+    @endif
 </div>
 
 <!-- Évolution + Type de demande -->
@@ -845,8 +823,6 @@ document.addEventListener('DOMContentLoaded', function () {
     var monthCounts = @json($monthCounts);
     var typeLabels = @json($typeLabels);
     var typeCounts = @json($typeCounts);
-    var totalAcceptees = {{ $totalAcceptees }};
-    var totalRefusees = {{ $totalRefusees }};
 
     var palette = ['#2CA8FF', '#FB404B', '#18ce0f', '#FFA534', '#9C27B0', '#00BCD4', '#FF5722', '#607D8B'];
 
@@ -888,24 +864,6 @@ document.addEventListener('DOMContentLoaded', function () {
         }
     });
 
-    new Chart(document.getElementById('reponseChart'), {
-        type: 'bar',
-        data: {
-            labels: ['Acceptées', 'Refusées'],
-            datasets: [{
-                label: 'Demandes',
-                data: [totalAcceptees, totalRefusees],
-                backgroundColor: ['#18ce0f', '#FB404B'],
-                borderRadius: 6,
-            }]
-        },
-        options: {
-            responsive: true,
-            maintainAspectRatio: false,
-            scales: { y: { beginAtZero: true, ticks: { precision: 0 } } },
-            plugins: { legend: { display: false } }
-        }
-    });
 });
 </script>
 @endif

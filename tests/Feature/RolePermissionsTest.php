@@ -204,6 +204,7 @@ class RolePermissionsTest extends TestCase
         $response->assertOk();
         $response->assertDontSee('Type de Demande');
         $response->assertDontSee('Acceptées / Refusées');
+        $response->assertDontSee("Taux d'Acceptation", false);
         $response->assertSee('Évolution des Demandes');
     }
 
@@ -216,6 +217,7 @@ class RolePermissionsTest extends TestCase
         $response->assertOk();
         $response->assertSee('Type de Demande');
         $response->assertSee('Acceptées / Refusées');
+        $response->assertSee("Taux d'Acceptation", false);
     }
 
     public function test_service_dashboard_recent_demandes_are_ordered_and_labeled_by_last_update(): void
@@ -285,20 +287,19 @@ class RolePermissionsTest extends TestCase
         $response->assertSee(route('depot.trashed'), false);
     }
 
-    public function test_accueil_mini_dashboard_shows_the_type_and_acceptance_charts(): void
+    public function test_accueil_mini_dashboard_shows_the_type_chart_but_not_acceptance(): void
     {
         $accueil = User::factory()->create(['role' => UserRole::User]);
-        Tabdepot::create(['nom' => 'A', 'tel' => '22222222', 'daterecp' => now()->format('Y-m-d'), 'decision_maire' => 'accepte']);
-        Tabdepot::create(['nom' => 'B', 'tel' => '22222223', 'daterecp' => now()->format('Y-m-d'), 'decision_maire' => 'refuse']);
+        Tabdepot::create(['reference' => 'A', 'daterecp' => now()->format('Y-m-d')]);
+        Tabdepot::create(['reference' => 'B', 'daterecp' => now()->format('Y-m-d')]);
 
         $response = $this->actingAs($accueil)->get('/');
 
         $response->assertOk();
         $response->assertSee('Type de Demande');
-        $response->assertSee('Acceptées / Refusées');
         $response->assertSee('Évolution des Demandes');
-        $response->assertSee('1 acceptées');
-        $response->assertSee('1 refusées');
+        $response->assertDontSee('Acceptées / Refusées');
+        $response->assertDontSee("Taux d'Acceptation", false);
     }
 
     public function test_accueil_mini_dashboard_shows_origine_badge(): void

@@ -85,11 +85,6 @@ class DashboardController extends Controller
             $typeLabels = $typeStats->pluck('typdm');
             $typeCounts = $typeStats->pluck('total');
 
-            // Vue d'ensemble globale (toutes demandes, tous services) : Accueil voit
-            // l'ensemble du circuit, contrairement à un agent d'un seul service.
-            $totalAcceptees = Tabdepot::where('decision_maire', 'accepte')->count();
-            $totalRefusees = Tabdepot::where('decision_maire', 'refuse')->count();
-
             return view('admin.dashboard', compact(
                 'isAdmin',
                 'isPlainUser',
@@ -103,9 +98,7 @@ class DashboardController extends Controller
                 'months',
                 'monthCounts',
                 'typeLabels',
-                'typeCounts',
-                'totalAcceptees',
-                'totalRefusees'
+                'typeCounts'
             ));
         }
 
