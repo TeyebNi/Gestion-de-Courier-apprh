@@ -260,6 +260,20 @@ class RolePermissionsTest extends TestCase
         $response->assertDontSee('2026-08-30');
     }
 
+    public function test_accueil_sees_a_navbar_bell_with_the_pending_count(): void
+    {
+        $accueil = User::factory()->create(['role' => UserRole::User]);
+        Tabdepot::create(['nom' => 'A', 'tel' => '22222222', 'daterecp' => now()->format('Y-m-d')]);
+        Tabdepot::create(['nom' => 'B', 'tel' => '22222223', 'daterecp' => now()->format('Y-m-d')]);
+        Tabdepot::create(['nom' => 'C', 'tel' => '22222224', 'daterecp' => now()->format('Y-m-d')]);
+
+        $response = $this->actingAs($accueil)->get('/');
+
+        $response->assertOk();
+        $response->assertSee('circuitBellDropdown', false);
+        $response->assertSee('3 demande(s) à transmettre au Cabinet');
+    }
+
     public function test_cabinet_sees_a_navbar_bell_with_the_pending_count(): void
     {
         $cabinet = User::factory()->create(['role' => UserRole::Fatou]);

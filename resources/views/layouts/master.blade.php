@@ -193,15 +193,18 @@
                             </div>
                         </form>
                         <ul class="navbar-nav">
-                            @if(auth()->user()->canAccessCabinet() || auth()->user()->canAccessMaire())
+                            @if(auth()->user()->canAccessDepot() || auth()->user()->canAccessCabinet() || auth()->user()->canAccessMaire())
                             @php
+                                $accueilPendingCount = auth()->user()->canAccessDepot()
+                                    ? \App\Models\Tabdepot::where('statut_circuit', 'accueil')->count()
+                                    : 0;
                                 $cabinetPendingCount = auth()->user()->canAccessCabinet()
                                     ? \App\Models\Tabdepot::where('statut_circuit', 'fatou')->whereNull('decision_maire')->count()
                                     : 0;
                                 $mairePendingCount = auth()->user()->canAccessMaire()
                                     ? \App\Models\Tabdepot::where('statut_circuit', 'maire')->count()
                                     : 0;
-                                $circuitPendingTotal = $cabinetPendingCount + $mairePendingCount;
+                                $circuitPendingTotal = $accueilPendingCount + $cabinetPendingCount + $mairePendingCount;
                             @endphp
                             <li class="nav-item dropdown">
                                 <a class="nav-link dropdown-toggle" href="#" id="circuitBellDropdown" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false" style="position:relative;">
@@ -213,6 +216,13 @@
                                 <div class="dropdown-menu dropdown-menu-right" aria-labelledby="circuitBellDropdown" style="min-width:320px;">
                                     <span class="dropdown-item-text"><strong>En attente de traitement</strong></span>
                                     <div class="dropdown-divider"></div>
+                                    @if(auth()->user()->canAccessDepot())
+                                        <a class="dropdown-item" href="{{ route('depot.index') }}" style="white-space:normal;">
+                                            <span class="badge badge-secondary">Accueil</span>
+                                            <div>{{ $accueilPendingCount }} demande(s) à transmettre au Cabinet</div>
+                                        </a>
+                                        <div class="dropdown-divider"></div>
+                                    @endif
                                     @if(auth()->user()->canAccessCabinet())
                                         <a class="dropdown-item" href="{{ route('circuit.fatou.index') }}" style="white-space:normal;">
                                             <span class="badge badge-info">Cabinet</span>
