@@ -283,6 +283,41 @@ class CircuitWorkflowTest extends TestCase
         $this->assertDatabaseMissing('service_notifications', ['iddmd' => $depot->id]);
     }
 
+    public function test_decide_marks_the_demande_as_unseen_by_accueil(): void
+    {
+        $fatou = User::factory()->create(['role' => UserRole::Fatou]);
+        $depot = $this->makeDepot();
+        $depot->update(['statut_circuit' => 'fatou']);
+
+        $this->actingAs($fatou)->post("/circuit/{$depot->id}/decider", ['remarque_maire' => 'RAS']);
+
+        $this->assertFalse($depot->fresh()->vue_accueil);
+    }
+
+    public function test_visiting_suivi_marks_annotations_as_seen_by_accueil(): void
+    {
+        $accueil = User::factory()->create(['role' => UserRole::User]);
+        $depot = $this->makeDepot();
+        $depot->update(['statut_circuit' => 'cloture', 'remarque_maire' => 'RAS', 'vue_accueil' => false]);
+
+        $response = $this->actingAs($accueil)->get('/circuit/suivi');
+
+        $response->assertOk();
+        $this->assertTrue($depot->fresh()->vue_accueil);
+    }
+
+    public function test_accueil_bell_shows_the_new_annotations_count(): void
+    {
+        $accueil = User::factory()->create(['role' => UserRole::User]);
+        $depot = $this->makeDepot();
+        $depot->update(['statut_circuit' => 'cloture', 'remarque_maire' => 'RAS', 'vue_accueil' => false]);
+
+        $response = $this->actingAs($accueil)->get('/');
+
+        $response->assertOk();
+        $response->assertSee("1 nouvelle(s) annotation(s) du Maire à consulter", false);
+    }
+
     public function test_decide_requires_annotations(): void
     {
         $fatou = User::factory()->create(['role' => UserRole::Fatou]);

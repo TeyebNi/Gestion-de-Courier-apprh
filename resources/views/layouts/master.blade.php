@@ -193,7 +193,10 @@
                                 $cabinetPendingCount = auth()->user()->canAccessCabinet()
                                     ? \App\Models\Tabdepot::where('statut_circuit', 'fatou')->count()
                                     : 0;
-                                $circuitPendingTotal = $accueilPendingCount + $cabinetPendingCount;
+                                $nouvellesAnnotationsCount = auth()->user()->canAccessDepot()
+                                    ? \App\Models\Tabdepot::where('vue_accueil', false)->count()
+                                    : 0;
+                                $circuitPendingTotal = $accueilPendingCount + $cabinetPendingCount + $nouvellesAnnotationsCount;
                             @endphp
                             <li class="nav-item dropdown">
                                 <a class="nav-link dropdown-toggle" href="#" id="circuitBellDropdown" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false" style="position:relative;">
@@ -211,6 +214,13 @@
                                             <div>{{ $accueilPendingCount }} demande(s) à transmettre au Cabinet</div>
                                         </a>
                                         <div class="dropdown-divider"></div>
+                                        @if($nouvellesAnnotationsCount > 0)
+                                        <a class="dropdown-item" href="{{ route('circuit.suivi') }}" style="white-space:normal;">
+                                            <span class="badge badge-warning">Annotations</span>
+                                            <div>{{ $nouvellesAnnotationsCount }} nouvelle(s) annotation(s) du Maire à consulter</div>
+                                        </a>
+                                        <div class="dropdown-divider"></div>
+                                        @endif
                                     @endif
                                     @if(auth()->user()->canAccessCabinet())
                                         <a class="dropdown-item" href="{{ route('circuit.fatou.index') }}" style="white-space:normal;">

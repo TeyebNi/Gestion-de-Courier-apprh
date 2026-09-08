@@ -103,6 +103,7 @@ class CircuitController extends Controller
             'remarque_maire' => $request->remarque_maire,
             'statut_circuit' => $serviceDestination ? 'service' : 'cloture',
             'service_assigne' => $serviceDestination,
+            'vue_accueil' => false,
         ]);
 
         $this->logHistorique(
@@ -206,6 +207,10 @@ class CircuitController extends Controller
         if (! auth()->user()->canAccessSuivi()) {
             abort(403, "Cette page est réservée à l'accueil et aux administrateurs.");
         }
+
+        // Visiter Suivi vaut consultation : les annotations fraîchement saisies
+        // par le Cabinet ne sont plus signalées comme "nouvelles" dans la cloche.
+        Tabdepot::where('vue_accueil', false)->update(['vue_accueil' => true]);
 
         $search = $request->search;
         $statut = $request->statut;
