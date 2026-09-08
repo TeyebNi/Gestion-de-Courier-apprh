@@ -173,6 +173,18 @@ Types de Demande
 </div>
 @endif
 
+@if (session('error'))
+<div id="typedemErrorOverlay" style="position:fixed; inset:0; background:rgba(0,0,0,0.5); z-index:2000; display:flex; align-items:center; justify-content:center;">
+    <div style="background:#fff; border-radius:12px; padding:32px; width:90%; max-width:380px; text-align:center; box-shadow:0 10px 30px rgba(0,0,0,0.2);">
+        <div style="margin:0 auto 16px; width:64px; height:64px; border-radius:50%; border:3px solid #dc3545; display:flex; align-items:center; justify-content:center;">
+            <span style="color:#dc3545; font-size:32px;">&#10007;</span>
+        </div>
+        <p style="color:#333; margin-bottom:20px;">{{ session('error') }}</p>
+        <button id="closeTypedemError" class="btn btn-danger" style="width:100%;">OK</button>
+    </div>
+</div>
+@endif
+
 <script>
 document.addEventListener('DOMContentLoaded', function () {
     $('#exampleModal-edit').on('show.bs.modal', function (event) {
@@ -192,6 +204,13 @@ document.addEventListener('DOMContentLoaded', function () {
     if (closeBtnTypedemEdit) {
         closeBtnTypedemEdit.addEventListener('click', function () {
             document.getElementById('typedemEditSuccessOverlay').style.display = 'none';
+        });
+    }
+
+    var closeBtnTypedemError = document.getElementById('closeTypedemError');
+    if (closeBtnTypedemError) {
+        closeBtnTypedemError.addEventListener('click', function () {
+            document.getElementById('typedemErrorOverlay').style.display = 'none';
         });
     }
 });

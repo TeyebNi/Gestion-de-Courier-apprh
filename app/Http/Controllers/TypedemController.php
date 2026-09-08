@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\Tabdepot;
 use App\Models\Typedem;
 use App\Http\Controllers\Controller;
 use Illuminate\Http\Request;
@@ -96,6 +97,11 @@ class TypedemController extends Controller
      */
     public function destroy(Typedem $typedem)
     {
+        $demandesUtilisant = Tabdepot::where('typdm', $typedem->name)->count();
+        if ($demandesUtilisant > 0) {
+            return redirect()->route('typedem.index')->with('error', "Impossible de supprimer « {$typedem->name} » : {$demandesUtilisant} demande(s) l'utilisent encore.");
+        }
+
         $id = $typedem->id;
         $typedem->delete();
 
