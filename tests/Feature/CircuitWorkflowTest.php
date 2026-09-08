@@ -294,6 +294,40 @@ class CircuitWorkflowTest extends TestCase
             ->assertHeader('Content-Type', 'application/pdf');
     }
 
+    public function test_closing_a_demande_shows_the_resolution_wherever_the_status_is_displayed(): void
+    {
+        $serviceUser = User::factory()->create(['role' => UserRole::User, 'service' => 'Etat Civil']);
+        $fatou = User::factory()->create(['role' => UserRole::Fatou]);
+        $accueil = User::factory()->create(['role' => UserRole::User]);
+
+        $depot = $this->makeDepot();
+        $depot->update(['statut_circuit' => 'service', 'service_assigne' => 'Etat Civil', 'remarque_maire' => 'RAS']);
+
+        $this->actingAs($serviceUser)->post("/circuit/{$depot->id}/cloturer", ['resolution' => 'convoquer']);
+
+        // Cabinet de Maire : le tableau "déjà annotées" doit refléter la vraie résolution.
+        $cabinetResponse = $this->actingAs($fatou)->get('/circuit/fatou');
+        $cabinetResponse->assertSee('Clôturée (Convoquée)');
+
+        // Accueil : Suivi doit refléter la même chose, pas un générique "traitée par le service".
+        $suiviResponse = $this->actingAs($accueil)->get('/circuit/suivi');
+        $suiviResponse->assertSee('Clôturée (Convoquée)');
+    }
+
+    public function test_service_close_buttons_directly_set_the_resolution(): void
+    {
+        $serviceUser = User::factory()->create(['role' => UserRole::User, 'service' => 'Etat Civil']);
+        $depot = $this->makeDepot();
+        $depot->update(['statut_circuit' => 'service', 'service_assigne' => 'Etat Civil']);
+
+        $this->actingAs($serviceUser)->post("/circuit/{$depot->id}/cloturer", ['resolution' => 'classer'])
+            ->assertRedirect();
+
+        $depot->refresh();
+        $this->assertSame('cloture', $depot->statut_circuit);
+        $this->assertSame('classer', $depot->resolution_service);
+    }
+
     public function test_fatou_index_shows_already_annotated_demandes(): void
     {
         $fatou = User::factory()->create(['role' => UserRole::Fatou]);

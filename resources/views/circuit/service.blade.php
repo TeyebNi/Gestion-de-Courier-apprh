@@ -56,17 +56,20 @@ document.addEventListener('DOMContentLoaded', function () {
                                 <td class="text-truncate" style="max-width:220px;" title="{{ $d->remarque_maire }}">{{ $d->remarque_maire ?: '—' }}</td>
                                 <td>{{ $d->daterecpFormatted() }}</td>
                                 <td>
-                                    <form action="{{ route('circuit.cloturer', $d) }}" method="post" class="form-inline" onsubmit="return confirm('Confirmer la clôture de cette demande ?');">
+                                    <form action="{{ route('circuit.cloturer', $d) }}" method="post" style="display:inline;" onsubmit="return confirm('Marquer cette demande comme traitée ?');">
                                         @csrf
-                                        <select name="resolution" class="form-control form-control-sm mr-1" required style="max-width:140px;">
-                                            <option value="">Résolution...</option>
-                                            <option value="traiter">Traiter</option>
-                                            <option value="classer">Classer</option>
-                                            <option value="convoquer">Convoquer</option>
-                                        </select>
-                                        <button type="submit" class="btn btn-success btn-sm">
-                                            <i class="fas fa-check"></i> Clôturer
-                                        </button>
+                                        <input type="hidden" name="resolution" value="traiter">
+                                        <button type="submit" class="btn btn-success btn-sm" title="Traiter"><i class="fas fa-check"></i> Traiter</button>
+                                    </form>
+                                    <form action="{{ route('circuit.cloturer', $d) }}" method="post" style="display:inline;" onsubmit="return confirm('Classer cette demande sans traitement particulier ?');">
+                                        @csrf
+                                        <input type="hidden" name="resolution" value="classer">
+                                        <button type="submit" class="btn btn-secondary btn-sm" title="Classer"><i class="fas fa-folder"></i> Classer</button>
+                                    </form>
+                                    <form action="{{ route('circuit.cloturer', $d) }}" method="post" style="display:inline;" onsubmit="return confirm('Convoquer le demandeur ?');">
+                                        @csrf
+                                        <input type="hidden" name="resolution" value="convoquer">
+                                        <button type="submit" class="btn btn-warning btn-sm" title="Convoquer"><i class="fas fa-phone"></i> Convoquer</button>
                                     </form>
                                 </td>
                             </tr>

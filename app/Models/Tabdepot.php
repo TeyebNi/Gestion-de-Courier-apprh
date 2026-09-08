@@ -51,8 +51,22 @@ class Tabdepot extends Model
             'fatou' => 'Chez le Cabinet de Maire',
             'maire' => 'Chez le Maire',
             'service' => 'Chez le service : ' . ($this->service_assigne ?? '—'),
-            'cloture' => 'Clôturée (traitée par le service)',
+            'cloture' => 'Clôturée (' . ($this->resolutionLabel() ?: 'traitée par le service') . ')',
             default => $this->statut_circuit ?? 'À l\'accueil',
+        };
+    }
+
+    /**
+     * Libellé de la résolution choisie par le service à la clôture
+     * (traiter/classer/convoquer), réutilisé partout où le statut est affiché.
+     */
+    public function resolutionLabel(): ?string
+    {
+        return match ($this->resolution_service) {
+            'traiter' => 'Traitée',
+            'classer' => 'Classée',
+            'convoquer' => 'Convoquée',
+            default => null,
         };
     }
 

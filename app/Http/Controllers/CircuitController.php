@@ -188,13 +188,7 @@ class CircuitController extends Controller
             'resolution_service' => $request->resolution,
         ]);
 
-        $resolutionLabel = match ($request->resolution) {
-            'traiter' => 'Traitée',
-            'classer' => 'Classée',
-            'convoquer' => 'Convocation du demandeur',
-        };
-
-        $this->logHistorique($tabdepot, 'service', 'cloture', $resolutionLabel . ' par le service ' . $tabdepot->service_assigne);
+        $this->logHistorique($tabdepot, 'service', 'cloture', $tabdepot->resolutionLabel() . ' par le service ' . $tabdepot->service_assigne);
 
         if ($tabdepot->tel) {
             $this->sms->send(
