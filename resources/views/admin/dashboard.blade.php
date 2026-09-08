@@ -527,35 +527,6 @@ Tableau de bord
     </div>
     @endif
 
-    @if($isAdmin)
-    <div class="col-lg-3 col-md-6">
-        <div class="card card-stats">
-            <div class="card-body">
-                <div class="row">
-                    <div class="col-5 col-md-4">
-                        <div class="icon-big text-center icon-warning">
-                            <i class="now-ui-icons ui-1_check text-success"></i>
-                        </div>
-                    </div>
-                    <div class="col-7 col-md-8">
-                        <div class="numbers">
-                            <p class="card-category">Taux d'Acceptation</p>
-                            <h4 class="card-title">{{ $tauxAcceptation }}%</h4>
-                        </div>
-                    </div>
-                </div>
-            </div>
-            <div class="card-footer">
-                <hr>
-                <div class="stats">
-                    <i class="now-ui-icons ui-1_check text-success"></i> {{ $totalAcceptees }} acceptées
-                    &nbsp;·&nbsp;
-                    <i class="now-ui-icons ui-1_simple-remove text-danger"></i> {{ $totalRefusees }} refusées
-                </div>
-            </div>
-        </div>
-    </div>
-    @endif
 </div>
 
 <!-- Évolution + Type de demande -->
@@ -600,32 +571,9 @@ Tableau de bord
     @endif
 </div>
 
-<!-- Acceptées/Refusées + Dernières demandes -->
+<!-- Dernières demandes -->
 <div class="row">
-    @if($isAdmin)
-    <div class="col-lg-5">
-        <div class="card card-chart">
-            <div class="card-header">
-                <h5 class="card-category">Traitement des demandes</h5>
-                <h4 class="card-title">Acceptées / Refusées</h4>
-            </div>
-            <div class="card-body">
-                <div class="chart-area">
-                    <canvas id="reponseChart"></canvas>
-                </div>
-            </div>
-            <div class="card-footer">
-                <div class="stats">
-                    <i class="now-ui-icons ui-1_check"></i> {{ $totalAcceptees }} acceptées
-                    &nbsp;·&nbsp;
-                    <i class="now-ui-icons ui-1_simple-remove"></i> {{ $totalRefusees }} refusées
-                </div>
-            </div>
-        </div>
-    </div>
-    @endif
-
-    <div class="{{ $isAdmin ? 'col-lg-7' : 'col-lg-12' }}">
+    <div class="col-lg-12">
         <div class="card card-tasks">
             <div class="card-header">
                 <h5 class="card-category">Activité récente</h5>
@@ -725,8 +673,6 @@ document.addEventListener('DOMContentLoaded', function () {
     var typeCounts = @json($typeCounts);
     var serviceLabels = @json($serviceLabels);
     var serviceCounts = @json($serviceCounts);
-    var totalAcceptees = {{ $totalAcceptees }};
-    var totalRefusees = {{ $totalRefusees }};
 
     var palette = ['#2CA8FF', '#FB404B', '#18ce0f', '#FFA534', '#9C27B0', '#00BCD4', '#FF5722', '#607D8B'];
 
@@ -766,25 +712,6 @@ document.addEventListener('DOMContentLoaded', function () {
             responsive: true,
             maintainAspectRatio: false,
             plugins: { legend: { position: 'bottom', labels: { boxWidth: 12 } } }
-        }
-    });
-
-    new Chart(document.getElementById('reponseChart'), {
-        type: 'bar',
-        data: {
-            labels: ['Acceptées', 'Refusées'],
-            datasets: [{
-                label: 'Demandes',
-                data: [totalAcceptees, totalRefusees],
-                backgroundColor: ['#18ce0f', '#FB404B'],
-                borderRadius: 6,
-            }]
-        },
-        options: {
-            responsive: true,
-            maintainAspectRatio: false,
-            scales: { y: { beginAtZero: true, ticks: { precision: 0 } } },
-            plugins: { legend: { display: false } }
         }
     });
     @endif

@@ -208,7 +208,7 @@ class RolePermissionsTest extends TestCase
         $response->assertSee('Évolution des Demandes');
     }
 
-    public function test_admin_dashboard_still_shows_the_type_and_acceptance_charts(): void
+    public function test_admin_dashboard_still_shows_the_type_chart_but_not_acceptance(): void
     {
         $admin = User::factory()->create(['role' => UserRole::Admin]);
 
@@ -216,8 +216,8 @@ class RolePermissionsTest extends TestCase
 
         $response->assertOk();
         $response->assertSee('Type de Demande');
-        $response->assertSee('Acceptées / Refusées');
-        $response->assertSee("Taux d'Acceptation", false);
+        $response->assertDontSee('Acceptées / Refusées');
+        $response->assertDontSee("Taux d'Acceptation", false);
     }
 
     public function test_service_dashboard_recent_demandes_are_ordered_and_labeled_by_last_update(): void

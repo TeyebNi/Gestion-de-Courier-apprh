@@ -122,18 +122,6 @@ class DashboardController extends Controller
                 ->count('typdm');
         }
 
-        // "Acceptées/Refusées" reflète désormais la décision du Maire elle-même
-        // (Tabdepot.decision_maire), la seule source de vérité depuis que le
-        // circuit envoie le SMS directement au citoyen dans decide().
-        $decisionQuery = Tabdepot::whereNotNull('decision_maire');
-        if (!$isAdmin) {
-            $decisionQuery->where('service_assigne', $user->service);
-        }
-        $totalAcceptees = (clone $decisionQuery)->where('decision_maire', 'accepte')->count();
-        $totalRefusees = (clone $decisionQuery)->where('decision_maire', 'refuse')->count();
-        $totalReponses = $totalAcceptees + $totalRefusees;
-        $tauxAcceptation = $totalReponses > 0 ? round(($totalAcceptees / $totalReponses) * 100) : 0;
-
         // Demandes assignées à ce service mais pas encore clôturées par lui.
         $totalEnCours = (clone $assignedQuery)->where('statut_circuit', 'service')->count();
 
@@ -213,9 +201,6 @@ class DashboardController extends Controller
             'totalDemandes',
             'totalDemandesAssignees',
             'totalTypes',
-            'tauxAcceptation',
-            'totalAcceptees',
-            'totalRefusees',
             'totalEnCours',
             'months',
             'monthCounts',
