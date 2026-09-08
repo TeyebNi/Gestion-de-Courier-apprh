@@ -14,7 +14,7 @@ Corbeille - Dépôt des Demandes
                     Corbeille — Demandes supprimées
                 </h4>
                 <div class="d-flex align-items-center flex-wrap">
-                    @include('partials.search-box', ['route' => 'depot.trashed', 'placeholder' => 'Rechercher par nom, objet...'])
+                    @include('partials.search-box', ['route' => 'depot.trashed', 'placeholder' => 'Rechercher par code, objet...'])
                     <a href="{{ route('depot.index') }}" class="btn btn-secondary btn-sm">
                         <i class="fas fa-arrow-left"></i> Retour au Dépôt
                     </a>
@@ -29,10 +29,10 @@ Corbeille - Dépôt des Demandes
                 <div class="table-responsive">
                     <table class="table">
                         <thead class="text-primary">
+                            <th>N°</th>
                             <th>Code</th>
-                            <th>Nom</th>
                             <th>Objet</th>
-                            <th>Type</th>
+                            <th>Origine</th>
                             <th>Supprimée le</th>
                             <th class="text-right">Action</th>
                         </thead>
@@ -40,9 +40,9 @@ Corbeille - Dépôt des Demandes
                             @forelse($tabdepot as $item)
                             <tr>
                                 <td>{{ $item->id }}</td>
-                                <td>{{ $item->nom ?: ($item->origine_detail ?: '—') }}</td>
+                                <td>{{ $item->reference ?: '—' }}</td>
                                 <td class="text-truncate" style="max-width:220px;" title="{{ $item->objet }}">{{ $item->objet ?: '—' }}</td>
-                                <td>{{ $item->typdm ?: '—' }}</td>
+                                <td>@include('partials.origine-badge', ['demande' => $item])</td>
                                 <td>{{ $item->deleted_at->format('d/m/Y H:i') }}</td>
                                 <td class="text-right">
                                     <form action="{{ route('depot.restore', $item->id) }}" method="post" style="display:inline;">
@@ -53,7 +53,7 @@ Corbeille - Dépôt des Demandes
                                     </form>
                                     @if(auth()->user()->isAdmin())
                                     <button type="button" class="btn btn-danger btn-sm force-delete-btn"
-                                        data-id="{{ $item->id }}" data-nom="{{ $item->nom ?: ($item->origine_detail ?: 'cette demande') }}"
+                                        data-id="{{ $item->id }}" data-nom="{{ $item->reference ?: 'cette demande' }}"
                                         data-toggle="modal" data-target="#forceDeleteModal" title="Supprimer définitivement">
                                         <i class="fas fa-trash"></i>
                                     </button>

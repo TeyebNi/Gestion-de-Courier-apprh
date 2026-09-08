@@ -180,9 +180,9 @@
     <div class="details">
         <table class="details-table">
             <tr>
-                <td class="detail-label">Type de demande</td>
+                <td class="detail-label">Code</td>
                 <td class="detail-sep">:</td>
-                <td class="detail-value">{{ $detailf->typdm ?: '—' }}</td>
+                <td class="detail-value">{{ $detailf->reference ?: '—' }}</td>
             </tr>
 
             <tr>
@@ -192,33 +192,17 @@
             </tr>
 
             <tr>
-                <td class="detail-label">N° référence</td>
+                <td class="detail-label">Origine</td>
                 <td class="detail-sep">:</td>
-                <td class="detail-value">{{ $detailf->reference ?: '—' }}</td>
-            </tr>
-
-            <tr>
-                <td class="detail-label">Nom</td>
-                <td class="detail-sep">:</td>
-                <td class="detail-value">{{ $detailf->nom ?: ($detailf->origine_detail ?: '—') }}</td>
-            </tr>
-
-            <tr>
-                <td class="detail-label">NNI</td>
-                <td class="detail-sep">:</td>
-                <td class="detail-value">{{ $detailf->nni ?: '—' }}</td>
-            </tr>
-
-            <tr>
-                <td class="detail-label">Téléphone</td>
-                <td class="detail-sep">:</td>
-                <td class="detail-value">{{ $detailf->tel ?: '—' }}</td>
-            </tr>
-
-            <tr>
-                <td class="detail-label">Adresse</td>
-                <td class="detail-sep">:</td>
-                <td class="detail-value">{{ $detailf->adresse ?: '—' }}</td>
+                <td class="detail-value">
+                    @if($detailf->origine === 'interne')
+                        Interne @if($detailf->origine_detail) — {{ $detailf->origine_detail }} @endif
+                    @elseif($detailf->origine === 'externe')
+                        Externe
+                    @else
+                        —
+                    @endif
+                </td>
             </tr>
 
             <tr>

@@ -220,9 +220,7 @@ class CircuitController extends Controller
             ->when($statut, fn ($q) => $q->where('statut_circuit', $statut))
             ->when($search, function ($q) use ($search) {
                 $q->where(function ($sub) use ($search) {
-                    $sub->where('nom', 'like', "%{$search}%")
-                        ->orWhere('nni', 'like', "%{$search}%")
-                        ->orWhere('objet', 'like', "%{$search}%")
+                    $sub->where('objet', 'like', "%{$search}%")
                         ->orWhere('reference', 'like', "%{$search}%")
                         ->orWhere('id', 'like', "%{$search}%")
                         ->orWhere('id', ltrim($search, '0') ?: '0');

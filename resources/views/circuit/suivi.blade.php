@@ -24,7 +24,7 @@ Suivi des Demandes
                         <div class="input-group-prepend">
                             <span class="input-group-text"><i class="fas fa-barcode"></i></span>
                         </div>
-                        <input type="text" name="search" id="scan_search" class="form-control" placeholder="Scannez le code-barres, ou tapez N°, nom, NNI, objet, référence..." value="{{ $search }}" autofocus autocomplete="off">
+                        <input type="text" name="search" id="scan_search" class="form-control" placeholder="Scannez le code-barres, ou tapez N°, code, objet..." value="{{ $search }}" autofocus autocomplete="off">
                     </div>
                     <button type="submit" class="btn btn-primary btn-sm ml-2">Rechercher</button>
                     <button type="button" class="btn btn-secondary btn-sm ml-2" data-toggle="modal" data-target="#qrScannerModal">
@@ -37,8 +37,8 @@ Suivi des Demandes
                     <table class="table">
                         <thead class="text-primary">
                             <th>N°</th>
-                            <th>Nom</th>
-                            <th>Type</th>
+                            <th>Code</th>
+                            <th>Origine</th>
                             <th>Objet</th>
                             <th>Où se trouve la demande ?</th>
                             <th>Annotations du Maire</th>
@@ -49,8 +49,8 @@ Suivi des Demandes
                             @forelse($demandes as $d)
                             <tr>
                                 <td>{{ $d->id }}</td>
-                                <td>{{ $d->nom ?: ($d->origine_detail ?: '—') }} @if($d->piece_jointe)<a href="{{ asset('storage/' . $d->piece_jointe) }}" target="_blank" title="Voir la pièce jointe"><i class="fas fa-paperclip text-info"></i></a>@endif</td>
-                                <td>{{ $d->typdm ?: '—' }}</td>
+                                <td>{{ $d->reference ?: '—' }}</td>
+                                <td>@include('partials.origine-badge', ['demande' => $d])</td>
                                 <td class="text-truncate" style="max-width:220px;" title="{{ $d->objet }}">{{ $d->objet ?: '—' }}</td>
                                 <td>
                                     <span class="badge {{ \App\Models\Tabdepot::circuitStepBadgeClass($d->statut_circuit) }}">{{ $d->statutLabel() }}</span>

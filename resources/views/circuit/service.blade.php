@@ -40,8 +40,8 @@ document.addEventListener('DOMContentLoaded', function () {
                 <div class="table-responsive">
                     <table class="table">
                         <thead class="text-primary">
-                            <th>Nom</th>
-                            <th>Type</th>
+                            <th>Code</th>
+                            <th>Origine</th>
                             <th>Objet</th>
                             <th>Annotations du Maire</th>
                             <th>Date</th>
@@ -50,8 +50,8 @@ document.addEventListener('DOMContentLoaded', function () {
                         <tbody>
                             @forelse($demandes as $d)
                             <tr>
-                                <td>{{ $d->nom ?: ($d->origine_detail ?: '—') }} @if($d->piece_jointe)<a href="{{ asset('storage/' . $d->piece_jointe) }}" target="_blank" title="Voir la pièce jointe"><i class="fas fa-paperclip text-info"></i></a>@endif</td>
-                                <td>{{ $d->typdm ?: '—' }}</td>
+                                <td>{{ $d->reference ?: '—' }}</td>
+                                <td>@include('partials.origine-badge', ['demande' => $d])</td>
                                 <td class="text-truncate" style="max-width:220px;" title="{{ $d->objet }}">{{ $d->objet ?: '—' }}</td>
                                 <td class="text-truncate" style="max-width:220px;" title="{{ $d->remarque_maire }}">{{ $d->remarque_maire ?: '—' }}</td>
                                 <td>{{ $d->daterecpFormatted() }}</td>
@@ -98,8 +98,8 @@ document.addEventListener('DOMContentLoaded', function () {
                 <div class="table-responsive">
                     <table class="table">
                         <thead class="text-primary">
-                            <th>Nom</th>
-                            <th>Type</th>
+                            <th>Code</th>
+                            <th>Origine</th>
                             <th>Objet</th>
                             <th>Résolution</th>
                             <th>Date</th>
@@ -108,8 +108,8 @@ document.addEventListener('DOMContentLoaded', function () {
                         <tbody>
                             @forelse($demandesTraitees as $d)
                             <tr>
-                                <td>{{ $d->nom ?: ($d->origine_detail ?: '—') }} @if($d->piece_jointe)<a href="{{ asset('storage/' . $d->piece_jointe) }}" target="_blank" title="Voir la pièce jointe"><i class="fas fa-paperclip text-info"></i></a>@endif</td>
-                                <td>{{ $d->typdm ?: '—' }}</td>
+                                <td>{{ $d->reference ?: '—' }}</td>
+                                <td>@include('partials.origine-badge', ['demande' => $d])</td>
                                 <td class="text-truncate" style="max-width:220px;" title="{{ $d->objet }}">{{ $d->objet ?: '—' }}</td>
                                 <td>
                                     @if($d->resolution_service === 'traiter')

@@ -45,23 +45,10 @@ document.addEventListener('DOMContentLoaded', function () {
                     <div class="card-body">
                         <div class="row">
                             <div class="col-md-8">
-                                <p><strong>Nom :</strong> {{ $d->nom ?: ($d->origine_detail ?: '—') }} @if($d->piece_jointe)<a href="{{ asset('storage/' . $d->piece_jointe) }}" target="_blank" title="Voir la pièce jointe"><i class="fas fa-paperclip text-info"></i></a>@endif</p>
+                                <p><strong>Code :</strong> {{ $d->reference ?: '—' }}</p>
                                 <p><strong>Objet :</strong> {{ $d->objet ?: '—' }}</p>
-                                <p><strong>Type de demande :</strong> {{ $d->typdm ?: '—' }}</p>
-                                @if($d->reference)
-                                <p><strong>N° référence :</strong> {{ $d->reference }}</p>
-                                @endif
                                 <p><strong>Origine :</strong> @include('partials.origine-badge', ['demande' => $d])</p>
-                                <p><strong>NNI :</strong> {{ $d->nni ?: '—' }} — <strong>Tel :</strong> {{ $d->tel ?: '—' }}</p>
-                                <p><strong>Adresse :</strong> {{ $d->adresse ?: '—' }}</p>
                                 <p><strong>Date de réception :</strong> {{ $d->daterecpFormatted() }}</p>
-                                @if($d->piece_jointe)
-                                <p>
-                                    <a href="{{ asset('storage/' . $d->piece_jointe) }}" target="_blank" class="btn btn-info btn-sm">
-                                        <i class="fas fa-paperclip"></i> Voir le document original (scan)
-                                    </a>
-                                </p>
-                                @endif
                                 <p>
                                     <a href="{{ route('depot.print_reçu', $d->id) }}" target="_blank" class="btn btn-secondary btn-sm">
                                         <i class="fas fa-print"></i> Imprimer le reçu pour le Maire
@@ -110,7 +97,7 @@ document.addEventListener('DOMContentLoaded', function () {
                 <div class="table-responsive">
                     <table class="table">
                         <thead class="text-primary">
-                            <th>Nom</th>
+                            <th>Code</th>
                             <th>Objet</th>
                             <th>Annotations du Maire</th>
                             <th>Où se trouve la demande ?</th>
@@ -119,7 +106,7 @@ document.addEventListener('DOMContentLoaded', function () {
                         <tbody>
                             @forelse($dejaAnnotees as $d)
                             <tr>
-                                <td>{{ $d->nom ?: ($d->origine_detail ?: '—') }}</td>
+                                <td>{{ $d->reference ?: '—' }}</td>
                                 <td class="text-truncate" style="max-width:220px;" title="{{ $d->objet }}">{{ $d->objet ?: '—' }}</td>
                                 <td class="text-truncate" style="max-width:260px;" title="{{ $d->remarque_maire }}">{{ $d->remarque_maire }}</td>
                                 <td>

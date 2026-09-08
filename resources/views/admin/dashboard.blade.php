@@ -310,34 +310,22 @@ Tableau de bord
                 <div class="table-full-width table-responsive">
                     <table class="table">
                         <thead class="text-primary">
-                            <th>Nom</th>
+                            <th>Code</th>
                             <th>Origine</th>
                             <th>Objet</th>
-                            <th>Téléphone</th>
-                            <th>Type</th>
                             <th>Date</th>
                         </thead>
                         <tbody>
                             @forelse($recentDemandesUser as $d)
                             <tr>
-                                <td>
-                                    {{ $d->nom ?: ($d->origine_detail ?: '—') }}
-                                    @if($d->piece_jointe)
-                                        <a href="{{ asset('storage/' . $d->piece_jointe) }}" target="_blank" title="Voir la pièce jointe"><i class="fas fa-paperclip text-info"></i></a>
-                                    @endif
-                                    @if($d->nni)
-                                        <br><small class="text-muted">NNI: {{ $d->nni }}</small>
-                                    @endif
-                                </td>
+                                <td>{{ $d->reference ?: '—' }}</td>
                                 <td>@include('partials.origine-badge', ['demande' => $d])</td>
                                 <td class="text-truncate" style="max-width:220px;" title="{{ $d->objet }}">{{ $d->objet ?: '—' }}</td>
-                                <td>{{ $d->tel ?: '—' }}</td>
-                                <td>{{ $d->typdm ?: '—' }}</td>
                                 <td>{{ $d->daterecpFormatted() }}</td>
                             </tr>
                             @empty
                             <tr>
-                                <td colspan="6" class="text-center text-muted">Aucune demande pour le moment.</td>
+                                <td colspan="4" class="text-center text-muted">Aucune demande pour le moment.</td>
                             </tr>
                             @endforelse
                         </tbody>
@@ -426,16 +414,16 @@ Tableau de bord
                 <div class="table-full-width table-responsive">
                     <table class="table">
                         <thead class="text-primary">
-                            <th>Nom</th>
-                            <th>Type</th>
+                            <th>Code</th>
+                            <th>Origine</th>
                             <th>Objet</th>
                             <th>Date</th>
                         </thead>
                         <tbody>
                             @forelse($recentQueue as $d)
                             <tr>
-                                <td>{{ $d->nom ?: ($d->origine_detail ?: '—') }}</td>
-                                <td>{{ $d->typdm ?: '—' }}</td>
+                                <td>{{ $d->reference ?: '—' }}</td>
+                                <td>@include('partials.origine-badge', ['demande' => $d])</td>
                                 <td class="text-truncate" style="max-width:220px;" title="{{ $d->objet }}">{{ $d->objet ?: '—' }}</td>
                                 <td>{{ $d->daterecpFormatted() }}</td>
                             </tr>
@@ -670,15 +658,15 @@ Tableau de bord
                     @if($isAdmin)
                     <table class="table">
                         <thead class="text-primary">
-                            <th>Nom</th>
-                            <th>Type</th>
+                            <th>Code</th>
+                            <th>Origine</th>
                             <th>Date</th>
                         </thead>
                         <tbody>
                             @forelse($recentDemandes as $d)
                             <tr>
-                                <td>{{ $d->nom ?: ($d->origine_detail ?: '—') }}</td>
-                                <td>{{ $d->typdm ?: '—' }}</td>
+                                <td>{{ $d->reference ?: '—' }}</td>
+                                <td>@include('partials.origine-badge', ['demande' => $d])</td>
                                 <td>{{ $d->daterecpFormatted() }}</td>
                             </tr>
                             @empty
@@ -691,7 +679,7 @@ Tableau de bord
                     @else
                     <table class="table">
                         <thead class="text-primary">
-                            <th>Nom</th>
+                            <th>Code</th>
                             <th>Objet</th>
                             <th>Statut</th>
                             <th>Dernière mise à jour</th>
@@ -699,7 +687,7 @@ Tableau de bord
                         <tbody>
                             @forelse($recentServiceDemandes as $d)
                             <tr>
-                                <td>{{ $d->nom ?: ($d->origine_detail ?: '—') }}</td>
+                                <td>{{ $d->reference ?: '—' }}</td>
                                 <td class="text-truncate" style="max-width:180px;" title="{{ $d->objet }}">{{ $d->objet ?: '—' }}</td>
                                 <td><span class="badge {{ \App\Models\Tabdepot::circuitStepBadgeClass($d->statut_circuit) }}">{{ $d->statutLabel() }}</span></td>
                                 <td>{{ $d->updated_at->format('d/m/Y H:i') }}</td>

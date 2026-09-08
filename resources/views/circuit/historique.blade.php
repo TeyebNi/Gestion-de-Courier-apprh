@@ -11,7 +11,7 @@ Historique de la Demande
         <div class="card">
             <div class="card-header d-flex justify-content-between align-items-center flex-wrap">
                 <h4 class="card-title mb-0" style="font-weight: 700; color: #212529;">
-                    Demande de {{ $tabdepot->nom ?: ($tabdepot->origine_detail ?: '—') }}
+                    Demande {{ $tabdepot->reference ?: '#' . $tabdepot->id }}
                     <span class="badge {{ \App\Models\Tabdepot::circuitStepBadgeClass($tabdepot->statut_circuit) }} ml-2">{{ $tabdepot->statutLabel() }}</span>
                 </h4>
                 <a href="{{ route('circuit.suivi') }}" class="btn btn-secondary btn-sm">
@@ -27,10 +27,6 @@ Historique de la Demande
                         <strong>{{ $tabdepot->id }}</strong>
                     </div>
                     <div class="col-md-4 mb-3">
-                        <small class="text-muted d-block">Type de demande</small>
-                        <strong>{{ $tabdepot->typdm ?: '—' }}</strong>
-                    </div>
-                    <div class="col-md-4 mb-3">
                         <small class="text-muted d-block">Objet</small>
                         <strong>{{ $tabdepot->objet ?: '—' }}</strong>
                     </div>
@@ -41,37 +37,14 @@ Historique de la Demande
                                 Interne @if($tabdepot->origine_detail) — {{ $tabdepot->origine_detail }} @endif
                             @elseif($tabdepot->origine === 'externe')
                                 Externe
-                                @if($tabdepot->type_expediteur === 'institution')
-                                    — {{ $tabdepot->origine_detail ?: 'Institution' }}
-                                @else
-                                    — Citoyen
-                                @endif
                             @else
                                 —
                             @endif
                         </strong>
                     </div>
                     <div class="col-md-4 mb-3">
-                        <small class="text-muted d-block">N° référence</small>
-                        <strong>{{ $tabdepot->reference ?: '—' }}</strong>
-                    </div>
-                    <div class="col-md-4 mb-3">
                         <small class="text-muted d-block">Date de réception</small>
                         <strong>{{ $tabdepot->daterecpFormatted() }}</strong>
-                    </div>
-                    @if($tabdepot->nni)
-                    <div class="col-md-4 mb-3">
-                        <small class="text-muted d-block">NNI</small>
-                        <strong>{{ $tabdepot->nni }}</strong>
-                    </div>
-                    @endif
-                    <div class="col-md-4 mb-3">
-                        <small class="text-muted d-block">Téléphone</small>
-                        <strong>{{ $tabdepot->tel ?: '—' }}</strong>
-                    </div>
-                    <div class="col-md-4 mb-3">
-                        <small class="text-muted d-block">Adresse</small>
-                        <strong>{{ $tabdepot->adresse ?: '—' }}</strong>
                     </div>
                     @if($tabdepot->decision_maire)
                     <div class="col-md-4 mb-3">

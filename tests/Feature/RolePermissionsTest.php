@@ -221,8 +221,8 @@ class RolePermissionsTest extends TestCase
     public function test_service_dashboard_recent_demandes_are_ordered_and_labeled_by_last_update(): void
     {
         $serviceUser = User::factory()->create(['role' => UserRole::User, 'service' => 'Etat Civil']);
-        $old = Tabdepot::create(['nom' => 'Ancien', 'tel' => '22222222', 'daterecp' => '2026-01-01', 'service_assigne' => 'Etat Civil']);
-        $recent = Tabdepot::create(['nom' => 'Recent', 'tel' => '22222223', 'daterecp' => '2026-01-01', 'service_assigne' => 'Etat Civil']);
+        $old = Tabdepot::create(['reference' => 'ANCIEN-1', 'daterecp' => '2026-01-01', 'service_assigne' => 'Etat Civil']);
+        $recent = Tabdepot::create(['reference' => 'RECENT-1', 'daterecp' => '2026-01-01', 'service_assigne' => 'Etat Civil']);
         // Eloquent ecrase updated_at a chaque save() : on force la valeur directement
         // en base pour simuler un ordre de derniere mise a jour realiste.
         \Illuminate\Support\Facades\DB::table('tabdepot')->where('id', $old->id)->update(['updated_at' => now()->subDays(10)]);
@@ -232,7 +232,7 @@ class RolePermissionsTest extends TestCase
 
         $response->assertOk();
         $response->assertSee('Dernière mise à jour');
-        $response->assertSeeInOrder(['Recent', 'Ancien']);
+        $response->assertSeeInOrder(['RECENT-1', 'ANCIEN-1']);
     }
 
     public function test_accueil_sees_a_navbar_bell_with_the_pending_count(): void
@@ -301,7 +301,7 @@ class RolePermissionsTest extends TestCase
         $response->assertSee('1 refusées');
     }
 
-    public function test_accueil_mini_dashboard_shows_origine_badge_and_piece_jointe_link(): void
+    public function test_accueil_mini_dashboard_shows_origine_badge(): void
     {
         $accueilLikeAdmin = User::factory()->create([
             'role' => UserRole::Admin,
@@ -310,12 +310,10 @@ class RolePermissionsTest extends TestCase
             'can_access_all_services' => false,
         ]);
         Tabdepot::create([
-            'nom' => 'Ahmed Ould Sidi',
-            'tel' => '22222222',
+            'reference' => 'MI/2026/010',
             'daterecp' => now()->format('Y-m-d'),
             'origine' => 'interne',
             'origine_detail' => 'Etat Civil',
-            'piece_jointe' => 'pieces_jointes/test.pdf',
         ]);
 
         $response = $this->actingAs($accueilLikeAdmin)->get('/');
@@ -323,7 +321,7 @@ class RolePermissionsTest extends TestCase
         $response->assertOk();
         $response->assertSee('Interne');
         $response->assertSee('Etat Civil');
-        $response->assertSee('fa-paperclip', false);
+        $response->assertSee('MI/2026/010');
     }
 
     public function test_accueil_mini_dashboard_shows_institution_name_objet_and_a_localized_date(): void

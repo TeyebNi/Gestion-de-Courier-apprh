@@ -49,9 +49,8 @@ class CircuitWorkflowTest extends TestCase
     {
         $accueil = User::factory()->create(['role' => UserRole::User]);
         $depot = Tabdepot::create([
-            'nom' => 'Citoyen Test',
-            'tel' => '22222222',
-            'adresse' => 'Quartier Socogim, Nouakchott',
+            'origine' => 'interne',
+            'origine_detail' => 'Etat Civil',
             'daterecp' => now()->format('Y-m-d'),
             'objet' => 'Raccordement eau',
             'reference' => 'MI/2026/245',
@@ -63,8 +62,6 @@ class CircuitWorkflowTest extends TestCase
         $response->assertOk();
         $response->assertSee('Raccordement eau');
         $response->assertSee('MI/2026/245');
-        $response->assertSee('22222222');
-        $response->assertSee('Quartier Socogim, Nouakchott');
         $response->assertSee('Etat Civil');
     }
 
@@ -499,14 +496,14 @@ class CircuitWorkflowTest extends TestCase
         $serviceUser = User::factory()->create(['role' => UserRole::User, 'service' => 'Etat Civil']);
 
         $depotForMe = $this->makeDepot();
-        $depotForMe->update(['statut_circuit' => 'fatou']);
+        $depotForMe->update(['statut_circuit' => 'fatou', 'reference' => 'MI/2026/001']);
         $this->actingAs($fatou)->post("/circuit/{$depotForMe->id}/decider", [
             'remarque_maire' => 'RAS',
             'service_destination' => 'Etat Civil',
         ]);
 
         $depotForOther = $this->makeDepot();
-        $depotForOther->update(['statut_circuit' => 'fatou']);
+        $depotForOther->update(['statut_circuit' => 'fatou', 'reference' => 'MI/2026/002']);
         $this->actingAs($fatou)->post("/circuit/{$depotForOther->id}/decider", [
             'remarque_maire' => 'RAS',
             'service_destination' => 'Urbanisme',
@@ -515,7 +512,7 @@ class CircuitWorkflowTest extends TestCase
         $response = $this->actingAs($serviceUser)->get('/circuit/service');
 
         $response->assertOk();
-        $response->assertSee('Citoyen Test');
+        $response->assertSee('MI/2026/001');
         $response->assertViewHas('demandes', function ($demandes) use ($depotForMe, $depotForOther) {
             return $demandes->contains('id', $depotForMe->id) && ! $demandes->contains('id', $depotForOther->id);
         });
@@ -544,15 +541,15 @@ class CircuitWorkflowTest extends TestCase
             'reference' => 'MI/2026/245',
         ]);
         $other = $this->makeDepot();
-        $other->update(['statut_circuit' => 'fatou', 'nom' => 'Autre Citoyen']);
+        $other->update(['statut_circuit' => 'fatou', 'reference' => 'AUTRE/2026/999']);
 
         $byObjet = $this->actingAs($accueil)->get('/circuit/suivi?search=Raccordement');
-        $byObjet->assertSee('Citoyen Test');
-        $byObjet->assertDontSee('Autre Citoyen');
+        $byObjet->assertSee('MI/2026/245');
+        $byObjet->assertDontSee('AUTRE/2026/999');
 
         $byReference = $this->actingAs($accueil)->get('/circuit/suivi?search=MI/2026/245');
-        $byReference->assertSee('Citoyen Test');
-        $byReference->assertDontSee('Autre Citoyen');
+        $byReference->assertSee('MI/2026/245');
+        $byReference->assertDontSee('AUTRE/2026/999');
     }
 
     public function test_suivi_can_be_filtered_by_statut(): void
@@ -560,16 +557,16 @@ class CircuitWorkflowTest extends TestCase
         $accueil = User::factory()->create(['role' => UserRole::User]);
 
         $chezService = $this->makeDepot();
-        $chezService->update(['statut_circuit' => 'service', 'nom' => 'Chez Service', 'service_assigne' => 'Etat Civil']);
+        $chezService->update(['statut_circuit' => 'service', 'reference' => 'CHEZ-SERVICE', 'service_assigne' => 'Etat Civil']);
 
         $chezFatou = $this->makeDepot();
-        $chezFatou->update(['statut_circuit' => 'fatou', 'nom' => 'Chez Fatou']);
+        $chezFatou->update(['statut_circuit' => 'fatou', 'reference' => 'CHEZ-FATOU']);
 
         $response = $this->actingAs($accueil)->get('/circuit/suivi?statut=service');
 
         $response->assertOk();
-        $response->assertSee('Chez Service');
-        $response->assertDontSee('Chez Fatou');
+        $response->assertSee('CHEZ-SERVICE');
+        $response->assertDontSee('CHEZ-FATOU');
     }
 
     public function test_cabinet_cannot_access_suivi_directly_by_url(): void
