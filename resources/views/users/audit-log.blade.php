@@ -47,7 +47,9 @@ Journal des comptes
                         </tbody>
                     </table>
                 </div>
-                {{ $logs->links() }}
+                <div class="d-flex justify-content-center mt-3">
+                    {{ $logs->links() }}
+                </div>
             </div>
         </div>
     </div>

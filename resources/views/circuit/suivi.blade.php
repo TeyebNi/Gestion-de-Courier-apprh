@@ -66,7 +66,9 @@ Suivi des Demandes
                         </tbody>
                     </table>
                 </div>
-                {{ $demandes->links() }}
+                <div class="d-flex justify-content-center mt-3">
+                    {{ $demandes->links() }}
+                </div>
             </div>
         </div>
     </div>
