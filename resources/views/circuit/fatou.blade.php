@@ -49,11 +49,6 @@ document.addEventListener('DOMContentLoaded', function () {
                                 <p><strong>Objet :</strong> {{ $d->objet ?: '—' }}</p>
                                 <p><strong>Origine :</strong> @include('partials.origine-badge', ['demande' => $d])</p>
                                 <p><strong>Date de réception :</strong> {{ $d->daterecpFormatted() }}</p>
-                                <p>
-                                    <a href="{{ route('depot.print_reçu', $d->id) }}" target="_blank" class="btn btn-secondary btn-sm">
-                                        <i class="fas fa-print"></i> Imprimer le reçu pour le Maire
-                                    </a>
-                                </p>
                             </div>
                             <div class="col-md-4">
                                 <form action="{{ route('circuit.decider', $d) }}" method="post">
