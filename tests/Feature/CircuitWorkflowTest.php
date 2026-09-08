@@ -591,6 +591,32 @@ class CircuitWorkflowTest extends TestCase
         $this->actingAs($serviceUser)->get("/circuit/{$depot->id}/historique")->assertOk();
     }
 
+    public function test_service_users_historique_back_link_does_not_point_to_suivi(): void
+    {
+        // Un utilisateur de service n'a pas accès à Suivi (réservé à Accueil/Admin) :
+        // le bouton "retour" ne doit pas l'y renvoyer, sous peine de 403.
+        $serviceUser = User::factory()->create(['role' => UserRole::User, 'service' => 'Etat Civil']);
+        $depot = $this->makeDepot();
+        $depot->update(['statut_circuit' => 'service', 'service_assigne' => 'Etat Civil']);
+
+        $response = $this->actingAs($serviceUser)->get("/circuit/{$depot->id}/historique");
+
+        $response->assertOk();
+        $response->assertSee(route('circuit.service.index'), false);
+        $response->assertDontSee(route('circuit.suivi'), false);
+    }
+
+    public function test_accueils_historique_back_link_points_to_suivi(): void
+    {
+        $accueil = User::factory()->create(['role' => UserRole::User]);
+        $depot = $this->makeDepot();
+
+        $response = $this->actingAs($accueil)->get("/circuit/{$depot->id}/historique");
+
+        $response->assertOk();
+        $response->assertSee(route('circuit.suivi'), false);
+    }
+
     public function test_suivi_page_no_longer_offers_the_camera_qr_scanner(): void
     {
         $accueil = User::factory()->create(['role' => UserRole::User]);

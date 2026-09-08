@@ -14,9 +14,15 @@ Historique de la Demande
                     Demande {{ $tabdepot->reference ?: '#' . $tabdepot->id }}
                     <span class="badge {{ \App\Models\Tabdepot::circuitStepBadgeClass($tabdepot->statut_circuit) }} ml-2">{{ $tabdepot->statutLabel() }}</span>
                 </h4>
+                @if(auth()->user()->canAccessSuivi())
                 <a href="{{ route('circuit.suivi') }}" class="btn btn-secondary btn-sm">
                     <i class="fas fa-arrow-left"></i> Retour au suivi
                 </a>
+                @else
+                <a href="{{ route('circuit.service.index') }}" class="btn btn-secondary btn-sm">
+                    <i class="fas fa-arrow-left"></i> Retour à vos demandes
+                </a>
+                @endif
             </div>
             <div class="card-body">
 
