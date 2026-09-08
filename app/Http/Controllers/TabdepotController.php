@@ -4,7 +4,6 @@ namespace App\Http\Controllers;
 
 use App\Models\DemandeHistorique;
 use App\Models\Tabdepot;
-use App\Models\Orientation;
 use App\Http\Controllers\Controller;
 use App\Services\SmsService;
 use Illuminate\Http\Request;
@@ -30,7 +29,6 @@ class TabdepotController extends Controller
         }
 
         $search = $request->search;
-        $orientations = Orientation::orderBy('name')->get();
 
         $tabdepot = Tabdepot::query()
             ->when($search, function ($query) use ($search) {
@@ -41,7 +39,7 @@ class TabdepotController extends Controller
             ->paginate(5)
             ->appends(['search' => $search]);
 
-        return view('depot.index', compact('tabdepot', 'orientations', 'search'));
+        return view('depot.index', compact('tabdepot', 'search'));
     }
 
     public function exportExcel(Request $request)
@@ -91,23 +89,18 @@ class TabdepotController extends Controller
             abort(403, "Cette page est réservée à l'accueil et aux administrateurs.");
         }
 
-        $isInterne = $request->origine === 'interne';
-
         $request->validate([
             'origine' => ['required', 'in:interne,externe'],
-            'origine_detail' => [$isInterne ? 'required' : 'nullable', 'string', 'max:255'],
             'reference' => ['required', 'string', 'max:100', Rule::unique('tabdepot', 'reference')],
             'objet' => ['nullable', 'string', 'max:255'],
         ], [
             'origine.required' => "L'origine est obligatoire.",
-            'origine_detail.required' => 'Le service est obligatoire pour une demande interne.',
             'reference.required' => 'Le code est obligatoire.',
             'reference.unique' => 'Ce code est déjà utilisé par une autre demande.',
         ]);
 
         $demande = Tabdepot::create([
             'origine' => $request->origine,
-            'origine_detail' => $isInterne ? $request->origine_detail : null,
             'reference' => $request->reference,
             'objet' => $request->objet,
             'daterecp' => now()->format('Y-m-d'),
@@ -128,23 +121,18 @@ class TabdepotController extends Controller
             abort(403, "Cette page est réservée à l'accueil et aux administrateurs.");
         }
 
-        $isInterne = $request->origine === 'interne';
-
         $request->validate([
             'origine' => ['required', 'in:interne,externe'],
-            'origine_detail' => [$isInterne ? 'required' : 'nullable', 'string', 'max:255'],
             'reference' => ['required', 'string', 'max:100', Rule::unique('tabdepot', 'reference')->ignore($tabdepot->id)],
             'objet' => ['nullable', 'string', 'max:255'],
         ], [
             'origine.required' => "L'origine est obligatoire.",
-            'origine_detail.required' => 'Le service est obligatoire pour une demande interne.',
             'reference.required' => 'Le code est obligatoire.',
             'reference.unique' => 'Ce code est déjà utilisé par une autre demande.',
         ]);
 
         $tabdepot->update([
             'origine' => $request->origine,
-            'origine_detail' => $isInterne ? $request->origine_detail : null,
             'reference' => $request->reference,
             'objet' => $request->objet,
         ]);

@@ -57,7 +57,7 @@ Dashboard Courier
                                         <i class="fas fa-route"></i>
                                     </a>
                                     @endif
-                                    <a data-id="{{$item->id}}" data-objet="{{$item->objet}}" data-reference="{{$item->reference}}" data-origine="{{$item->origine}}" data-origine-detail="{{$item->origine_detail}}" data-toggle="modal" data-target="#exampleModal-edit" type="button" class="btn btn-info btn-sm" title="Modifier"><svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"></path><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"></path></svg></a>
+                                    <a data-id="{{$item->id}}" data-objet="{{$item->objet}}" data-reference="{{$item->reference}}" data-origine="{{$item->origine}}" data-toggle="modal" data-target="#exampleModal-edit" type="button" class="btn btn-info btn-sm" title="Modifier"><svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"></path><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"></path></svg></a>
                                     @if(($item->statut_circuit ?? 'accueil') === 'accueil')
                                     <a data-id="{{$item->id}}" data-reference="{{ $item->reference ?: 'cette demande' }}" data-toggle="modal" data-target="#exampleModal-delete" type="button" class="btn btn-danger btn-sm" title="Supprimer"><svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"></polyline><path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"></path><path d="M10 11v6"></path><path d="M14 11v6"></path><path d="M9 6V4a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v2"></path></svg></a>
                                     @endif
@@ -103,25 +103,15 @@ Dashboard Courier
       <div class="modal-body">
          <form action="{{route('depot.store')}}" method="post">
         @csrf
+        <input type="hidden" name="form_source" value="create">
       <div class="input-group">
         <div class="input-group-prepend">
         <span class="input-group-text">Origine *</span>
       </div>
-     <select id="create_origine" class="form-control" name="origine" onchange="toggleOrigineDetail(this, 'create')" required>
+     <select id="create_origine" class="form-control" name="origine" required>
       <option value="">Sélectionner l'origine</option>
-      <option value="interne">Interne (note entre services de la commune)</option>
-      <option value="externe">Externe (citoyen, institution, organisme...)</option>
-    </select>
-      </div>
-      <div class="input-group" id="create_origine_interne_wrap" style="display:none;">
-        <div class="input-group-prepend">
-        <span class="input-group-text">Service</span>
-      </div>
-     <select class="form-control" name="origine_detail" id="create_origine_detail_select" disabled>
-      <option value="">Sélectionner le service</option>
-      @foreach($orientations as $o)
-        <option value="{{ $o->name }}">{{ $o->name }}</option>
-      @endforeach
+      <option value="interne" @selected(old('origine') === 'interne')>Interne (note entre services de la commune)</option>
+      <option value="externe" @selected(old('origine') === 'externe')>Externe (citoyen, institution, organisme...)</option>
     </select>
       </div>
       <br>
@@ -129,14 +119,17 @@ Dashboard Courier
         <div class="input-group-prepend">
         <span class="input-group-text">Code *</span>
       </div>
-      <input type="text" class="form-control" name="reference" placeholder="Code / référence du courrier" maxlength="100" required>
+      <input type="text" class="form-control @error('reference') is-invalid @enderror" name="reference" value="{{ old('reference') }}" placeholder="Code / référence du courrier" maxlength="100" required>
     </div>
+    @error('reference')
+      <div class="text-danger small mt-1 mb-2">{{ $message }}</div>
+    @enderror
       <br>
       <div class="input-group">
         <div class="input-group-prepend">
         <span class="input-group-text">Objet</span>
       </div>
-      <input type="text" class="form-control" name="objet" placeholder="Résumé de la demande (optionnel)" maxlength="255">
+      <input type="text" class="form-control" name="objet" value="{{ old('objet') }}" placeholder="Résumé de la demande (optionnel)" maxlength="255">
     </div>
       </div>
       <div class="modal-footer">
@@ -161,26 +154,17 @@ Dashboard Courier
       <form id="editDepotForm" action="" method="post">
        @csrf
         @method('PUT')
+        <input type="hidden" name="form_source" value="edit">
+        <input type="hidden" name="depot_id" id="edit_depot_id" value="{{ old('depot_id') }}">
         <div class="modal-body">
         <div class="input-group">
         <div class="input-group-prepend">
         <span class="input-group-text">Origine *</span>
       </div>
-     <select id="edit_origine" class="form-control" name="origine" onchange="toggleOrigineDetail(this, 'edit')" required>
+     <select id="edit_origine" class="form-control" name="origine" required>
       <option value="">Sélectionner l'origine</option>
-      <option value="interne">Interne (note entre services de la commune)</option>
-      <option value="externe">Externe (citoyen, institution, organisme...)</option>
-    </select>
-      </div>
-      <div class="input-group" id="edit_origine_interne_wrap" style="display:none;">
-        <div class="input-group-prepend">
-        <span class="input-group-text">Service</span>
-      </div>
-     <select class="form-control" name="origine_detail" id="edit_origine_detail_select" disabled>
-      <option value="">Sélectionner le service</option>
-      @foreach($orientations as $o)
-        <option value="{{ $o->name }}">{{ $o->name }}</option>
-      @endforeach
+      <option value="interne" @selected(old('origine') === 'interne')>Interne (note entre services de la commune)</option>
+      <option value="externe" @selected(old('origine') === 'externe')>Externe (citoyen, institution, organisme...)</option>
     </select>
       </div>
       <br>
@@ -188,14 +172,17 @@ Dashboard Courier
         <div class="input-group-prepend">
         <span class="input-group-text">Code *</span>
       </div>
-      <input id="edit_reference" type="text" class="form-control" name="reference" placeholder="Code / référence du courrier" maxlength="100" required>
+      <input id="edit_reference" type="text" class="form-control @error('reference') is-invalid @enderror" name="reference" value="{{ old('reference') }}" placeholder="Code / référence du courrier" maxlength="100" required>
     </div>
+    @error('reference')
+      <div class="text-danger small mt-1 mb-2">{{ $message }}</div>
+    @enderror
       <br>
       <div class="input-group">
         <div class="input-group-prepend">
         <span class="input-group-text">Objet</span>
       </div>
-      <input id="edit_objet" type="text" class="form-control" name="objet" placeholder="Résumé de la demande (optionnel)" maxlength="255">
+      <input id="edit_objet" type="text" class="form-control" name="objet" value="{{ old('objet') }}" placeholder="Résumé de la demande (optionnel)" maxlength="255">
     </div>
         </div>
         <div class="modal-footer">
@@ -245,28 +232,14 @@ Dashboard Courier
 @endif
 
 <script>
-function toggleOrigineDetail(selectEl, prefix) {
-    var value = selectEl.value;
-    var interneWrap = document.getElementById(prefix + '_origine_interne_wrap');
-    var interneSelect = document.getElementById(prefix + '_origine_detail_select');
-    var isInterne = value === 'interne';
-
-    interneWrap.style.display = isInterne ? '' : 'none';
-    interneSelect.disabled = !isInterne;
-    if (!isInterne) { interneSelect.value = ''; }
-}
-
 $('#exampleModal-edit').on('show.bs.modal', function (event) {
     var button = $(event.relatedTarget);
     var id = button.data('id');
     $('#editDepotForm').attr('action', '{{ url('/depot') }}/' + id);
+    $('#edit_depot_id').val(id);
     $('#edit_objet').val(button.data('objet'));
     $('#edit_reference').val(button.data('reference'));
     $('#edit_origine').val(button.data('origine'));
-    toggleOrigineDetail(document.getElementById('edit_origine'), 'edit');
-    if (button.data('origine') === 'interne') {
-        $('#edit_origine_detail_select').val(button.data('origine-detail'));
-    }
 });
 
 $('#exampleModal-delete').on('show.bs.modal', function (event) {
@@ -287,7 +260,15 @@ $('#exampleModal').on('hidden.bs.modal', function () {
     var form = this.querySelector('form');
     if (!form) { return; }
     form.reset();
-    toggleOrigineDetail(document.getElementById('create_origine'), 'create');
 });
+
+@if ($errors->any())
+    @if (old('form_source') === 'edit')
+        $('#editDepotForm').attr('action', '{{ url('/depot') }}/' + @json(old('depot_id')));
+        $('#exampleModal-edit').modal('show');
+    @else
+        $('#exampleModal').modal('show');
+    @endif
+@endif
 </script>
 @endsection

@@ -149,20 +149,21 @@ class DepotTest extends TestCase
         $this->assertDatabaseCount('tabdepot', 0);
     }
 
-    public function test_store_requires_a_service_for_an_internal_demande(): void
+    public function test_store_accepts_an_internal_demande_without_any_service_detail(): void
     {
         $user = User::factory()->create(['role' => UserRole::User]);
 
-        $response = $this->actingAs($user)->post('/depot', [
+        $this->actingAs($user)->post('/depot', [
             'reference' => 'NOTE-1',
             'origine' => 'interne',
-        ]);
+        ])->assertRedirect(route('depot.index'));
 
-        $response->assertSessionHasErrors('origine_detail');
-        $this->assertDatabaseCount('tabdepot', 0);
+        $demande = Tabdepot::firstOrFail();
+        $this->assertSame('interne', $demande->origine);
+        $this->assertNull($demande->origine_detail);
     }
 
-    public function test_store_saves_an_internal_demande_with_its_service(): void
+    public function test_store_ignores_a_service_detail_sent_for_an_internal_demande(): void
     {
         $user = User::factory()->create(['role' => UserRole::User]);
 
@@ -170,14 +171,13 @@ class DepotTest extends TestCase
             'reference' => 'NOTE-1',
             'origine' => 'interne',
             'origine_detail' => 'Etat Civil',
-        ])->assertRedirect(route('depot.index'));
+        ]);
 
         $demande = Tabdepot::firstOrFail();
-        $this->assertSame('interne', $demande->origine);
-        $this->assertSame('Etat Civil', $demande->origine_detail);
+        $this->assertNull($demande->origine_detail);
     }
 
-    public function test_store_does_not_save_a_service_for_an_external_demande(): void
+    public function test_store_ignores_a_service_detail_sent_for_an_external_demande(): void
     {
         $user = User::factory()->create(['role' => UserRole::User]);
 
@@ -189,6 +189,44 @@ class DepotTest extends TestCase
 
         $demande = Tabdepot::firstOrFail();
         $this->assertNull($demande->origine_detail);
+    }
+
+    public function test_a_duplicate_code_error_reopens_the_create_modal_with_the_message_inline(): void
+    {
+        $user = User::factory()->create(['role' => UserRole::User]);
+        $this->makeDepot(['reference' => 'MI/2026/245']);
+
+        $response = $this->actingAs($user)->from('/depot')->post('/depot', [
+            'origine' => 'externe',
+            'reference' => 'MI/2026/245',
+            'objet' => 'Second envoi',
+        ]);
+
+        $response->assertRedirect('/depot');
+        $followUp = $this->actingAs($user)->get('/depot');
+
+        $followUp->assertSee('Ce code est déjà utilisé par une autre demande.');
+        $followUp->assertSee("$('#exampleModal').modal('show');", false);
+    }
+
+    public function test_a_duplicate_code_error_reopens_the_edit_modal_for_the_right_demande(): void
+    {
+        $user = User::factory()->create(['role' => UserRole::User]);
+        $this->makeDepot(['reference' => 'MI/2026/245']);
+        $other = $this->makeDepot(['reference' => 'MI/2026/999']);
+
+        $this->actingAs($user)->from('/depot')->put("/depot/{$other->id}", [
+            'origine' => 'externe',
+            'reference' => 'MI/2026/245',
+            'form_source' => 'edit',
+            'depot_id' => $other->id,
+        ]);
+
+        $followUp = $this->actingAs($user)->get('/depot');
+
+        $followUp->assertSee('Ce code est déjà utilisé par une autre demande.');
+        $followUp->assertSee(json_encode((string) $other->id), false);
+        $followUp->assertSee("$('#exampleModal-edit').modal('show');", false);
     }
 
     public function test_store_saves_objet(): void
