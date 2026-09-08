@@ -17,7 +17,6 @@ Suivi des Demandes
                     <select name="statut" class="form-control form-control-sm mr-2" onchange="this.form.submit()">
                         <option value="">Tous les statuts</option>
                         <option value="fatou" @selected($statut === 'fatou')>{{ \App\Models\Tabdepot::circuitStepLabel('fatou') }}</option>
-                        <option value="maire" @selected($statut === 'maire')>{{ \App\Models\Tabdepot::circuitStepLabel('maire') }}</option>
                         <option value="service" @selected($statut === 'service')>Chez un service</option>
                         <option value="cloture" @selected($statut === 'cloture')>Clôturée</option>
                     </select>
@@ -43,7 +42,7 @@ Suivi des Demandes
                             <th>Objet</th>
                             <th>Où se trouve la demande ?</th>
                             <th>Décision Maire</th>
-                            <th>Remarque Maire</th>
+                            <th>Annotations du Maire</th>
                             <th>Dernière mise à jour</th>
                             <th>Action</th>
                         </thead>

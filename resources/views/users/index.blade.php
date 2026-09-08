@@ -57,7 +57,6 @@ Les Utilisateurs
                                        data-service="{{ $u->service }}"
                                        data-can-manage-users="{{ $u->can_manage_users !== false ? '1' : '0' }}"
                                        data-can-access-cabinet="{{ $u->can_access_cabinet !== false ? '1' : '0' }}"
-                                       data-can-access-maire="{{ $u->can_access_maire !== false ? '1' : '0' }}"
                                        data-can-access-all-services="{{ $u->can_access_all_services !== false ? '1' : '0' }}"
                                        data-toggle="modal" data-target="#editUserModal"
                                        type="button" class="btn btn-success btn-sm edit-user-btn" title="Modifier"><svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"></path><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"></path></svg></a>
@@ -152,8 +151,7 @@ Les Utilisateurs
                         <select class="form-control" name="role" id="create_role">
                             <option value="user">User</option>
                             <option value="admin">Admin</option>
-                            <option value="fatou">Cabinet (Coordination)</option>
-                            <option value="maire">Maire</option>
+                            <option value="fatou">Cabinet de Maire</option>
                         </select>
                     </div>
                     <div class="input-group" id="create_service_group">
@@ -176,11 +174,7 @@ Les Utilisateurs
                         </div>
                         <div class="form-check mt-2">
                             <input type="checkbox" class="form-check-input" name="can_access_cabinet" id="create_can_access_cabinet" value="1">
-                            <label class="form-check-label" for="create_can_access_cabinet">Accès aux pages Cabinet (coordination)</label>
-                        </div>
-                        <div class="form-check mt-2">
-                            <input type="checkbox" class="form-check-input" name="can_access_maire" id="create_can_access_maire" value="1">
-                            <label class="form-check-label" for="create_can_access_maire">Accès aux pages Maire (décision)</label>
+                            <label class="form-check-label" for="create_can_access_cabinet">Accès aux pages Cabinet de Maire</label>
                         </div>
                         <div class="form-check mt-2">
                             <input type="checkbox" class="form-check-input" name="can_access_all_services" id="create_can_access_all_services" value="1">
@@ -230,8 +224,7 @@ Les Utilisateurs
                         <select class="form-control" name="role" id="edit_role">
                             <option value="user">User</option>
                             <option value="admin">Admin</option>
-                            <option value="fatou">Cabinet (Coordination)</option>
-                            <option value="maire">Maire</option>
+                            <option value="fatou">Cabinet de Maire</option>
                         </select>
                     </div>
                     <div class="input-group" id="edit_service_group">
@@ -254,11 +247,7 @@ Les Utilisateurs
                         </div>
                         <div class="form-check mt-2">
                             <input type="checkbox" class="form-check-input" name="can_access_cabinet" id="edit_can_access_cabinet" value="1">
-                            <label class="form-check-label" for="edit_can_access_cabinet">Accès aux pages Cabinet (coordination)</label>
-                        </div>
-                        <div class="form-check mt-2">
-                            <input type="checkbox" class="form-check-input" name="can_access_maire" id="edit_can_access_maire" value="1">
-                            <label class="form-check-label" for="edit_can_access_maire">Accès aux pages Maire (décision)</label>
+                            <label class="form-check-label" for="edit_can_access_cabinet">Accès aux pages Cabinet de Maire</label>
                         </div>
                         <div class="form-check mt-2">
                             <input type="checkbox" class="form-check-input" name="can_access_all_services" id="edit_can_access_all_services" value="1">
@@ -375,7 +364,6 @@ $('#editUserModal').on('show.bs.modal', function (event) {
     $('#edit_service').val(button.data('service'));
     $('#edit_can_manage_users').prop('checked', button.data('can-manage-users') == 1);
     $('#edit_can_access_cabinet').prop('checked', button.data('can-access-cabinet') == 1);
-    $('#edit_can_access_maire').prop('checked', button.data('can-access-maire') == 1);
     $('#edit_can_access_all_services').prop('checked', button.data('can-access-all-services') == 1);
 
     var isLastAdmin = (role === 'admin' && {{ $adminCount }} <= 1);
@@ -402,7 +390,6 @@ function toggleServiceField(role, prefix) {
         $('#' + prefix + '_admin_permissions_group').hide();
         $('#' + prefix + '_can_manage_users').prop('checked', false);
         $('#' + prefix + '_can_access_cabinet').prop('checked', false);
-        $('#' + prefix + '_can_access_maire').prop('checked', false);
         $('#' + prefix + '_can_access_all_services').prop('checked', false);
     }
 }

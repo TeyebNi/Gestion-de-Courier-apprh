@@ -27,7 +27,6 @@ class User extends Authenticatable
         'service',
         'can_manage_users',
         'can_access_cabinet',
-        'can_access_maire',
         'can_access_all_services',
     ];
 
@@ -54,7 +53,6 @@ class User extends Authenticatable
             'role' => UserRole::class,
             'can_manage_users' => 'boolean',
             'can_access_cabinet' => 'boolean',
-            'can_access_maire' => 'boolean',
             'can_access_all_services' => 'boolean',
         ];
     }
@@ -76,31 +74,23 @@ class User extends Authenticatable
     }
 
     /**
-     * Whether this user has the 'maire' role.
-     */
-    public function isMaire(): bool
-    {
-        return $this->role === UserRole::Maire;
-    }
-
-    /**
      * Whether this user can access the Dépôt des Demandes module (reception intake).
-     * Cabinet, Maire and service users have their own dedicated circuit pages instead.
+     * Cabinet de Maire and service users have their own dedicated circuit pages instead.
      */
     public function canAccessDepot(): bool
     {
-        return $this->isAdmin() || (! $this->isFatou() && ! $this->isMaire() && empty($this->service));
+        return $this->isAdmin() || (! $this->isFatou() && empty($this->service));
     }
 
     /**
      * Whether this user can access "Suivi des Demandes" (cross-service tracking
-     * of every demande in the circuit). Accueil, admins and the Maire need the
-     * full picture; Cabinet (purely transactional) and service users (scoped to
-     * their own queue) do not.
+     * of every demande in the circuit). Accueil and admins need the full picture;
+     * Cabinet de Maire (purely transactional) and service users (scoped to their
+     * own queue) do not.
      */
     public function canAccessSuivi(): bool
     {
-        return $this->canAccessDepot() || $this->isMaire();
+        return $this->canAccessDepot();
     }
 
     /**
@@ -121,14 +111,6 @@ class User extends Authenticatable
     public function canAccessCabinet(): bool
     {
         return $this->isFatou() || ($this->isAdmin() && $this->can_access_cabinet !== false);
-    }
-
-    /**
-     * Whether this user can access the Maire decision pages.
-     */
-    public function canAccessMaire(): bool
-    {
-        return $this->isMaire() || ($this->isAdmin() && $this->can_access_maire !== false);
     }
 
     /**
@@ -153,7 +135,6 @@ class User extends Authenticatable
         return $this->isAdmin()
             && $this->canManageUsers()
             && $this->canAccessCabinet()
-            && $this->canAccessMaire()
             && $this->canAccessAllServices();
     }
 }

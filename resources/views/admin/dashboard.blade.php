@@ -356,9 +356,9 @@ Tableau de bord
     </div>
 </div>
 
-@elseif($isCabinet || $isMaireUser)
+@elseif($isCabinet)
 
-<!-- Dashboard minimal Cabinet / Maire -->
+<!-- Dashboard minimal Cabinet de Maire -->
 <div class="row justify-content-center">
     <div class="col-lg-5 col-md-6">
         <div class="card card-stats">
@@ -381,43 +381,13 @@ Tableau de bord
                 <hr>
                 <div class="stats">
                     <a href="{{ $queueRoute }}">
-                        <i class="now-ui-icons {{ $isCabinet ? 'arrows-1_share-66' : 'ui-1_check' }}"></i>
-                        {{ $isCabinet ? 'Aller au Cabinet' : 'Aller aux décisions' }}
+                        <i class="now-ui-icons arrows-1_share-66"></i>
+                        Aller au Cabinet de Maire
                     </a>
                 </div>
             </div>
         </div>
     </div>
-    @if($isMaireUser)
-    <div class="col-lg-5 col-md-6">
-        <div class="card card-stats">
-            <div class="card-body">
-                <div class="row">
-                    <div class="col-5 col-md-4">
-                        <div class="icon-big text-center icon-warning">
-                            <i class="now-ui-icons ui-1_check text-success"></i>
-                        </div>
-                    </div>
-                    <div class="col-7 col-md-8">
-                        <div class="numbers">
-                            <p class="card-category">Mes décisions</p>
-                            <h4 class="card-title">{{ $totalAcceptees + $totalRefusees }}</h4>
-                        </div>
-                    </div>
-                </div>
-            </div>
-            <div class="card-footer">
-                <hr>
-                <div class="stats">
-                    <i class="now-ui-icons ui-1_check text-success"></i> {{ $totalAcceptees }} acceptées
-                    &nbsp;·&nbsp;
-                    <i class="now-ui-icons ui-1_simple-remove text-danger"></i> {{ $totalRefusees }} refusées
-                </div>
-            </div>
-        </div>
-    </div>
-    @endif
-    @if($isCabinet)
     <div class="col-lg-5 col-md-6">
         <div class="card card-stats">
             <div class="card-body">
@@ -429,8 +399,8 @@ Tableau de bord
                     </div>
                     <div class="col-7 col-md-8">
                         <div class="numbers">
-                            <p class="card-category">Envoyées au Maire</p>
-                            <h4 class="card-title">{{ $totalEnvoyeesMaire }}</h4>
+                            <p class="card-category">Annotées</p>
+                            <h4 class="card-title">{{ $totalAnnotees }}</h4>
                         </div>
                     </div>
                 </div>
@@ -438,19 +408,18 @@ Tableau de bord
             <div class="card-footer">
                 <hr>
                 <div class="stats">
-                    <i class="now-ui-icons ui-1_send"></i> Total des transmissions
+                    <i class="now-ui-icons ui-1_send"></i> Total des annotations saisies
                 </div>
             </div>
         </div>
     </div>
-    @endif
 </div>
 
 <div class="row">
     <div class="col-md-12">
         <div class="card card-tasks">
             <div class="card-header">
-                <h5 class="card-category">{{ $isCabinet ? 'Cabinet' : 'Maire' }}</h5>
+                <h5 class="card-category">Cabinet de Maire</h5>
                 <h4 class="card-title">Demandes en attente</h4>
             </div>
             <div class="card-body">
@@ -780,7 +749,7 @@ Tableau de bord
 @endsection
 
 @section('scripts')
-@if(!$isPlainUser && !$isCabinet && !$isMaireUser)
+@if(!$isPlainUser && !$isCabinet)
 <script src="{{ asset('assets/js/plugins/chartjs.min.js') }}"></script>
 <script>
 document.addEventListener('DOMContentLoaded', function () {

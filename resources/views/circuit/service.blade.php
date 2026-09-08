@@ -43,8 +43,7 @@ document.addEventListener('DOMContentLoaded', function () {
                             <th>Nom</th>
                             <th>Type</th>
                             <th>Objet</th>
-                            <th>Décision du Maire</th>
-                            <th>Remarque</th>
+                            <th>Annotations du Maire</th>
                             <th>Date</th>
                             <th>Action</th>
                         </thead>
@@ -54,20 +53,17 @@ document.addEventListener('DOMContentLoaded', function () {
                                 <td>{{ $d->nom ?: ($d->origine_detail ?: '—') }} @if($d->piece_jointe)<a href="{{ asset('storage/' . $d->piece_jointe) }}" target="_blank" title="Voir la pièce jointe"><i class="fas fa-paperclip text-info"></i></a>@endif</td>
                                 <td>{{ $d->typdm ?: '—' }}</td>
                                 <td class="text-truncate" style="max-width:220px;" title="{{ $d->objet }}">{{ $d->objet ?: '—' }}</td>
-                                <td>
-                                    @if($d->decision_maire === 'accepte')
-                                        <span class="badge badge-success">Acceptée</span>
-                                    @elseif($d->decision_maire === 'refuse')
-                                        <span class="badge badge-danger">Refusée</span>
-                                    @else
-                                        <span class="badge badge-secondary">Envoyée directement (sans décision)</span>
-                                    @endif
-                                </td>
-                                <td>{{ $d->remarque_maire ?: '—' }}</td>
+                                <td class="text-truncate" style="max-width:220px;" title="{{ $d->remarque_maire }}">{{ $d->remarque_maire ?: '—' }}</td>
                                 <td>{{ $d->daterecpFormatted() }}</td>
                                 <td>
-                                    <form action="{{ route('circuit.cloturer', $d) }}" method="post" onsubmit="return confirm('Marquer cette demande comme traitée ?');">
+                                    <form action="{{ route('circuit.cloturer', $d) }}" method="post" class="form-inline" onsubmit="return confirm('Confirmer la clôture de cette demande ?');">
                                         @csrf
+                                        <select name="resolution" class="form-control form-control-sm mr-1" required style="max-width:140px;">
+                                            <option value="">Résolution...</option>
+                                            <option value="traiter">Traiter</option>
+                                            <option value="classer">Classer</option>
+                                            <option value="convoquer">Convoquer</option>
+                                        </select>
                                         <button type="submit" class="btn btn-success btn-sm">
                                             <i class="fas fa-check"></i> Clôturer
                                         </button>
@@ -76,7 +72,7 @@ document.addEventListener('DOMContentLoaded', function () {
                             </tr>
                             @empty
                             <tr>
-                                <td colspan="7" class="text-center text-muted">Aucune demande pour votre service.</td>
+                                <td colspan="6" class="text-center text-muted">Aucune demande pour votre service.</td>
                             </tr>
                             @endforelse
                         </tbody>
@@ -102,7 +98,7 @@ document.addEventListener('DOMContentLoaded', function () {
                             <th>Nom</th>
                             <th>Type</th>
                             <th>Objet</th>
-                            <th>Décision du Maire</th>
+                            <th>Résolution</th>
                             <th>Date</th>
                             <th>Action</th>
                         </thead>
@@ -113,12 +109,14 @@ document.addEventListener('DOMContentLoaded', function () {
                                 <td>{{ $d->typdm ?: '—' }}</td>
                                 <td class="text-truncate" style="max-width:220px;" title="{{ $d->objet }}">{{ $d->objet ?: '—' }}</td>
                                 <td>
-                                    @if($d->decision_maire === 'accepte')
-                                        <span class="badge badge-success">Acceptée</span>
-                                    @elseif($d->decision_maire === 'refuse')
-                                        <span class="badge badge-danger">Refusée</span>
+                                    @if($d->resolution_service === 'traiter')
+                                        <span class="badge badge-success">Traitée</span>
+                                    @elseif($d->resolution_service === 'classer')
+                                        <span class="badge badge-secondary">Classée</span>
+                                    @elseif($d->resolution_service === 'convoquer')
+                                        <span class="badge badge-warning">Convoquée</span>
                                     @else
-                                        <span class="badge badge-secondary">Envoyée directement (sans décision)</span>
+                                        <span class="text-muted">—</span>
                                     @endif
                                 </td>
                                 <td>{{ $d->daterecpFormatted() }}</td>

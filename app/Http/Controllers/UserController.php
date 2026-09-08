@@ -63,18 +63,17 @@ class UserController extends Controller
             'name' => ['required', 'string', 'max:255', 'regex:/^[\pL\s]+$/u'],
             'email' => ['required', 'email', 'max:255', Rule::unique('users', 'email')],
             'password' => ['required', 'string', 'min:8', 'confirmed'],
-            'role' => ['required', 'in:admin,user,fatou,maire'],
+            'role' => ['required', 'in:admin,user,fatou'],
             'service' => ['nullable', 'string', 'max:255'],
             'can_manage_users' => ['nullable', 'boolean'],
             'can_access_cabinet' => ['nullable', 'boolean'],
-            'can_access_maire' => ['nullable', 'boolean'],
             'can_access_all_services' => ['nullable', 'boolean'],
         ], [
             'name.regex' => 'Le nom ne doit contenir que des lettres.',
             'email.unique' => 'Cet email est déjà utilisé par un autre utilisateur.',
         ]);
 
-        $service = in_array($request->role, ['admin', 'fatou', 'maire']) ? null : $request->service;
+        $service = in_array($request->role, ['admin', 'fatou']) ? null : $request->service;
 
         $user = User::create([
             'name' => $request->name,
@@ -84,7 +83,6 @@ class UserController extends Controller
             'service' => $service,
             'can_manage_users' => $request->role === 'admin' ? $request->boolean('can_manage_users') : true,
             'can_access_cabinet' => $request->role === 'admin' ? $request->boolean('can_access_cabinet') : true,
-            'can_access_maire' => $request->role === 'admin' ? $request->boolean('can_access_maire') : true,
             'can_access_all_services' => $request->role === 'admin' ? $request->boolean('can_access_all_services') : true,
         ]);
 
@@ -138,11 +136,10 @@ class UserController extends Controller
     $request->validate([
         'name' => ['required', 'string', 'max:255', 'regex:/^[\pL\s]+$/u'],
         'email' => ['required', 'email', 'max:255', Rule::unique('users', 'email')->ignore($user->id)],
-        'role' => ['required', 'in:admin,user,fatou,maire'],
+        'role' => ['required', 'in:admin,user,fatou'],
         'service' => ['nullable', 'string', 'max:255'],
         'can_manage_users' => ['nullable', 'boolean'],
         'can_access_cabinet' => ['nullable', 'boolean'],
-        'can_access_maire' => ['nullable', 'boolean'],
         'can_access_all_services' => ['nullable', 'boolean'],
     ], [
         'name.regex' => 'Le nom ne doit contenir que des lettres.',
@@ -163,7 +160,7 @@ class UserController extends Controller
         return redirect()->route('users.index')->with('error', "Impossible de retirer l'accès à \"Les Utilisateurs\" : aucun autre administrateur ne pourrait plus gérer les comptes.");
     }
 
-    $service = in_array($request->role, ['admin', 'fatou', 'maire']) ? null : $request->service;
+    $service = in_array($request->role, ['admin', 'fatou']) ? null : $request->service;
 
     $user->update([
         'name' => $request->name,
@@ -172,7 +169,6 @@ class UserController extends Controller
         'service' => $service,
         'can_manage_users' => $request->role === 'admin' ? $request->boolean('can_manage_users') : true,
         'can_access_cabinet' => $request->role === 'admin' ? $request->boolean('can_access_cabinet') : true,
-        'can_access_maire' => $request->role === 'admin' ? $request->boolean('can_access_maire') : true,
         'can_access_all_services' => $request->role === 'admin' ? $request->boolean('can_access_all_services') : true,
     ]);
 

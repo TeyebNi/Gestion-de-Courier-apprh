@@ -117,15 +117,7 @@
                     <li class="{{ request()->is('circuit/fatou*') ? 'active' : '' }}">
                         <a href="{{ route('circuit.fatou.index') }}">
                             <i class="now-ui-icons arrows-1_share-66"></i>
-                            <p>Circuit - Cabinet</p>
-                        </a>
-                    </li>
-                    @endif
-                    @if(auth()->user()->canAccessMaire())
-                    <li class="{{ request()->is('circuit/maire*') ? 'active' : '' }}">
-                        <a href="{{ route('circuit.maire.index') }}">
-                            <i class="now-ui-icons business_briefcase-24"></i>
-                            <p>Circuit - Maire</p>
+                            <p>Circuit - Cabinet de Maire</p>
                         </a>
                     </li>
                     @endif
@@ -137,7 +129,7 @@
                         </a>
                     </li>
                     @endif
-                    @if(auth()->user()->isAdmin() || auth()->user()->isMaire() || (empty(auth()->user()->service) && !auth()->user()->isFatou() && !auth()->user()->isMaire()))
+                    @if(auth()->user()->canAccessSuivi())
                     <li class="{{ request()->is('circuit/suivi*') ? 'active' : '' }}">
                         <a href="{{ route('circuit.suivi') }}">
                             <i class="now-ui-icons ui-1_zoom-bold"></i>
@@ -193,18 +185,15 @@
                             </div>
                         </form>
                         <ul class="navbar-nav">
-                            @if(auth()->user()->canAccessDepot() || auth()->user()->canAccessCabinet() || auth()->user()->canAccessMaire())
+                            @if(auth()->user()->canAccessDepot() || auth()->user()->canAccessCabinet())
                             @php
                                 $accueilPendingCount = auth()->user()->canAccessDepot()
                                     ? \App\Models\Tabdepot::where('statut_circuit', 'accueil')->count()
                                     : 0;
                                 $cabinetPendingCount = auth()->user()->canAccessCabinet()
-                                    ? \App\Models\Tabdepot::where('statut_circuit', 'fatou')->whereNull('decision_maire')->count()
+                                    ? \App\Models\Tabdepot::where('statut_circuit', 'fatou')->count()
                                     : 0;
-                                $mairePendingCount = auth()->user()->canAccessMaire()
-                                    ? \App\Models\Tabdepot::where('statut_circuit', 'maire')->count()
-                                    : 0;
-                                $circuitPendingTotal = $accueilPendingCount + $cabinetPendingCount + $mairePendingCount;
+                                $circuitPendingTotal = $accueilPendingCount + $cabinetPendingCount;
                             @endphp
                             <li class="nav-item dropdown">
                                 <a class="nav-link dropdown-toggle" href="#" id="circuitBellDropdown" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false" style="position:relative;">
@@ -225,15 +214,8 @@
                                     @endif
                                     @if(auth()->user()->canAccessCabinet())
                                         <a class="dropdown-item" href="{{ route('circuit.fatou.index') }}" style="white-space:normal;">
-                                            <span class="badge badge-info">Cabinet</span>
-                                            <div>{{ $cabinetPendingCount }} demande(s) à transmettre au Maire</div>
-                                        </a>
-                                        <div class="dropdown-divider"></div>
-                                    @endif
-                                    @if(auth()->user()->canAccessMaire())
-                                        <a class="dropdown-item" href="{{ route('circuit.maire.index') }}" style="white-space:normal;">
-                                            <span class="badge badge-warning">Maire</span>
-                                            <div>{{ $mairePendingCount }} demande(s) en attente de décision</div>
+                                            <span class="badge badge-info">Cabinet de Maire</span>
+                                            <div>{{ $cabinetPendingCount }} demande(s) en attente d'annotations</div>
                                         </a>
                                         <div class="dropdown-divider"></div>
                                     @endif

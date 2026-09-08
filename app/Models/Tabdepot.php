@@ -12,7 +12,7 @@ class Tabdepot extends Model
     protected $table ='tabdepot';
     protected $fillable = [
         'typdm', 'objet', 'reference', 'origine', 'origine_detail', 'type_expediteur', 'piece_jointe', 'nom', 'nni','tel','adresse', 'daterecp',
-        'statut_circuit', 'decision_maire', 'remarque_maire', 'service_assigne'];
+        'statut_circuit', 'decision_maire', 'remarque_maire', 'service_assigne', 'resolution_service'];
     protected $hidden=['created_at' ,'updated_at'];
 
     public function historiques()
@@ -41,7 +41,7 @@ class Tabdepot extends Model
     {
         return match ($this->statut_circuit) {
             'accueil' => 'À l\'accueil',
-            'fatou' => $this->decision_maire ? 'Chez le Cabinet (retour du Maire)' : 'Chez le Cabinet',
+            'fatou' => 'Chez le Cabinet de Maire',
             'maire' => 'Chez le Maire',
             'service' => 'Chez le service : ' . ($this->service_assigne ?? '—'),
             'cloture' => 'Clôturée (traitée par le service)',
@@ -57,7 +57,7 @@ class Tabdepot extends Model
     {
         return match ($step) {
             'accueil' => 'Accueil',
-            'fatou' => 'Cabinet',
+            'fatou' => 'Cabinet de Maire',
             'maire' => 'Maire',
             'service' => 'Service',
             'cloture' => 'Clôturée',

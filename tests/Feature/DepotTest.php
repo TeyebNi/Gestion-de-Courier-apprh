@@ -125,15 +125,14 @@ class DepotTest extends TestCase
         });
     }
 
-    public function test_cabinet_maire_and_service_users_cannot_access_depot(): void
+    public function test_cabinet_and_service_users_cannot_access_depot(): void
     {
         $demande = Tabdepot::create(['nom' => 'Ahmed', 'tel' => '22334455', 'daterecp' => now()->format('Y-m-d')]);
 
         $cabinet = User::factory()->create(['role' => UserRole::Fatou]);
-        $maire = User::factory()->create(['role' => UserRole::Maire]);
         $serviceUser = User::factory()->create(['role' => UserRole::User, 'service' => 'Etat Civil']);
 
-        foreach ([$cabinet, $maire, $serviceUser] as $user) {
+        foreach ([$cabinet, $serviceUser] as $user) {
             $this->actingAs($user)->get('/depot')->assertForbidden();
             $this->actingAs($user)->post('/depot', ['nom' => 'X', 'tel' => '22222222'])->assertForbidden();
             $this->actingAs($user)->put("/depot/{$demande->id}", ['nom' => 'Ahmed', 'tel' => '22334455'])->assertForbidden();

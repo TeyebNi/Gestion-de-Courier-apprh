@@ -28,14 +28,13 @@ class DatabaseSeeder extends Seeder
 
         // L'Accueil garde le rôle admin (accès à Orientation, Types de demande...)
         // mais sans les pouvoirs qui ne concernent pas sa fonction : gérer les
-        // comptes, coordonner (Cabinet), décider (Maire), ou voir les files de
-        // toutes les services.
+        // comptes, coordonner (Cabinet de Maire), ou voir les files de toutes les
+        // services.
         $accueil = User::where('email', 'accueil@gmail.com')->first();
         $accueilRestrictions = [
             'role' => UserRole::Admin,
             'can_manage_users' => false,
             'can_access_cabinet' => false,
-            'can_access_maire' => false,
             'can_access_all_services' => false,
         ];
 
@@ -55,26 +54,13 @@ class DatabaseSeeder extends Seeder
 
         if (! $cabinet) {
             User::create([
-                'name' => 'Cabinet',
+                'name' => 'Cabinet de Maire',
                 'email' => 'cabinet@gmail.com',
                 'password' => bcrypt('12345678'),
                 'role' => UserRole::Fatou,
             ]);
         } elseif (! $cabinet->isFatou()) {
             $cabinet->update(['role' => UserRole::Fatou]);
-        }
-
-        $maire = User::where('email', 'maire@gmail.com')->first();
-
-        if (! $maire) {
-            User::create([
-                'name' => 'Maire',
-                'email' => 'maire@gmail.com',
-                'password' => bcrypt('12345678'),
-                'role' => UserRole::Maire,
-            ]);
-        } elseif (! $maire->isMaire()) {
-            $maire->update(['role' => UserRole::Maire]);
         }
     }
 }

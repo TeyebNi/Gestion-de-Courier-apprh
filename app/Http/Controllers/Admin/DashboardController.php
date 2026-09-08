@@ -16,62 +16,40 @@ class DashboardController extends Controller
         $user = auth()->user();
         $isAdmin = $user->isAdmin();
         $isCabinet = !$isAdmin && $user->isFatou();
-        $isMaireUser = !$isAdmin && $user->isMaire();
-        // Un admin restreint (ex: Accueil, qui n'a ni Cabinet, ni Maire, ni l'accès
-        // à toutes les services) reçoit le dashboard minimal plutôt que la vue admin
+        // Un admin restreint (ex: Accueil, qui n'a ni Cabinet, ni l'accès à toutes
+        // les services) reçoit le dashboard minimal plutôt que la vue admin
         // complète, cohérent avec ce qu'il peut réellement voir ailleurs. Manquer
         // uniquement "can_manage_users" ne doit pas dégrader le dashboard : ça ne
         // change rien à ce qu'il peut voir en matière de demandes/circuit.
-        $isPlainUser = (!$isAdmin && !$isCabinet && !$isMaireUser && empty($user->service))
-            || ($isAdmin && ! $user->canAccessCabinet() && ! $user->canAccessMaire() && ! $user->canAccessAllServices());
+        $isPlainUser = (!$isAdmin && !$isCabinet && empty($user->service))
+            || ($isAdmin && ! $user->canAccessCabinet() && ! $user->canAccessAllServices());
 
-        // ----- Cabinet / Maire : dashboard minimal centré sur leur file d'attente -----
-        if ($isCabinet || $isMaireUser) {
-            $totalAcceptees = null;
-            $totalRefusees = null;
-            $totalEnvoyeesMaire = null;
+        // ----- Cabinet de Maire : dashboard minimal centré sur sa file d'attente -----
+        if ($isCabinet) {
+            $pendingCount = Tabdepot::where('statut_circuit', 'fatou')->count();
+            $recentQueue = Tabdepot::where('statut_circuit', 'fatou')
+                ->orderByDesc('id')
+                ->limit(8)
+                ->get();
+            $queueRoute = route('circuit.fatou.index');
+            $queueLabel = "En attente d'annotations";
 
-            if ($isCabinet) {
-                $pendingCount = Tabdepot::where('statut_circuit', 'fatou')->whereNull('decision_maire')->count();
-                $recentQueue = Tabdepot::where('statut_circuit', 'fatou')
-                    ->whereNull('decision_maire')
-                    ->orderByDesc('id')
-                    ->limit(8)
-                    ->get();
-                $queueRoute = route('circuit.fatou.index');
-                $queueLabel = 'En attente au Cabinet';
-
-                // Chaque transfert vers le Maire est journalisé dans l'historique de la
-                // demande : un compte simple du travail accompli, sans rien exposer de
-                // plus que ce qui concerne le Cabinet lui-même.
-                $totalEnvoyeesMaire = DemandeHistorique::where('vers_statut', 'maire')->count();
-            } else {
-                $pendingCount = Tabdepot::where('statut_circuit', 'maire')->count();
-                $recentQueue = Tabdepot::where('statut_circuit', 'maire')
-                    ->orderByDesc('id')
-                    ->limit(8)
-                    ->get();
-                $queueRoute = route('circuit.maire.index');
-                $queueLabel = 'En attente de décision';
-
-                // Aucune page n'affiche ce total ailleurs : même "Historique de mes
-                // décisions" ne montre qu'une liste, jamais un compte global.
-                $totalAcceptees = Tabdepot::where('decision_maire', 'accepte')->count();
-                $totalRefusees = Tabdepot::where('decision_maire', 'refuse')->count();
-            }
+            // Chaque annotation saisie (avec ou sans service concerné) est
+            // journalisée depuis le statut "fatou" : un compte simple du travail
+            // accompli, sans rien exposer de plus que ce qui concerne le Cabinet.
+            $totalAnnotees = DemandeHistorique::where('de_statut', 'fatou')
+                ->whereIn('vers_statut', ['service', 'cloture'])
+                ->count();
 
             return view('admin.dashboard', compact(
                 'isAdmin',
                 'isPlainUser',
                 'isCabinet',
-                'isMaireUser',
                 'pendingCount',
                 'recentQueue',
                 'queueRoute',
                 'queueLabel',
-                'totalAcceptees',
-                'totalRefusees',
-                'totalEnvoyeesMaire'
+                'totalAnnotees'
             ));
         }
 
@@ -116,7 +94,6 @@ class DashboardController extends Controller
                 'isAdmin',
                 'isPlainUser',
                 'isCabinet',
-                'isMaireUser',
                 'totalDemandesToday',
                 'totalDemandesWeek',
                 'totalDemandesAll',
@@ -240,7 +217,6 @@ class DashboardController extends Controller
             'isAdmin',
             'isPlainUser',
             'isCabinet',
-            'isMaireUser',
             'totalDemandes',
             'totalDemandesAssignees',
             'totalTypes',

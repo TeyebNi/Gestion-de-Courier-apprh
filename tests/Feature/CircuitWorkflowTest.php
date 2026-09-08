@@ -140,9 +140,9 @@ class CircuitWorkflowTest extends TestCase
         $response->assertSee('Dossier prioritaire, à traiter rapidement.');
     }
 
-    public function test_maire_form_preselects_service_for_an_internal_demande(): void
+    public function test_fatou_form_preselects_service_for_an_internal_demande(): void
     {
-        $maire = User::factory()->create(['role' => UserRole::Maire]);
+        $fatou = User::factory()->create(['role' => UserRole::Fatou]);
         Orientation::create(['name' => 'Informatique']);
         Orientation::create(['name' => 'Etat Civil']);
         Tabdepot::create([
@@ -151,37 +151,14 @@ class CircuitWorkflowTest extends TestCase
             'daterecp' => now()->format('Y-m-d'),
             'origine' => 'interne',
             'origine_detail' => 'Informatique',
-            'statut_circuit' => 'maire',
+            'statut_circuit' => 'fatou',
         ]);
 
-        $response = $this->actingAs($maire)->get('/circuit/maire');
+        $response = $this->actingAs($fatou)->get('/circuit/fatou');
 
         $response->assertOk();
         $response->assertSee('<option value="Informatique" selected>Informatique</option>', false);
         $response->assertSee('<option value="Etat Civil" >Etat Civil</option>', false);
-    }
-
-    public function test_maire_index_shows_institution_name_objet_and_a_localized_date(): void
-    {
-        $maire = User::factory()->create(['role' => UserRole::Maire]);
-        Tabdepot::create([
-            'origine' => 'externe',
-            'type_expediteur' => 'institution',
-            'origine_detail' => "Ministère de l'Intérieur",
-            'objet' => 'Demande de raccordement eau',
-            'reference' => 'MI/2026/245',
-            'daterecp' => '2026-08-30',
-            'statut_circuit' => 'maire',
-        ]);
-
-        $response = $this->actingAs($maire)->get('/circuit/maire');
-
-        $response->assertOk();
-        $response->assertSee("Ministère de l&#039;Intérieur", false);
-        $response->assertSee('Demande de raccordement eau');
-        $response->assertSee('MI/2026/245');
-        $response->assertSee('30/08/2026');
-        $response->assertDontSee('2026-08-30');
     }
 
     public function test_historique_transferts_are_paginated_by_ten(): void
@@ -205,71 +182,66 @@ class CircuitWorkflowTest extends TestCase
         });
     }
 
-    public function test_full_circuit_accueil_to_fatou_to_maire_to_service(): void
+    public function test_full_circuit_accueil_to_fatou_to_service(): void
     {
         $accueil = User::factory()->create(['role' => UserRole::User]);
         $fatou = User::factory()->create(['role' => UserRole::Fatou]);
-        $maire = User::factory()->create(['role' => UserRole::Maire]);
 
         $depot = $this->makeDepot();
 
-        // Accueil -> Fatou
+        // Accueil -> Cabinet de Maire
         $this->actingAs($accueil)
             ->post("/circuit/{$depot->id}/envoyer-fatou")
             ->assertRedirect();
         $this->assertSame('fatou', $depot->fresh()->statut_circuit);
 
-        // Fatou -> Maire
+        // Le Cabinet saisit les annotations du Maire (recueillies à la main)
+        // et transmet directement au service concerné, en une seule étape.
         $this->actingAs($fatou)
-            ->post("/circuit/{$depot->id}/envoyer-maire")
-            ->assertRedirect();
-        $this->assertSame('maire', $depot->fresh()->statut_circuit);
-
-        // Maire decides and sends to a service
-        $this->actingAs($maire)
             ->post("/circuit/{$depot->id}/decider", [
-                'decision_maire' => 'accepte',
-                'remarque_maire' => 'RAS',
+                'remarque_maire' => 'Vu par le Maire, à traiter en urgence.',
                 'service_destination' => 'Etat Civil',
             ])
             ->assertRedirect();
 
         $depot->refresh();
         $this->assertSame('service', $depot->statut_circuit);
-        $this->assertSame('accepte', $depot->decision_maire);
+        $this->assertSame('Vu par le Maire, à traiter en urgence.', $depot->remarque_maire);
         $this->assertSame('Etat Civil', $depot->service_assigne);
 
         // Le service clôture la demande : fin du circuit.
         $serviceUser = User::factory()->create(['role' => UserRole::User, 'service' => 'Etat Civil']);
         $this->actingAs($serviceUser)
-            ->post("/circuit/{$depot->id}/cloturer")
+            ->post("/circuit/{$depot->id}/cloturer", ['resolution' => 'traiter'])
             ->assertRedirect();
 
-        $this->assertSame('cloture', $depot->fresh()->statut_circuit);
+        $depot->refresh();
+        $this->assertSame('cloture', $depot->statut_circuit);
+        $this->assertSame('traiter', $depot->resolution_service);
 
         // Every transition must be logged in the history trail.
-        $this->assertGreaterThanOrEqual(4, $depot->historiques()->count());
+        $this->assertGreaterThanOrEqual(3, $depot->historiques()->count());
     }
 
-    public function test_sms_is_sent_on_decision_and_on_closure(): void
+    public function test_sms_is_sent_on_annotation_and_on_closure(): void
     {
-        $maire = User::factory()->create(['role' => UserRole::Maire]);
+        $fatou = User::factory()->create(['role' => UserRole::Fatou]);
         $serviceUser = User::factory()->create(['role' => UserRole::User, 'service' => 'Etat Civil']);
 
         $depot = $this->makeDepot();
-        $depot->update(['statut_circuit' => 'maire']);
+        $depot->update(['statut_circuit' => 'fatou']);
 
-        $this->actingAs($maire)->post("/circuit/{$depot->id}/decider", [
-            'decision_maire' => 'accepte',
+        $this->actingAs($fatou)->post("/circuit/{$depot->id}/decider", [
+            'remarque_maire' => 'RAS',
             'service_destination' => 'Etat Civil',
         ]);
 
         Http::assertSent(function ($request) {
             return str_contains($request->url(), 'twilio.com')
-                && str_contains($request['Body'] ?? '', 'acceptée');
+                && str_contains($request['Body'] ?? '', 'examinée et transmise');
         });
 
-        $this->actingAs($serviceUser)->post("/circuit/{$depot->id}/cloturer");
+        $this->actingAs($serviceUser)->post("/circuit/{$depot->id}/cloturer", ['resolution' => 'traiter']);
 
         Http::assertSent(function ($request) {
             return str_contains($request->url(), 'twilio.com')
@@ -279,12 +251,12 @@ class CircuitWorkflowTest extends TestCase
 
     public function test_decide_notifies_the_assigned_service(): void
     {
-        $maire = User::factory()->create(['role' => UserRole::Maire]);
+        $fatou = User::factory()->create(['role' => UserRole::Fatou]);
         $depot = $this->makeDepot();
-        $depot->update(['statut_circuit' => 'maire']);
+        $depot->update(['statut_circuit' => 'fatou']);
 
-        $this->actingAs($maire)->post("/circuit/{$depot->id}/decider", [
-            'decision_maire' => 'accepte',
+        $this->actingAs($fatou)->post("/circuit/{$depot->id}/decider", [
+            'remarque_maire' => 'RAS',
             'service_destination' => 'Etat Civil',
         ]);
 
@@ -293,6 +265,34 @@ class CircuitWorkflowTest extends TestCase
             'iddmd' => $depot->id,
             'is_read' => false,
         ]);
+    }
+
+    public function test_decide_without_a_service_classes_the_demande_directly(): void
+    {
+        $fatou = User::factory()->create(['role' => UserRole::Fatou]);
+        $depot = $this->makeDepot();
+        $depot->update(['statut_circuit' => 'fatou']);
+
+        $this->actingAs($fatou)->post("/circuit/{$depot->id}/decider", [
+            'remarque_maire' => 'Ne concerne aucun service, classée.',
+        ])->assertRedirect();
+
+        $depot->refresh();
+        $this->assertSame('cloture', $depot->statut_circuit);
+        $this->assertNull($depot->service_assigne);
+        $this->assertDatabaseMissing('service_notifications', ['iddmd' => $depot->id]);
+    }
+
+    public function test_decide_requires_annotations(): void
+    {
+        $fatou = User::factory()->create(['role' => UserRole::Fatou]);
+        $depot = $this->makeDepot();
+        $depot->update(['statut_circuit' => 'fatou']);
+
+        $this->actingAs($fatou)->post("/circuit/{$depot->id}/decider", [])
+            ->assertSessionHasErrors('remarque_maire');
+
+        $this->assertSame('fatou', $depot->fresh()->statut_circuit);
     }
 
     public function test_only_the_assigned_service_can_close_a_demande(): void
@@ -315,7 +315,7 @@ class CircuitWorkflowTest extends TestCase
         $depot = $this->makeDepot();
         $depot->update(['statut_circuit' => 'service', 'service_assigne' => 'Etat Civil']);
 
-        $this->actingAs($serviceUser)->post("/circuit/{$depot->id}/cloturer")->assertRedirect();
+        $this->actingAs($serviceUser)->post("/circuit/{$depot->id}/cloturer", ['resolution' => 'traiter'])->assertRedirect();
 
         $response = $this->actingAs($serviceUser)->get('/circuit/service');
 
@@ -365,28 +365,15 @@ class CircuitWorkflowTest extends TestCase
         $this->assertSame('cloture', $depot->fresh()->statut_circuit);
     }
 
-    public function test_cannot_send_a_demande_to_maire_unless_it_is_at_fatou(): void
+    public function test_cannot_decide_on_a_demande_unless_it_is_at_fatou(): void
     {
         $fatou = User::factory()->create(['role' => UserRole::Fatou]);
         $depot = $this->makeDepot();
         $depot->update(['statut_circuit' => 'cloture']);
 
         $this->actingAs($fatou)
-            ->post("/circuit/{$depot->id}/envoyer-maire")
-            ->assertForbidden();
-
-        $this->assertSame('cloture', $depot->fresh()->statut_circuit);
-    }
-
-    public function test_cannot_decide_on_a_demande_unless_it_is_at_maire(): void
-    {
-        $maire = User::factory()->create(['role' => UserRole::Maire]);
-        $depot = $this->makeDepot();
-        $depot->update(['statut_circuit' => 'cloture']);
-
-        $this->actingAs($maire)
             ->post("/circuit/{$depot->id}/decider", [
-                'decision_maire' => 'accepte',
+                'remarque_maire' => 'RAS',
                 'service_destination' => 'Etat Civil',
             ])
             ->assertForbidden();
@@ -394,34 +381,35 @@ class CircuitWorkflowTest extends TestCase
         $this->assertSame('cloture', $depot->fresh()->statut_circuit);
     }
 
-    public function test_accueil_cannot_send_directly_to_maire(): void
+    public function test_accueil_cannot_decide_directly(): void
     {
         $accueil = User::factory()->create(['role' => UserRole::User]);
         $depot = $this->makeDepot();
+        $depot->update(['statut_circuit' => 'fatou']);
 
         $this->actingAs($accueil)
-            ->post("/circuit/{$depot->id}/envoyer-maire")
+            ->post("/circuit/{$depot->id}/decider", ['remarque_maire' => 'RAS'])
             ->assertForbidden();
 
-        $this->assertSame('accueil', $depot->fresh()->statut_circuit);
+        $this->assertSame('fatou', $depot->fresh()->statut_circuit);
     }
 
     public function test_service_user_only_sees_demandes_assigned_to_their_service(): void
     {
-        $maire = User::factory()->create(['role' => UserRole::Maire]);
+        $fatou = User::factory()->create(['role' => UserRole::Fatou]);
         $serviceUser = User::factory()->create(['role' => UserRole::User, 'service' => 'Etat Civil']);
 
         $depotForMe = $this->makeDepot();
-        $depotForMe->update(['statut_circuit' => 'maire']);
-        $this->actingAs($maire)->post("/circuit/{$depotForMe->id}/decider", [
-            'decision_maire' => 'accepte',
+        $depotForMe->update(['statut_circuit' => 'fatou']);
+        $this->actingAs($fatou)->post("/circuit/{$depotForMe->id}/decider", [
+            'remarque_maire' => 'RAS',
             'service_destination' => 'Etat Civil',
         ]);
 
         $depotForOther = $this->makeDepot();
-        $depotForOther->update(['statut_circuit' => 'maire']);
-        $this->actingAs($maire)->post("/circuit/{$depotForOther->id}/decider", [
-            'decision_maire' => 'accepte',
+        $depotForOther->update(['statut_circuit' => 'fatou']);
+        $this->actingAs($fatou)->post("/circuit/{$depotForOther->id}/decider", [
+            'remarque_maire' => 'RAS',
             'service_destination' => 'Urbanisme',
         ]);
 
@@ -472,16 +460,16 @@ class CircuitWorkflowTest extends TestCase
     {
         $accueil = User::factory()->create(['role' => UserRole::User]);
 
-        $chezMaire = $this->makeDepot();
-        $chezMaire->update(['statut_circuit' => 'maire', 'nom' => 'Chez Maire']);
+        $chezService = $this->makeDepot();
+        $chezService->update(['statut_circuit' => 'service', 'nom' => 'Chez Service', 'service_assigne' => 'Etat Civil']);
 
         $chezFatou = $this->makeDepot();
         $chezFatou->update(['statut_circuit' => 'fatou', 'nom' => 'Chez Fatou']);
 
-        $response = $this->actingAs($accueil)->get('/circuit/suivi?statut=maire');
+        $response = $this->actingAs($accueil)->get('/circuit/suivi?statut=service');
 
         $response->assertOk();
-        $response->assertSee('Chez Maire');
+        $response->assertSee('Chez Service');
         $response->assertDontSee('Chez Fatou');
     }
 

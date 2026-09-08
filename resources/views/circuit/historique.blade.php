@@ -87,7 +87,7 @@ Historique de la Demande
                     @endif
                     @if($tabdepot->remarque_maire)
                     <div class="col-md-8 mb-3">
-                        <small class="text-muted d-block">Remarque du Maire</small>
+                        <small class="text-muted d-block">Annotations du Maire</small>
                         <strong>{{ $tabdepot->remarque_maire }}</strong>
                     </div>
                     @endif

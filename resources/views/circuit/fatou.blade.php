@@ -1,7 +1,7 @@
 @extends('layouts.master')
 
 @section('title')
-Cabinet - Circuit des Demandes
+Cabinet de Maire - Circuit des Demandes
 @endsection
 
 @section('content')
@@ -33,43 +33,61 @@ document.addEventListener('DOMContentLoaded', function () {
         <div class="card">
             <div class="card-header">
                 <h4 class="card-title mb-0" style="font-weight: 700; color: #212529;">
-                    À transmettre au Maire
+                    Cabinet de Maire — Demandes en attente d'annotations
                 </h4>
+                <p class="text-muted mb-0" style="font-size: 0.9em;">
+                    Portez le dossier au Maire, recueillez ses annotations, puis saisissez-les ici.
+                </p>
             </div>
             <div class="card-body">
-                <div class="table-responsive">
-                    <table class="table">
-                        <thead class="text-primary">
-                            <th>Nom</th>
-                            <th>Type</th>
-                            <th>Objet</th>
-                            <th>Origine</th>
-                            <th>Date</th>
-                            <th>Action</th>
-                        </thead>
-                        <tbody>
-                            @forelse($aEnvoyer as $d)
-                            <tr>
-                                <td>{{ $d->nom ?: ($d->origine_detail ?: '—') }} @if($d->piece_jointe)<a href="{{ asset('storage/' . $d->piece_jointe) }}" target="_blank" title="Voir la pièce jointe"><i class="fas fa-paperclip text-info"></i></a>@endif</td>
-                                <td>{{ $d->typdm ?: '—' }}</td>
-                                <td class="text-truncate" style="max-width:220px;" title="{{ $d->objet }}">{{ $d->objet ?: '—' }}</td>
-                                <td>@include('partials.origine-badge', ['demande' => $d])</td>
-                                <td>{{ $d->daterecpFormatted() }}</td>
-                                <td>
-                                    <form action="{{ route('circuit.envoyer-maire', $d) }}" method="post" style="display:inline;">
-                                        @csrf
-                                        <button type="submit" class="btn btn-primary btn-sm">Envoyer au Maire</button>
-                                    </form>
-                                </td>
-                            </tr>
-                            @empty
-                            <tr>
-                                <td colspan="6" class="text-center text-muted">Aucune demande en attente.</td>
-                            </tr>
-                            @endforelse
-                        </tbody>
-                    </table>
+                @forelse($aEnvoyer as $d)
+                <div class="card" style="border: 1px solid #eee; margin-bottom: 15px;">
+                    <div class="card-body">
+                        <div class="row">
+                            <div class="col-md-8">
+                                <p><strong>Nom :</strong> {{ $d->nom ?: ($d->origine_detail ?: '—') }} @if($d->piece_jointe)<a href="{{ asset('storage/' . $d->piece_jointe) }}" target="_blank" title="Voir la pièce jointe"><i class="fas fa-paperclip text-info"></i></a>@endif</p>
+                                <p><strong>Objet :</strong> {{ $d->objet ?: '—' }}</p>
+                                <p><strong>Type de demande :</strong> {{ $d->typdm ?: '—' }}</p>
+                                @if($d->reference)
+                                <p><strong>N° référence :</strong> {{ $d->reference }}</p>
+                                @endif
+                                <p><strong>Origine :</strong> @include('partials.origine-badge', ['demande' => $d])</p>
+                                <p><strong>NNI :</strong> {{ $d->nni ?: '—' }} — <strong>Tel :</strong> {{ $d->tel ?: '—' }}</p>
+                                <p><strong>Adresse :</strong> {{ $d->adresse ?: '—' }}</p>
+                                <p><strong>Date de réception :</strong> {{ $d->daterecpFormatted() }}</p>
+                                @if($d->piece_jointe)
+                                <p>
+                                    <a href="{{ asset('storage/' . $d->piece_jointe) }}" target="_blank" class="btn btn-info btn-sm">
+                                        <i class="fas fa-paperclip"></i> Voir le document original (scan)
+                                    </a>
+                                </p>
+                                @endif
+                            </div>
+                            <div class="col-md-4">
+                                <form action="{{ route('circuit.decider', $d) }}" method="post">
+                                    @csrf
+                                    <div class="form-group">
+                                        <label>Annotations du Maire <span class="text-danger">*</span></label>
+                                        <textarea name="remarque_maire" class="form-control" rows="4" placeholder="Ce que le Maire a annoté sur le dossier..." required></textarea>
+                                    </div>
+                                    <div class="form-group">
+                                        <label>Service concerné (optionnel)</label>
+                                        <select name="service_destination" class="form-control">
+                                            <option value="">Aucun (classer directement)</option>
+                                            @foreach($orientations as $o)
+                                                <option value="{{ $o->name }}" {{ $d->origine === 'interne' && $d->origine_detail === $o->name ? 'selected' : '' }}>{{ $o->name }}</option>
+                                            @endforeach
+                                        </select>
+                                    </div>
+                                    <button type="submit" class="btn btn-primary btn-block">Enregistrer les annotations</button>
+                                </form>
+                            </div>
+                        </div>
+                    </div>
                 </div>
+                @empty
+                <p class="text-center text-muted">Aucune demande en attente.</p>
+                @endforelse
             </div>
         </div>
     </div>

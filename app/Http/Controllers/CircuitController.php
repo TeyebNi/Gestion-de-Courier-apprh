@@ -60,96 +60,77 @@ class CircuitController extends Controller
     }
 
     /**
-     * Fatou : liste des demandes à traiter (venant de l'accueil).
+     * Cabinet de Maire : liste des demandes en attente d'annotations du Maire.
+     * Le Maire ne se connecte jamais à l'application : le Cabinet lui porte le
+     * dossier papier à la main, recueille ses annotations, et les saisit ici
+     * en une seule étape (plus d'envoi séparé "au Maire" dans l'application).
      */
     public function fatouIndex()
     {
         $aEnvoyer = Tabdepot::where('statut_circuit', 'fatou')
-            ->whereNull('decision_maire')
             ->orderByDesc('id')
             ->get();
-
-        return view('circuit.fatou', compact('aEnvoyer'));
-    }
-
-    /**
-     * Fatou : transmettre une demande au Maire.
-     */
-    public function sendToMaire(Tabdepot $tabdepot)
-    {
-        if ($tabdepot->statut_circuit !== 'fatou') {
-            abort(403, "Cette demande n'est pas en attente chez le Cabinet, elle ne peut pas être transmise au Maire.");
-        }
-
-        $this->logHistorique($tabdepot, $tabdepot->statut_circuit, 'maire');
-
-        $tabdepot->update(['statut_circuit' => 'maire']);
-
-        return back()->with('success', 'La demande a été transmise au Maire.');
-    }
-
-    /**
-     * Maire : liste des demandes à décider.
-     */
-    public function maireIndex()
-    {
-        $demandes = Tabdepot::where('statut_circuit', 'maire')->orderByDesc('id')->get();
         $orientations = Orientation::orderBy('name')->get();
 
-        return view('circuit.maire', compact('demandes', 'orientations'));
+        return view('circuit.fatou', compact('aEnvoyer', 'orientations'));
     }
 
     /**
-     * Maire : envoyer directement vers un service, sans passer par une décision d'accepter/refuser.
-     */
-    /**
-     * Maire : accepter / refuser une demande (obligatoire), avec remarque et service optionnels.
-     * Si un service est choisi, la demande y est envoyée directement.
-     * Sinon, elle repart chez Fatou pour orientation.
+     * Cabinet de Maire : saisir les annotations du Maire (recueillies sur le
+     * dossier papier) et, si la demande concerne un service, la lui transmettre.
+     * Sans service concerné, la demande est directement clôturée.
      */
     public function decide(Request $request, Tabdepot $tabdepot)
     {
-        if ($tabdepot->statut_circuit !== 'maire') {
-            abort(403, "Cette demande n'est pas en attente de décision chez le Maire.");
+        if (! auth()->user()->canAccessCabinet()) {
+            abort(403, "Cette page est réservée au Cabinet de Maire et aux administrateurs.");
+        }
+
+        if ($tabdepot->statut_circuit !== 'fatou') {
+            abort(403, "Cette demande n'est pas en attente d'annotations du Maire.");
         }
 
         $request->validate([
-            'decision_maire' => ['required', 'in:accepte,refuse'],
-            'remarque_maire' => ['nullable', 'string', 'max:2000'],
-            'service_destination' => ['required', 'string', 'max:255'],
+            'remarque_maire' => ['required', 'string', 'max:2000'],
+            'service_destination' => ['nullable', 'string', 'max:255'],
+        ], [
+            'remarque_maire.required' => "Les annotations du Maire sont obligatoires.",
         ]);
 
+        $serviceDestination = $request->service_destination ?: null;
+
         $tabdepot->update([
-            'decision_maire' => $request->decision_maire,
             'remarque_maire' => $request->remarque_maire,
-            'statut_circuit' => 'service',
-            'service_assigne' => $request->service_destination,
+            'statut_circuit' => $serviceDestination ? 'service' : 'cloture',
+            'service_assigne' => $serviceDestination,
         ]);
 
         $this->logHistorique(
             $tabdepot,
-            'maire',
-            'service',
-            'Décision : ' . ($request->decision_maire === 'accepte' ? 'Acceptée' : 'Refusée')
-                . ($request->remarque_maire ? ' — ' . $request->remarque_maire : '')
-                . ' — Envoyée vers ' . $request->service_destination
+            'fatou',
+            $serviceDestination ? 'service' : 'cloture',
+            'Annotations du Maire : ' . $request->remarque_maire
+                . ($serviceDestination ? ' — Envoyée vers ' . $serviceDestination : ' — Classée sans service concerné')
         );
 
-        ServiceNotification::create([
-            'service' => $request->service_destination,
-            'iddmd' => $tabdepot->id,
-            'message' => "Nouvelle demande affectée à votre service (Code demande : {$tabdepot->id}).",
-        ]);
-
-        if ($tabdepot->tel) {
-            $decisionLabel = $request->decision_maire === 'accepte' ? 'acceptée' : 'refusée';
-            $this->sms->send(
-                $tabdepot->tel,
-                "Bonjour {$tabdepot->nom}, votre demande N°{$tabdepot->id} a été {$decisionLabel} et transmise au service {$request->service_destination}. Commune de Tevragh Zeina."
-            );
+        if ($serviceDestination) {
+            ServiceNotification::create([
+                'service' => $serviceDestination,
+                'iddmd' => $tabdepot->id,
+                'message' => "Nouvelle demande affectée à votre service (Code demande : {$tabdepot->id}).",
+            ]);
         }
 
-        return back()->with('success', 'La décision a été enregistrée et la demande envoyée au service.');
+        if ($tabdepot->tel) {
+            $message = $serviceDestination
+                ? "Bonjour {$tabdepot->nom}, votre demande N°{$tabdepot->id} a été examinée et transmise au service {$serviceDestination}. Commune de Tevragh Zeina."
+                : "Bonjour {$tabdepot->nom}, votre demande N°{$tabdepot->id} a été traitée. Commune de Tevragh Zeina.";
+            $this->sms->send($tabdepot->tel, $message);
+        }
+
+        return back()->with('success', $serviceDestination
+            ? 'Les annotations ont été enregistrées et la demande envoyée au service.'
+            : 'Les annotations ont été enregistrées et la demande classée.');
     }
 
     /**
@@ -173,9 +154,10 @@ class CircuitController extends Controller
     }
 
     /**
-     * Service : marquer une demande comme traitée (fin du circuit).
+     * Service : marquer une demande comme traitée (fin du circuit), avec le
+     * type de résolution retenu par le service (traiter / classer / convoquer).
      */
-    public function closeDemande(Tabdepot $tabdepot)
+    public function closeDemande(Request $request, Tabdepot $tabdepot)
     {
         $user = auth()->user();
 
@@ -187,9 +169,24 @@ class CircuitController extends Controller
             abort(403, "Cette demande n'est pas en attente de traitement par un service.");
         }
 
-        $tabdepot->update(['statut_circuit' => 'cloture']);
+        $request->validate([
+            'resolution' => ['required', 'in:traiter,classer,convoquer'],
+        ], [
+            'resolution.required' => "Veuillez choisir une résolution (Traiter, Classer ou Convoquer).",
+        ]);
 
-        $this->logHistorique($tabdepot, 'service', 'cloture', 'Demande traitée par le service ' . $tabdepot->service_assigne);
+        $tabdepot->update([
+            'statut_circuit' => 'cloture',
+            'resolution_service' => $request->resolution,
+        ]);
+
+        $resolutionLabel = match ($request->resolution) {
+            'traiter' => 'Traitée',
+            'classer' => 'Classée',
+            'convoquer' => 'Convocation du demandeur',
+        };
+
+        $this->logHistorique($tabdepot, 'service', 'cloture', $resolutionLabel . ' par le service ' . $tabdepot->service_assigne);
 
         if ($tabdepot->tel) {
             $this->sms->send(
@@ -207,7 +204,7 @@ class CircuitController extends Controller
     public function suiviIndex(Request $request)
     {
         if (! auth()->user()->canAccessSuivi()) {
-            abort(403, "Cette page est réservée à l'accueil, au Maire et aux administrateurs.");
+            abort(403, "Cette page est réservée à l'accueil et aux administrateurs.");
         }
 
         $search = $request->search;

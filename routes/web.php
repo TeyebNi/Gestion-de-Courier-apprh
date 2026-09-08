@@ -39,17 +39,14 @@ Route::middleware('auth')->group(function () {
     Route::get('notifications', [ServiceNotificationController::class, 'index'])->name('notifications.index');
     Route::patch('notifications/{notification}/read', [ServiceNotificationController::class, 'markRead'])->name('notifications.read');
 
-    // Circuit de la demande : Accueil -> Fatou -> Maire -> Fatou -> (Accueil ou Service)
+    // Circuit de la demande : Accueil -> Cabinet de Maire -> (Service ou Clôturée)
+    // Le Maire ne se connecte jamais à l'application : le Cabinet lui porte le
+    // dossier à la main et saisit ses annotations lui-même (route "decider").
     Route::post('circuit/{tabdepot}/envoyer-fatou', [CircuitController::class, 'sendToFatou'])->name('circuit.envoyer-fatou');
     Route::get('circuit/suivi', [CircuitController::class, 'suiviIndex'])->name('circuit.suivi');
 
     Route::middleware('fatou')->group(function () {
         Route::get('circuit/fatou', [CircuitController::class, 'fatouIndex'])->name('circuit.fatou.index');
-        Route::post('circuit/{tabdepot}/envoyer-maire', [CircuitController::class, 'sendToMaire'])->name('circuit.envoyer-maire');
-    });
-
-    Route::middleware('maire')->group(function () {
-        Route::get('circuit/maire', [CircuitController::class, 'maireIndex'])->name('circuit.maire.index');
         Route::post('circuit/{tabdepot}/decider', [CircuitController::class, 'decide'])->name('circuit.decider');
     });
 
@@ -57,7 +54,7 @@ Route::middleware('auth')->group(function () {
     Route::post('circuit/{tabdepot}/cloturer', [CircuitController::class, 'closeDemande'])->name('circuit.cloturer');
 
     // Cette route générique doit rester APRÈS toutes les routes littérales ci-dessus
-    // (circuit/suivi, circuit/fatou, circuit/maire, circuit/service),
+    // (circuit/suivi, circuit/fatou, circuit/service),
     // sinon Laravel essaierait de les faire correspondre à {tabdepot} en premier.
     Route::get('circuit/{tabdepot}/historique', [CircuitController::class, 'historique'])->name('circuit.historique');
 
