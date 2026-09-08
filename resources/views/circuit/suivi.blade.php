@@ -24,7 +24,7 @@ Suivi des Demandes
                         <div class="input-group-prepend">
                             <span class="input-group-text"><i class="fas fa-barcode"></i></span>
                         </div>
-                        <input type="text" name="search" id="scan_search" class="form-control" placeholder="Scannez le code-barres, ou tapez N°, code, objet..." value="{{ $search }}" autofocus autocomplete="off">
+                        <input type="text" name="search" id="scan_search" class="form-control" placeholder="Scannez le code-barres, ou tapez le code, l'objet..." value="{{ $search }}" autofocus autocomplete="off">
                     </div>
                     <button type="submit" class="btn btn-primary btn-sm ml-2">Rechercher</button>
                     <button type="button" class="btn btn-secondary btn-sm ml-2" data-toggle="modal" data-target="#qrScannerModal">
@@ -36,7 +36,6 @@ Suivi des Demandes
                 <div class="table-responsive">
                     <table class="table">
                         <thead class="text-primary">
-                            <th>N°</th>
                             <th>Code</th>
                             <th>Origine</th>
                             <th>Objet</th>
@@ -48,7 +47,6 @@ Suivi des Demandes
                         <tbody>
                             @forelse($demandes as $d)
                             <tr>
-                                <td>{{ $d->id }}</td>
                                 <td>{{ $d->reference ?: '—' }}</td>
                                 <td>@include('partials.origine-badge', ['demande' => $d])</td>
                                 <td class="text-truncate" style="max-width:220px;" title="{{ $d->objet }}">{{ $d->objet ?: '—' }}</td>
@@ -65,7 +63,7 @@ Suivi des Demandes
                             </tr>
                             @empty
                             <tr>
-                                <td colspan="8" class="text-center text-muted">Aucune demande engagée dans le circuit pour le moment.</td>
+                                <td colspan="7" class="text-center text-muted">Aucune demande engagée dans le circuit pour le moment.</td>
                             </tr>
                             @endforelse
                         </tbody>

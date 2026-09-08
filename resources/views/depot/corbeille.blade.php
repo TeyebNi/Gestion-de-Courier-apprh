@@ -29,7 +29,6 @@ Corbeille - Dépôt des Demandes
                 <div class="table-responsive">
                     <table class="table">
                         <thead class="text-primary">
-                            <th>N°</th>
                             <th>Code</th>
                             <th>Objet</th>
                             <th>Origine</th>
@@ -39,7 +38,6 @@ Corbeille - Dépôt des Demandes
                         <tbody>
                             @forelse($tabdepot as $item)
                             <tr>
-                                <td>{{ $item->id }}</td>
                                 <td>{{ $item->reference ?: '—' }}</td>
                                 <td class="text-truncate" style="max-width:220px;" title="{{ $item->objet }}">{{ $item->objet ?: '—' }}</td>
                                 <td>@include('partials.origine-badge', ['demande' => $item])</td>
@@ -62,7 +60,7 @@ Corbeille - Dépôt des Demandes
                             </tr>
                             @empty
                             <tr>
-                                <td colspan="6" class="text-center text-muted">
+                                <td colspan="5" class="text-center text-muted">
                                     @if($search)
                                         Aucune demande supprimée ne correspond à « {{ $search }} ».
                                     @else

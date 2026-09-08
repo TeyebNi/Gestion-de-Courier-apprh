@@ -24,7 +24,6 @@ Dashboard Courier
                 <div class="table-responsive">
                     <table class="table">
                         <thead class=" text-primary">
-                            <th>N°</th>
                             <th>Code</th>
                             <th>Objet</th>
                             <th>Origine</th>
@@ -38,7 +37,6 @@ Dashboard Courier
                                 $depotBadgeClass = \App\Models\Tabdepot::circuitStepBadgeClass($item->statut_circuit ?? 'accueil');
                             @endphp
                             <tr>
-                                <td>{{$item->id}}</td>
                                 <td>{{ $item->reference ?: '—' }}</td>
                                 <td class="text-truncate" style="max-width:280px;" title="{{ $item->objet }}">{{ $item->objet ?: '—' }}</td>
                                 <td>@include('partials.origine-badge', ['demande' => $item])</td>
@@ -65,7 +63,7 @@ Dashboard Courier
                             </tr>
                             @empty
                             <tr>
-                                <td colspan="7" class="text-center text-muted">
+                                <td colspan="6" class="text-center text-muted">
                                     @if($search)
                                         Aucune demande ne correspond à « {{ $search }} ».
                                     @else

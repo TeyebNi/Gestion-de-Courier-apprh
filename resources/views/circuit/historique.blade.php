@@ -23,10 +23,6 @@ Historique de la Demande
                 <h5 class="mb-3">Détails de la demande</h5>
                 <div class="row">
                     <div class="col-md-4 mb-3">
-                        <small class="text-muted d-block">N° / Code</small>
-                        <strong>{{ $tabdepot->id }}</strong>
-                    </div>
-                    <div class="col-md-4 mb-3">
                         <small class="text-muted d-block">Objet</small>
                         <strong>{{ $tabdepot->objet ?: '—' }}</strong>
                     </div>
