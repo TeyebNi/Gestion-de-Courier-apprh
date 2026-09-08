@@ -260,6 +260,40 @@ class RolePermissionsTest extends TestCase
         $response->assertDontSee('2026-08-30');
     }
 
+    public function test_cabinet_sees_a_navbar_bell_with_the_pending_count(): void
+    {
+        $cabinet = User::factory()->create(['role' => UserRole::Fatou]);
+        Tabdepot::create(['nom' => 'A', 'tel' => '22222222', 'daterecp' => now()->format('Y-m-d'), 'statut_circuit' => 'fatou']);
+        Tabdepot::create(['nom' => 'B', 'tel' => '22222223', 'daterecp' => now()->format('Y-m-d'), 'statut_circuit' => 'fatou']);
+
+        $response = $this->actingAs($cabinet)->get('/');
+
+        $response->assertOk();
+        $response->assertSee('circuitBellDropdown', false);
+        $response->assertSee('2 demande(s) à transmettre au Maire');
+    }
+
+    public function test_maire_sees_a_navbar_bell_with_the_pending_count(): void
+    {
+        $maire = User::factory()->create(['role' => UserRole::Maire]);
+        Tabdepot::create(['nom' => 'A', 'tel' => '22222222', 'daterecp' => now()->format('Y-m-d'), 'statut_circuit' => 'maire']);
+
+        $response = $this->actingAs($maire)->get('/');
+
+        $response->assertOk();
+        $response->assertSee('1 demande(s) en attente de décision');
+    }
+
+    public function test_plain_service_user_does_not_see_the_circuit_bell(): void
+    {
+        $serviceUser = User::factory()->create(['role' => UserRole::User, 'service' => 'Etat Civil']);
+
+        $response = $this->actingAs($serviceUser)->get('/');
+
+        $response->assertOk();
+        $response->assertDontSee('circuitBellDropdown', false);
+    }
+
     public function test_accueil_mini_dashboard_shows_institution_name_objet_and_a_localized_date(): void
     {
         $accueilLikeAdmin = User::factory()->create([
