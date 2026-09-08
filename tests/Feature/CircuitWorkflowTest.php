@@ -298,6 +298,23 @@ class CircuitWorkflowTest extends TestCase
         $this->assertSame('classer', $depot->resolution_service);
     }
 
+    public function test_closing_a_demande_marks_its_service_notification_as_read(): void
+    {
+        $serviceUser = User::factory()->create(['role' => UserRole::User, 'service' => 'Etat Civil']);
+        $depot = $this->makeDepot();
+        $depot->update(['statut_circuit' => 'service', 'service_assigne' => 'Etat Civil']);
+
+        $notification = \App\Models\ServiceNotification::create([
+            'service' => 'Etat Civil',
+            'iddmd' => $depot->id,
+            'message' => 'Nouvelle demande affectée à votre service.',
+        ]);
+
+        $this->actingAs($serviceUser)->post("/circuit/{$depot->id}/cloturer", ['resolution' => 'traiter']);
+
+        $this->assertTrue($notification->fresh()->is_read);
+    }
+
     public function test_fatou_index_shows_already_annotated_demandes(): void
     {
         $fatou = User::factory()->create(['role' => UserRole::Fatou]);

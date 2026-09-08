@@ -175,6 +175,12 @@ class CircuitController extends Controller
 
         $this->logHistorique($tabdepot, 'service', 'cloture', $tabdepot->resolutionLabel() . ' par le service ' . $tabdepot->service_assigne);
 
+        // La demande est traitée : la notification qui l'annonçait n'a plus
+        // besoin d'apparaître comme "à traiter" dans la cloche du service.
+        ServiceNotification::where('iddmd', $tabdepot->id)
+            ->where('service', $tabdepot->service_assigne)
+            ->update(['is_read' => true]);
+
         return back()->with('success', 'La demande a été marquée comme traitée.');
     }
 
