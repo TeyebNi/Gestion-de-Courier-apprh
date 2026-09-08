@@ -41,7 +41,6 @@ Suivi des Demandes
                             <th>Type</th>
                             <th>Objet</th>
                             <th>Où se trouve la demande ?</th>
-                            <th>Décision Maire</th>
                             <th>Annotations du Maire</th>
                             <th>Dernière mise à jour</th>
                             <th>Action</th>
@@ -56,15 +55,6 @@ Suivi des Demandes
                                 <td>
                                     <span class="badge {{ \App\Models\Tabdepot::circuitStepBadgeClass($d->statut_circuit) }}">{{ $d->statutLabel() }}</span>
                                 </td>
-                                <td>
-                                    @if($d->decision_maire === 'accepte')
-                                        <span class="text-success">Acceptée</span>
-                                    @elseif($d->decision_maire === 'refuse')
-                                        <span class="text-danger">Refusée</span>
-                                    @else
-                                        <span class="text-muted">En attente</span>
-                                    @endif
-                                </td>
                                 <td class="text-truncate" style="max-width:220px;" title="{{ $d->remarque_maire }}">{{ $d->remarque_maire ?: '—' }}</td>
                                 <td>{{ $d->updated_at->format('d/m/Y H:i') }}</td>
                                 <td>
@@ -75,7 +65,7 @@ Suivi des Demandes
                             </tr>
                             @empty
                             <tr>
-                                <td colspan="9" class="text-center text-muted">Aucune demande engagée dans le circuit pour le moment.</td>
+                                <td colspan="8" class="text-center text-muted">Aucune demande engagée dans le circuit pour le moment.</td>
                             </tr>
                             @endforelse
                         </tbody>
