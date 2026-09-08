@@ -83,6 +83,7 @@ class DashboardController extends Controller
             ])->count();
             $totalDemandesAll = Tabdepot::count();
             $totalEnAttenteEnvoi = Tabdepot::where('statut_circuit', 'accueil')->count();
+            $totalCorbeille = Tabdepot::onlyTrashed()->count();
             $recentDemandesUser = Tabdepot::orderByDesc('id')->limit(8)->get();
 
             $moisFr = ['Jan', 'Fév', 'Mar', 'Avr', 'Mai', 'Juin', 'Juil', 'Août', 'Sep', 'Oct', 'Nov', 'Déc'];
@@ -120,6 +121,7 @@ class DashboardController extends Controller
                 'totalDemandesWeek',
                 'totalDemandesAll',
                 'totalEnAttenteEnvoi',
+                'totalCorbeille',
                 'recentDemandesUser',
                 'months',
                 'monthCounts',

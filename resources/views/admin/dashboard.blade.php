@@ -204,6 +204,34 @@ Tableau de bord
             </div>
         </div>
     </div>
+
+    <div class="col-lg-3 col-md-6">
+        <div class="card card-stats">
+            <div class="card-body">
+                <div class="row">
+                    <div class="col-5 col-md-4">
+                        <div class="icon-big text-center icon-warning">
+                            <i class="now-ui-icons ui-1_simple-delete text-danger"></i>
+                        </div>
+                    </div>
+                    <div class="col-7 col-md-8">
+                        <div class="numbers">
+                            <p class="card-category">En Corbeille</p>
+                            <h4 class="card-title">{{ $totalCorbeille }}</h4>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="card-footer">
+                <hr>
+                <div class="stats">
+                    <a href="{{ route('depot.trashed') }}">
+                        <i class="now-ui-icons arrows-1_refresh-69"></i> Demandes supprimées
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
 </div>
 
 <!-- Évolution + Type de demande -->

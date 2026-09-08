@@ -348,6 +348,19 @@ class RolePermissionsTest extends TestCase
         $response->assertDontSee('circuitBellDropdown', false);
     }
 
+    public function test_accueil_mini_dashboard_shows_the_corbeille_count(): void
+    {
+        $accueil = User::factory()->create(['role' => UserRole::User]);
+        $depot = Tabdepot::create(['nom' => 'A', 'tel' => '22222222', 'daterecp' => now()->format('Y-m-d')]);
+        $depot->delete();
+
+        $response = $this->actingAs($accueil)->get('/');
+
+        $response->assertOk();
+        $response->assertSee('En Corbeille');
+        $response->assertSee(route('depot.trashed'), false);
+    }
+
     public function test_accueil_mini_dashboard_shows_the_type_and_acceptance_charts(): void
     {
         $accueil = User::factory()->create(['role' => UserRole::User]);

@@ -219,6 +219,7 @@ class DepotTest extends TestCase
     public function test_internal_demande_never_stores_nni_or_adresse(): void
     {
         $user = User::factory()->create(['role' => UserRole::User]);
+        \App\Models\Typedem::create(['name' => 'Note de service']);
 
         $this->actingAs($user)->post('/depot', [
             'nom' => 'Ahmed Ould Sidi',
@@ -461,6 +462,22 @@ class DepotTest extends TestCase
         ]);
 
         $response->assertSessionHasErrors('nom');
+        $this->assertDatabaseCount('tabdepot', 0);
+    }
+
+    public function test_store_rejects_a_typdm_not_in_the_defined_types_list(): void
+    {
+        $user = User::factory()->create(['role' => UserRole::User]);
+        \App\Models\Typedem::create(['name' => 'Reclamation']);
+
+        $response = $this->actingAs($user)->post('/depot', [
+            'nom' => 'Ahmed Ould Sidi',
+            'tel' => '22334455',
+            'origine' => 'interne',
+            'typdm' => 'sdfsdfsdfd',
+        ]);
+
+        $response->assertSessionHasErrors('typdm');
         $this->assertDatabaseCount('tabdepot', 0);
     }
 

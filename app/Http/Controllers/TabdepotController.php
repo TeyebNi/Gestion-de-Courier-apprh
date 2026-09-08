@@ -9,6 +9,7 @@ use App\Models\Orientation;
 use App\Http\Controllers\Controller;
 use App\Services\SmsService;
 use Illuminate\Http\Request;
+use Illuminate\Validation\Rule;
 
 use App\Traits\ExportsCsv;
 
@@ -99,7 +100,7 @@ class TabdepotController extends Controller
         $isInstitution = $request->type_expediteur === 'institution';
 
         $request->validate([
-            'typdm' => [$isInterne ? 'required' : 'nullable', 'string', 'max:255'],
+            'typdm' => [$isInterne ? 'required' : 'nullable', 'string', 'max:255', Rule::in(Typedem::pluck('name'))],
             'objet' => ['nullable', 'string', 'max:255'],
             'reference' => ['nullable', 'string', 'max:100'],
             'origine' => ['nullable', 'in:interne,externe'],
@@ -113,6 +114,7 @@ class TabdepotController extends Controller
             'piece_jointe' => [$isInstitution ? 'required' : 'nullable', 'file', 'mimes:pdf,jpg,jpeg,png', 'max:10240'],
         ], [
             'typdm.required' => 'Le type de demande est obligatoire pour une demande interne.',
+            'typdm.in' => "Ce type de demande n'existe pas dans la liste des types définis.",
             'origine_detail.required' => "Le nom de l'institution est obligatoire.",
             'nom.required' => 'Le nom est obligatoire.',
             'nom.regex' => 'Le nom ne doit contenir que des lettres.',
@@ -175,7 +177,7 @@ class TabdepotController extends Controller
     $isInstitution = $request->type_expediteur === 'institution';
 
     $request->validate([
-        'typdm' => [$isInterne ? 'required' : 'nullable', 'string', 'max:255'],
+        'typdm' => [$isInterne ? 'required' : 'nullable', 'string', 'max:255', Rule::in(Typedem::pluck('name'))],
         'objet' => ['nullable', 'string', 'max:255'],
         'reference' => ['nullable', 'string', 'max:100'],
         'origine' => ['nullable', 'in:interne,externe'],
@@ -191,6 +193,7 @@ class TabdepotController extends Controller
         'adresse' => ['nullable', 'string', 'max:255'],
         'daterecp' => ['nullable', 'date', 'before_or_equal:today'],
     ], [
+        'typdm.in' => "Ce type de demande n'existe pas dans la liste des types définis.",
         'nom.regex' => 'Le nom ne doit contenir que des lettres.',
         'nom.required' => 'Le nom est obligatoire.',
         'origine_detail.required' => "Le nom de l'institution est obligatoire.",
