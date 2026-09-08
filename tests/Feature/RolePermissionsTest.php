@@ -53,7 +53,6 @@ class RolePermissionsTest extends TestCase
 
         $this->actingAs($restrictedAdmin)->get('/utilisateurs')->assertForbidden();
         $this->actingAs($restrictedAdmin)->get('/orientation')->assertOk();
-        $this->actingAs($restrictedAdmin)->get('/typedem')->assertOk();
         $this->actingAs($restrictedAdmin)->get('/depot')->assertOk();
     }
 
@@ -96,7 +95,7 @@ class RolePermissionsTest extends TestCase
         ]);
 
         $this->actingAs($accueilLikeAdmin)->get('/circuit/fatou')->assertForbidden();
-        // Toujours admin : garde Orientation/Typedem/Dépôt.
+        // Toujours admin : garde Orientation/Dépôt.
         $this->actingAs($accueilLikeAdmin)->get('/orientation')->assertOk();
         $this->actingAs($accueilLikeAdmin)->get('/depot')->assertOk();
     }
@@ -208,16 +207,17 @@ class RolePermissionsTest extends TestCase
         $response->assertSee('Évolution des Demandes');
     }
 
-    public function test_admin_dashboard_still_shows_the_type_chart_but_not_acceptance(): void
+    public function test_admin_dashboard_no_longer_shows_type_or_acceptance_charts(): void
     {
         $admin = User::factory()->create(['role' => UserRole::Admin]);
 
         $response = $this->actingAs($admin)->get('/');
 
         $response->assertOk();
-        $response->assertSee('Type de Demande');
+        $response->assertDontSee('Type de Demande');
         $response->assertDontSee('Acceptées / Refusées');
         $response->assertDontSee("Taux d'Acceptation", false);
+        $response->assertSee('Évolution des Demandes');
     }
 
     public function test_service_dashboard_recent_demandes_are_ordered_and_labeled_by_last_update(): void
@@ -287,7 +287,7 @@ class RolePermissionsTest extends TestCase
         $response->assertSee(route('depot.trashed'), false);
     }
 
-    public function test_accueil_mini_dashboard_shows_the_type_chart_but_not_acceptance(): void
+    public function test_accueil_mini_dashboard_no_longer_shows_type_or_acceptance_charts(): void
     {
         $accueil = User::factory()->create(['role' => UserRole::User]);
         Tabdepot::create(['reference' => 'A', 'daterecp' => now()->format('Y-m-d')]);
@@ -296,7 +296,7 @@ class RolePermissionsTest extends TestCase
         $response = $this->actingAs($accueil)->get('/');
 
         $response->assertOk();
-        $response->assertSee('Type de Demande');
+        $response->assertDontSee('Type de Demande');
         $response->assertSee('Évolution des Demandes');
         $response->assertDontSee('Acceptées / Refusées');
         $response->assertDontSee("Taux d'Acceptation", false);

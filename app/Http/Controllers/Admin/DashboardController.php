@@ -5,7 +5,6 @@ namespace App\Http\Controllers\Admin;
 use App\Http\Controllers\Controller;
 use App\Models\DemandeHistorique;
 use App\Models\Tabdepot;
-use App\Models\Typedem;
 use Illuminate\Http\Request;
 use Illuminate\Support\Carbon;
 
@@ -75,16 +74,6 @@ class DashboardController extends Controller
                     ->count();
             }
 
-            $typeStats = Tabdepot::select('typdm')
-                ->selectRaw('count(*) as total')
-                ->whereNotNull('typdm')
-                ->groupBy('typdm')
-                ->orderByDesc('total')
-                ->limit(8)
-                ->get();
-            $typeLabels = $typeStats->pluck('typdm');
-            $typeCounts = $typeStats->pluck('total');
-
             return view('admin.dashboard', compact(
                 'isAdmin',
                 'isPlainUser',
@@ -96,9 +85,7 @@ class DashboardController extends Controller
                 'totalCorbeille',
                 'recentDemandesUser',
                 'months',
-                'monthCounts',
-                'typeLabels',
-                'typeCounts'
+                'monthCounts'
             ));
         }
 
@@ -111,16 +98,7 @@ class DashboardController extends Controller
         }
         $totalDemandesAssignees = (clone $assignedQuery)->count();
 
-        if ($isAdmin) {
-            $totalDemandes = Tabdepot::count();
-            $totalTypes = Typedem::count();
-        } else {
-            $totalDemandes = $totalDemandesAssignees;
-            $totalTypes = (clone $assignedQuery)
-                ->whereNotNull('typdm')
-                ->distinct('typdm')
-                ->count('typdm');
-        }
+        $totalDemandes = $isAdmin ? Tabdepot::count() : $totalDemandesAssignees;
 
         // Demandes assignées à ce service mais pas encore clôturées par lui.
         $totalEnCours = (clone $assignedQuery)->where('statut_circuit', 'service')->count();
@@ -139,15 +117,6 @@ class DashboardController extends Controller
                     ->count();
             }
 
-            // ----- Répartition par type de demande (global) -----
-            $typeStats = Tabdepot::select('typdm')
-                ->selectRaw('count(*) as total')
-                ->whereNotNull('typdm')
-                ->groupBy('typdm')
-                ->orderByDesc('total')
-                ->limit(8)
-                ->get();
-
             $recentDemandes = Tabdepot::orderByDesc('id')->limit(5)->get();
             $recentServiceDemandes = collect();
         } else {
@@ -163,25 +132,12 @@ class DashboardController extends Controller
                     ->count();
             }
 
-            // ----- Répartition par type des demandes assignées à ce service -----
-            $typeStats = (clone $assignedQuery)
-                ->select('typdm')
-                ->selectRaw('count(*) as total')
-                ->whereNotNull('typdm')
-                ->groupBy('typdm')
-                ->orderByDesc('total')
-                ->limit(8)
-                ->get();
-
             $recentDemandes = collect();
             $recentServiceDemandes = (clone $assignedQuery)
                 ->orderByDesc('updated_at')
                 ->limit(5)
                 ->get();
         }
-
-        $typeLabels = $typeStats->pluck('typdm');
-        $typeCounts = $typeStats->pluck('total');
 
         // ----- Répartition des demandes assignées par service -----
         $serviceStats = (clone $assignedQuery)
@@ -200,12 +156,9 @@ class DashboardController extends Controller
             'isCabinet',
             'totalDemandes',
             'totalDemandesAssignees',
-            'totalTypes',
             'totalEnCours',
             'months',
             'monthCounts',
-            'typeLabels',
-            'typeCounts',
             'serviceLabels',
             'serviceCounts',
             'recentDemandes',

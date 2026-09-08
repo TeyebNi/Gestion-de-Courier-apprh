@@ -11,7 +11,7 @@ class Tabdepot extends Model
      use HasFactory, SoftDeletes;
     protected $table ='tabdepot';
     protected $fillable = [
-        'typdm', 'objet', 'reference', 'origine', 'origine_detail', 'type_expediteur', 'piece_jointe', 'nom', 'nni','tel','adresse', 'daterecp',
+        'objet', 'reference', 'origine', 'origine_detail', 'type_expediteur', 'piece_jointe', 'nom', 'nni','tel','adresse', 'daterecp',
         'statut_circuit', 'decision_maire', 'remarque_maire', 'service_assigne', 'resolution_service', 'vue_accueil'];
     protected $hidden=['created_at' ,'updated_at'];
 

@@ -137,14 +137,6 @@
                         </a>
                     </li>
                     @endif
-                    @if(auth()->check() && auth()->user()->isAdmin())
-                    <li class="{{ request()->is('typedem*') ? 'active' : '' }}">
-                        <a href="{{ route('typedem.index') }}">
-                            <i class="now-ui-icons design_bullet-list-67"></i>
-                            <p>Types de Demande</p>
-                        </a>
-                    </li>
-                    @endif
                     @if(auth()->check() && auth()->user()->canManageUsers())
                     <li class="{{ request()->is('utilisateurs*') ? 'active' : '' }}">
                         <a href="{{ route('users.index') }}">

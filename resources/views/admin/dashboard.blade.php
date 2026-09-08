@@ -234,9 +234,9 @@ Tableau de bord
     </div>
 </div>
 
-<!-- Évolution + Type de demande -->
+<!-- Évolution -->
 <div class="row">
-    <div class="col-lg-8">
+    <div class="col-lg-12">
         <div class="card card-chart">
             <div class="card-header">
                 <h5 class="card-category">Suivi dans le temps</h5>
@@ -250,24 +250,6 @@ Tableau de bord
             <div class="card-footer">
                 <div class="stats">
                     <i class="now-ui-icons arrows-1_refresh-69"></i> Basé sur la date de réception des demandes
-                </div>
-            </div>
-        </div>
-    </div>
-    <div class="col-lg-4">
-        <div class="card card-chart">
-            <div class="card-header">
-                <h5 class="card-category">Répartition</h5>
-                <h4 class="card-title">Type de Demande</h4>
-            </div>
-            <div class="card-body">
-                <div class="chart-area">
-                    <canvas id="typeChart"></canvas>
-                </div>
-            </div>
-            <div class="card-footer">
-                <div class="stats">
-                    <i class="now-ui-icons design_bullet-list-67"></i> {{ $typeLabels->count() }} types au total
                 </div>
             </div>
         </div>
@@ -473,33 +455,7 @@ Tableau de bord
         </div>
     </div>
 
-    @if($isAdmin)
-    <div class="col-lg-3 col-md-6">
-        <div class="card card-stats">
-            <div class="card-body">
-                <div class="row">
-                    <div class="col-5 col-md-4">
-                        <div class="icon-big text-center icon-warning">
-                            <i class="now-ui-icons design_bullet-list-67 text-warning"></i>
-                        </div>
-                    </div>
-                    <div class="col-7 col-md-8">
-                        <div class="numbers">
-                            <p class="card-category">Types de Demande</p>
-                            <h4 class="card-title">{{ $totalTypes }}</h4>
-                        </div>
-                    </div>
-                </div>
-            </div>
-            <div class="card-footer">
-                <hr>
-                <div class="stats">
-                    <i class="now-ui-icons ui-1_settings-gear-63"></i> {{ $isAdmin ? 'Catégories actives' : 'Types reçus par votre service' }}
-                </div>
-            </div>
-        </div>
-    </div>
-    @else
+    @if(!$isAdmin)
     <div class="col-lg-3 col-md-6">
         <div class="card card-stats">
             <div class="card-body">
@@ -529,9 +485,9 @@ Tableau de bord
 
 </div>
 
-<!-- Évolution + Type de demande -->
+<!-- Évolution -->
 <div class="row">
-    <div class="{{ $isAdmin ? 'col-lg-8' : 'col-lg-12' }}">
+    <div class="col-lg-12">
         <div class="card card-chart">
             <div class="card-header">
                 <h5 class="card-category">Suivi dans le temps</h5>
@@ -549,26 +505,6 @@ Tableau de bord
             </div>
         </div>
     </div>
-    @if($isAdmin)
-    <div class="col-lg-4">
-        <div class="card card-chart">
-            <div class="card-header">
-                <h5 class="card-category">Répartition</h5>
-                <h4 class="card-title">Type de Demande</h4>
-            </div>
-            <div class="card-body">
-                <div class="chart-area">
-                    <canvas id="typeChart"></canvas>
-                </div>
-            </div>
-            <div class="card-footer">
-                <div class="stats">
-                    <i class="now-ui-icons design_bullet-list-67"></i> {{ $totalTypes }} types au total
-                </div>
-            </div>
-        </div>
-    </div>
-    @endif
 </div>
 
 <!-- Dernières demandes -->
@@ -669,12 +605,8 @@ Tableau de bord
 document.addEventListener('DOMContentLoaded', function () {
     var months = @json($months);
     var monthCounts = @json($monthCounts);
-    var typeLabels = @json($typeLabels);
-    var typeCounts = @json($typeCounts);
     var serviceLabels = @json($serviceLabels);
     var serviceCounts = @json($serviceCounts);
-
-    var palette = ['#2CA8FF', '#FB404B', '#18ce0f', '#FFA534', '#9C27B0', '#00BCD4', '#FF5722', '#607D8B'];
 
     new Chart(document.getElementById('evolutionChart'), {
         type: 'line',
@@ -697,24 +629,6 @@ document.addEventListener('DOMContentLoaded', function () {
             plugins: { legend: { display: false } }
         }
     });
-
-    @if($isAdmin)
-    new Chart(document.getElementById('typeChart'), {
-        type: 'doughnut',
-        data: {
-            labels: typeLabels,
-            datasets: [{
-                data: typeCounts,
-                backgroundColor: palette,
-            }]
-        },
-        options: {
-            responsive: true,
-            maintainAspectRatio: false,
-            plugins: { legend: { position: 'bottom', labels: { boxWidth: 12 } } }
-        }
-    });
-    @endif
 
     @if($isAdmin)
     var serviceChartEl = document.getElementById('serviceChart');
@@ -748,10 +662,6 @@ document.addEventListener('DOMContentLoaded', function () {
 document.addEventListener('DOMContentLoaded', function () {
     var months = @json($months);
     var monthCounts = @json($monthCounts);
-    var typeLabels = @json($typeLabels);
-    var typeCounts = @json($typeCounts);
-
-    var palette = ['#2CA8FF', '#FB404B', '#18ce0f', '#FFA534', '#9C27B0', '#00BCD4', '#FF5722', '#607D8B'];
 
     new Chart(document.getElementById('evolutionChart'), {
         type: 'line',
@@ -774,23 +684,6 @@ document.addEventListener('DOMContentLoaded', function () {
             plugins: { legend: { display: false } }
         }
     });
-
-    new Chart(document.getElementById('typeChart'), {
-        type: 'doughnut',
-        data: {
-            labels: typeLabels,
-            datasets: [{
-                data: typeCounts,
-                backgroundColor: palette,
-            }]
-        },
-        options: {
-            responsive: true,
-            maintainAspectRatio: false,
-            plugins: { legend: { position: 'bottom', labels: { boxWidth: 12 } } }
-        }
-    });
-
 });
 </script>
 @endif
