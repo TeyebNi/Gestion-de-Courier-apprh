@@ -47,6 +47,7 @@ Route::middleware('auth')->group(function () {
 
     Route::middleware('fatou')->group(function () {
         Route::get('circuit/fatou', [CircuitController::class, 'fatouIndex'])->name('circuit.fatou.index');
+        Route::get('circuit/{tabdepot}/fiche-maire', [CircuitController::class, 'printFicheMaire'])->name('circuit.fiche-maire');
         Route::post('circuit/{tabdepot}/decider', [CircuitController::class, 'decide'])->name('circuit.decider');
     });
 

@@ -76,6 +76,32 @@ class CircuitController extends Controller
     }
 
     /**
+     * Cabinet de Maire : imprime la fiche de la demande, à porter à la main au
+     * Maire (avec un espace pour ses annotations manuscrites), avant de les
+     * ressaisir via decide().
+     */
+    public function printFicheMaire(Tabdepot $tabdepot)
+    {
+        if (! auth()->user()->canAccessCabinet()) {
+            abort(403, "Cette page est réservée au Cabinet de Maire et aux administrateurs.");
+        }
+
+        $html = view('circuit.fiche_maire', compact('tabdepot'))->render();
+
+        $mpdf = new \Mpdf\Mpdf([
+            'mode' => 'utf-8',
+            'format' => 'A4',
+            'default_font' => 'dejavusans',
+            'autoScriptToLang' => true,
+            'autoLangToFont' => true,
+        ]);
+        $mpdf->WriteHTML($html);
+
+        return response($mpdf->Output('fiche_maire_' . $tabdepot->id . '.pdf', \Mpdf\Output\Destination::DOWNLOAD), 200)
+            ->header('Content-Type', 'application/pdf');
+    }
+
+    /**
      * Cabinet de Maire : saisir les annotations du Maire (recueillies sur le
      * dossier papier) et, si la demande concerne un service, la lui transmettre.
      * Sans service concerné, la demande est directement clôturée.

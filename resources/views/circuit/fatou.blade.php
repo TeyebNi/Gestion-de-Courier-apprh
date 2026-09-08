@@ -62,6 +62,11 @@ document.addEventListener('DOMContentLoaded', function () {
                                     </a>
                                 </p>
                                 @endif
+                                <p>
+                                    <a href="{{ route('circuit.fiche-maire', $d) }}" target="_blank" class="btn btn-secondary btn-sm">
+                                        <i class="fas fa-print"></i> Imprimer la fiche pour le Maire
+                                    </a>
+                                </p>
                             </div>
                             <div class="col-md-4">
                                 <form action="{{ route('circuit.decider', $d) }}" method="post">
