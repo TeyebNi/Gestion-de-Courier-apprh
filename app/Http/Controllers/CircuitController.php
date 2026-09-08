@@ -72,7 +72,14 @@ class CircuitController extends Controller
             ->get();
         $orientations = Orientation::orderBy('name')->get();
 
-        return view('circuit.fatou', compact('aEnvoyer', 'orientations'));
+        // Le Cabinet n'a pas accès à Suivi (vue globale tous services) : ce
+        // second tableau lui donne uniquement la trace de son propre travail
+        // d'annotation, une fois la demande sortie de la file d'attente.
+        $dejaAnnotees = Tabdepot::whereNotNull('remarque_maire')
+            ->orderByDesc('updated_at')
+            ->paginate(10, ['*'], 'annotees_page');
+
+        return view('circuit.fatou', compact('aEnvoyer', 'orientations', 'dejaAnnotees'));
     }
 
     /**

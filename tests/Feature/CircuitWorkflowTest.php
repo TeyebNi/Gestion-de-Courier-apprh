@@ -294,6 +294,25 @@ class CircuitWorkflowTest extends TestCase
             ->assertHeader('Content-Type', 'application/pdf');
     }
 
+    public function test_fatou_index_shows_already_annotated_demandes(): void
+    {
+        $fatou = User::factory()->create(['role' => UserRole::Fatou]);
+        $depot = $this->makeDepot();
+        $depot->update(['statut_circuit' => 'fatou']);
+
+        $this->actingAs($fatou)->post("/circuit/{$depot->id}/decider", [
+            'remarque_maire' => 'Dossier vu, à traiter en priorité.',
+            'service_destination' => 'Etat Civil',
+        ]);
+
+        $response = $this->actingAs($fatou)->get('/circuit/fatou');
+
+        $response->assertOk();
+        $response->assertSee('Demandes déjà annotées');
+        $response->assertSee('Dossier vu, à traiter en priorité.');
+        $response->assertDontSee('Aucune demande annotée pour le moment.');
+    }
+
     public function test_decide_marks_the_demande_as_unseen_by_accueil(): void
     {
         $fatou = User::factory()->create(['role' => UserRole::Fatou]);

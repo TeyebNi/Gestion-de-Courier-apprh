@@ -98,4 +98,49 @@ document.addEventListener('DOMContentLoaded', function () {
     </div>
 </div>
 
+<div class="row">
+    <div class="col-md-12">
+        <div class="card">
+            <div class="card-header">
+                <h4 class="card-title mb-0" style="font-weight: 700; color: #212529;">
+                    Demandes déjà annotées
+                </h4>
+            </div>
+            <div class="card-body">
+                <div class="table-responsive">
+                    <table class="table">
+                        <thead class="text-primary">
+                            <th>Nom</th>
+                            <th>Objet</th>
+                            <th>Annotations du Maire</th>
+                            <th>Où se trouve la demande ?</th>
+                            <th>Dernière mise à jour</th>
+                        </thead>
+                        <tbody>
+                            @forelse($dejaAnnotees as $d)
+                            <tr>
+                                <td>{{ $d->nom ?: ($d->origine_detail ?: '—') }}</td>
+                                <td class="text-truncate" style="max-width:220px;" title="{{ $d->objet }}">{{ $d->objet ?: '—' }}</td>
+                                <td class="text-truncate" style="max-width:260px;" title="{{ $d->remarque_maire }}">{{ $d->remarque_maire }}</td>
+                                <td>
+                                    <span class="badge {{ \App\Models\Tabdepot::circuitStepBadgeClass($d->statut_circuit) }}">{{ $d->statutLabel() }}</span>
+                                </td>
+                                <td>{{ $d->updated_at->format('d/m/Y H:i') }}</td>
+                            </tr>
+                            @empty
+                            <tr>
+                                <td colspan="5" class="text-center text-muted">Aucune demande annotée pour le moment.</td>
+                            </tr>
+                            @endforelse
+                        </tbody>
+                    </table>
+                </div>
+                <div class="d-flex justify-content-center mt-3">
+                    {{ $dejaAnnotees->links() }}
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
 @endsection
