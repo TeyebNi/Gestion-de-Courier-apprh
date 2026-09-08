@@ -61,7 +61,7 @@ class CircuitController extends Controller
     {
         $aEnvoyer = Tabdepot::where('statut_circuit', 'fatou')
             ->orderByDesc('id')
-            ->get();
+            ->paginate(5, ['*'], 'a_envoyer_page');
         $orientations = Orientation::orderBy('name')->get();
 
         // Le Cabinet n'a pas accès à Suivi (vue globale tous services) : ce
@@ -69,7 +69,7 @@ class CircuitController extends Controller
         // d'annotation, une fois la demande sortie de la file d'attente.
         $dejaAnnotees = Tabdepot::whereNotNull('remarque_maire')
             ->orderByDesc('updated_at')
-            ->paginate(10, ['*'], 'annotees_page');
+            ->paginate(5, ['*'], 'annotees_page');
 
         return view('circuit.fatou', compact('aEnvoyer', 'orientations', 'dejaAnnotees'));
     }
@@ -136,12 +136,12 @@ class CircuitController extends Controller
         $demandes = Tabdepot::where('statut_circuit', 'service')
             ->when(! $user->canAccessAllServices(), fn ($q) => $q->where('service_assigne', $user->service))
             ->orderByDesc('id')
-            ->get();
+            ->paginate(5, ['*'], 'demandes_page');
 
         $demandesTraitees = Tabdepot::where('statut_circuit', 'cloture')
             ->when(! $user->canAccessAllServices(), fn ($q) => $q->where('service_assigne', $user->service))
             ->orderByDesc('updated_at')
-            ->paginate(10, ['*'], 'traitees_page');
+            ->paginate(5, ['*'], 'traitees_page');
 
         return view('circuit.service', compact('demandes', 'demandesTraitees'));
     }
@@ -205,7 +205,7 @@ class CircuitController extends Controller
                 });
             })
             ->orderByDesc('updated_at')
-            ->paginate(10)
+            ->paginate(5)
             ->withQueryString();
 
         return view('circuit.suivi', compact('demandes', 'search', 'statut'));
@@ -223,7 +223,7 @@ class CircuitController extends Controller
             abort(403, "Vous n'avez pas accès à l'historique de cette demande.");
         }
 
-        $historiques = $tabdepot->historiques()->with('user')->paginate(10);
+        $historiques = $tabdepot->historiques()->with('user')->paginate(5);
 
         return view('circuit.historique', compact('tabdepot', 'historiques'));
     }

@@ -75,6 +75,9 @@ document.addEventListener('DOMContentLoaded', function () {
                 @empty
                 <p class="text-center text-muted">Aucune demande en attente.</p>
                 @endforelse
+                <div class="d-flex justify-content-center mt-3">
+                    {{ $aEnvoyer->links() }}
+                </div>
             </div>
         </div>
     </div>

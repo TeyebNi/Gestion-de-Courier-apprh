@@ -157,7 +157,7 @@ class CircuitWorkflowTest extends TestCase
         $response->assertSee('<option value="Etat Civil" >Etat Civil</option>', false);
     }
 
-    public function test_historique_transferts_are_paginated_by_ten(): void
+    public function test_historique_transferts_are_paginated_by_five(): void
     {
         $accueil = User::factory()->create(['role' => UserRole::User]);
         $depot = $this->makeDepot();
@@ -174,7 +174,7 @@ class CircuitWorkflowTest extends TestCase
 
         $response->assertOk();
         $response->assertViewHas('historiques', function ($historiques) {
-            return $historiques->count() === 10 && $historiques->total() === 15;
+            return $historiques->count() === 5 && $historiques->total() === 15;
         });
     }
 

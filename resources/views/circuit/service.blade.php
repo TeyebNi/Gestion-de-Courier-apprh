@@ -81,6 +81,9 @@ document.addEventListener('DOMContentLoaded', function () {
                         </tbody>
                     </table>
                 </div>
+                <div class="d-flex justify-content-center mt-3">
+                    {{ $demandes->links() }}
+                </div>
             </div>
         </div>
     </div>

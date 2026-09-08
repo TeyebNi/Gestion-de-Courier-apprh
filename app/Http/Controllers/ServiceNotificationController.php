@@ -14,7 +14,7 @@ class ServiceNotificationController extends Controller
         $notifications = ServiceNotification::query()
             ->when(! auth()->user()->canAccessAllServices(), fn ($q) => $q->where('service', $userService))
             ->orderByDesc('created_at')
-            ->paginate(10);
+            ->paginate(5);
 
         // D'anciennes notifications (avant le circuit actuel) ont un iddmd
         // invalide (nom de type, vide, ou demande depuis supprimée) : ne

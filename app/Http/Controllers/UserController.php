@@ -106,7 +106,7 @@ class UserController extends Controller
                   ->orWhere('details', 'like', "%{$search}%");
             });
         }
-        $logs = $query->paginate(15)->appends(['search' => $search]);
+        $logs = $query->paginate(5)->appends(['search' => $search]);
 
         return view('users.audit-log', compact('logs', 'search'));
     }

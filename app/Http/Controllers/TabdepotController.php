@@ -169,7 +169,7 @@ class TabdepotController extends Controller
                       ->orWhere('objet', 'like', "%{$search}%");
             })
             ->orderByDesc('deleted_at')
-            ->paginate(10)
+            ->paginate(5)
             ->appends(['search' => $search]);
 
         return view('depot.corbeille', compact('tabdepot', 'search'));
