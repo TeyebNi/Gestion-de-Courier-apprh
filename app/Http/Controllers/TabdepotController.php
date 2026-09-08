@@ -10,6 +10,7 @@ use App\Services\SmsService;
 use Illuminate\Http\Request;
 
 use App\Traits\ExportsCsv;
+use Illuminate\Validation\Rule;
 
 class TabdepotController extends Controller
 {
@@ -95,12 +96,13 @@ class TabdepotController extends Controller
         $request->validate([
             'origine' => ['required', 'in:interne,externe'],
             'origine_detail' => [$isInterne ? 'required' : 'nullable', 'string', 'max:255'],
-            'reference' => ['required', 'string', 'max:100'],
+            'reference' => ['required', 'string', 'max:100', Rule::unique('tabdepot', 'reference')],
             'objet' => ['nullable', 'string', 'max:255'],
         ], [
             'origine.required' => "L'origine est obligatoire.",
             'origine_detail.required' => 'Le service est obligatoire pour une demande interne.',
             'reference.required' => 'Le code est obligatoire.',
+            'reference.unique' => 'Ce code est déjà utilisé par une autre demande.',
         ]);
 
         $demande = Tabdepot::create([
@@ -131,12 +133,13 @@ class TabdepotController extends Controller
         $request->validate([
             'origine' => ['required', 'in:interne,externe'],
             'origine_detail' => [$isInterne ? 'required' : 'nullable', 'string', 'max:255'],
-            'reference' => ['required', 'string', 'max:100'],
+            'reference' => ['required', 'string', 'max:100', Rule::unique('tabdepot', 'reference')->ignore($tabdepot->id)],
             'objet' => ['nullable', 'string', 'max:255'],
         ], [
             'origine.required' => "L'origine est obligatoire.",
             'origine_detail.required' => 'Le service est obligatoire pour une demande interne.',
             'reference.required' => 'Le code est obligatoire.',
+            'reference.unique' => 'Ce code est déjà utilisé par une autre demande.',
         ]);
 
         $tabdepot->update([

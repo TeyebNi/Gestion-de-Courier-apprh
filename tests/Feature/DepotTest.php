@@ -78,6 +78,64 @@ class DepotTest extends TestCase
         $this->assertDatabaseCount('tabdepot', 0);
     }
 
+    public function test_store_rejects_a_code_already_used_by_another_demande(): void
+    {
+        $user = User::factory()->create(['role' => UserRole::User]);
+        $this->makeDepot(['reference' => 'MI/2026/245']);
+
+        $response = $this->actingAs($user)->post('/depot', [
+            'origine' => 'externe',
+            'reference' => 'MI/2026/245',
+        ]);
+
+        $response->assertSessionHasErrors('reference');
+        $this->assertDatabaseCount('tabdepot', 1);
+    }
+
+    public function test_store_rejects_a_code_already_used_by_a_trashed_demande(): void
+    {
+        $user = User::factory()->create(['role' => UserRole::User]);
+        $trashed = $this->makeDepot(['reference' => 'MI/2026/245']);
+        $trashed->delete();
+
+        $response = $this->actingAs($user)->post('/depot', [
+            'origine' => 'externe',
+            'reference' => 'MI/2026/245',
+        ]);
+
+        $response->assertSessionHasErrors('reference');
+    }
+
+    public function test_update_rejects_a_code_already_used_by_another_demande(): void
+    {
+        $user = User::factory()->create(['role' => UserRole::User]);
+        $this->makeDepot(['reference' => 'MI/2026/245']);
+        $other = $this->makeDepot(['reference' => 'MI/2026/999']);
+
+        $response = $this->actingAs($user)->put("/depot/{$other->id}", [
+            'origine' => 'externe',
+            'reference' => 'MI/2026/245',
+        ]);
+
+        $response->assertSessionHasErrors('reference');
+        $this->assertSame('MI/2026/999', $other->fresh()->reference);
+    }
+
+    public function test_update_keeping_the_same_code_is_allowed(): void
+    {
+        $user = User::factory()->create(['role' => UserRole::User]);
+        $demande = $this->makeDepot(['reference' => 'MI/2026/245']);
+
+        $response = $this->actingAs($user)->put("/depot/{$demande->id}", [
+            'origine' => 'externe',
+            'reference' => 'MI/2026/245',
+            'objet' => 'Objet mis à jour',
+        ]);
+
+        $response->assertSessionDoesntHaveErrors('reference');
+        $this->assertSame('Objet mis à jour', $demande->fresh()->objet);
+    }
+
     public function test_store_rejects_an_unknown_origine_value(): void
     {
         $user = User::factory()->create(['role' => UserRole::User]);
