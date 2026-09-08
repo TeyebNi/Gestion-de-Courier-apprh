@@ -3,6 +3,8 @@
 namespace App\Http\Controllers;
 
 use App\Models\Orientation;
+use App\Models\Tabdepot;
+use App\Models\User;
 use App\Http\Controllers\Controller;
 use Illuminate\Http\Request;
 use Illuminate\Validation\Rule;
@@ -78,6 +80,18 @@ class OrientationController extends Controller
 
     public function destroy(Orientation $orientation)
     {
+        // Le nom de l'orientation est référencé comme simple chaîne (pas de clé
+        // étrangère) dans service_assigne, origine_detail (demandes internes) et
+        // le service des comptes utilisateurs : vérifier les trois avant de
+        // supprimer, sinon les enregistrements existants deviennent orphelins.
+        $demandesAssignees = Tabdepot::where('service_assigne', $orientation->name)->count();
+        $demandesOrigine = Tabdepot::where('origine', 'interne')->where('origine_detail', $orientation->name)->count();
+        $usersUtilisant = User::where('service', $orientation->name)->count();
+
+        if ($demandesAssignees + $demandesOrigine + $usersUtilisant > 0) {
+            return redirect()->route('orientation.index')->with('error', "Impossible de supprimer « {$orientation->name} » : encore utilisée par {$demandesAssignees} demande(s) assignée(s), {$demandesOrigine} demande(s) interne(s) et {$usersUtilisant} compte(s) utilisateur.");
+        }
+
         $id = $orientation->id;
         $orientation->delete();
 
