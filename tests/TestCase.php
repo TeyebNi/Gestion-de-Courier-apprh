@@ -11,8 +11,7 @@ abstract class TestCase extends BaseTestCase
     {
         parent::setUp();
 
-        // Empêche tout appel réseau réel vers l'API Twilio pendant les tests
-        // (SmsService y fait un vrai appel HTTP dès que les identifiants sont configurés).
+        // Empêche tout appel réseau réel pendant les tests.
         Http::preventStrayRequests();
         Http::fake();
     }

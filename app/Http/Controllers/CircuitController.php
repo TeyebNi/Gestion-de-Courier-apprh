@@ -6,18 +6,10 @@ use App\Models\DemandeHistorique;
 use App\Models\Orientation;
 use App\Models\ServiceNotification;
 use App\Models\Tabdepot;
-use App\Services\SmsService;
 use Illuminate\Http\Request;
 
 class CircuitController extends Controller
 {
-    protected SmsService $sms;
-
-    public function __construct(SmsService $sms)
-    {
-        $this->sms = $sms;
-    }
-
     /**
      * Enregistre une étape dans l'historique de la demande.
      */
@@ -129,13 +121,6 @@ class CircuitController extends Controller
             ]);
         }
 
-        if ($tabdepot->tel) {
-            $message = $serviceDestination
-                ? "Bonjour {$tabdepot->nom}, votre demande N°{$tabdepot->id} a été examinée et transmise au service {$serviceDestination}. Commune de Tevragh Zeina."
-                : "Bonjour {$tabdepot->nom}, votre demande N°{$tabdepot->id} a été traitée. Commune de Tevragh Zeina.";
-            $this->sms->send($tabdepot->tel, $message);
-        }
-
         return back()->with('success', $serviceDestination
             ? 'Les annotations ont été enregistrées et la demande envoyée au service.'
             : 'Les annotations ont été enregistrées et la demande classée.');
@@ -189,13 +174,6 @@ class CircuitController extends Controller
         ]);
 
         $this->logHistorique($tabdepot, 'service', 'cloture', $tabdepot->resolutionLabel() . ' par le service ' . $tabdepot->service_assigne);
-
-        if ($tabdepot->tel) {
-            $this->sms->send(
-                $tabdepot->tel,
-                "Bonjour {$tabdepot->nom}, votre demande N°{$tabdepot->id} a été traitée par le service {$tabdepot->service_assigne}. Vous pouvez la récupérer. Commune de Tevragh Zeina."
-            );
-        }
 
         return back()->with('success', 'La demande a été marquée comme traitée.');
     }

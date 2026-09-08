@@ -32,7 +32,6 @@ Définis dans `App\Enums\UserRole` et appliqués via les middlewares `admin`, `f
 - Laravel 12 / PHP 8.2, MySQL
 - `laravel/ui` pour l'authentification
 - Export PDF : `barryvdh/laravel-dompdf` (rapports/factures) et `mpdf/mpdf` + `mpdf/qrcode` (reçu de dépôt avec QR code)
-- SMS : Twilio, via `App\Services\SmsService` (notifie le citoyen à l'enregistrement de sa demande)
 
 ## Installation
 

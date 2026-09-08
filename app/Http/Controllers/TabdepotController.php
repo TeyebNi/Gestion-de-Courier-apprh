@@ -5,7 +5,6 @@ namespace App\Http\Controllers;
 use App\Models\DemandeHistorique;
 use App\Models\Tabdepot;
 use App\Http\Controllers\Controller;
-use App\Services\SmsService;
 use Illuminate\Http\Request;
 
 use App\Traits\ExportsCsv;
@@ -14,13 +13,6 @@ use Illuminate\Validation\Rule;
 class TabdepotController extends Controller
 {
     use ExportsCsv;
-
-    protected SmsService $sms;
-
-    public function __construct(SmsService $sms)
-    {
-        $this->sms = $sms;
-    }
 
     public function index(Request $request)
     {

@@ -8,7 +8,6 @@ use App\Models\Orientation;
 use App\Models\Tabdepot;
 use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
-use Illuminate\Support\Facades\Http;
 use Tests\TestCase;
 
 class CircuitWorkflowTest extends TestCase
@@ -218,32 +217,6 @@ class CircuitWorkflowTest extends TestCase
 
         // Every transition must be logged in the history trail.
         $this->assertGreaterThanOrEqual(3, $depot->historiques()->count());
-    }
-
-    public function test_sms_is_sent_on_annotation_and_on_closure(): void
-    {
-        $fatou = User::factory()->create(['role' => UserRole::Fatou]);
-        $serviceUser = User::factory()->create(['role' => UserRole::User, 'service' => 'Etat Civil']);
-
-        $depot = $this->makeDepot();
-        $depot->update(['statut_circuit' => 'fatou']);
-
-        $this->actingAs($fatou)->post("/circuit/{$depot->id}/decider", [
-            'remarque_maire' => 'RAS',
-            'service_destination' => 'Etat Civil',
-        ]);
-
-        Http::assertSent(function ($request) {
-            return str_contains($request->url(), 'twilio.com')
-                && str_contains($request['Body'] ?? '', 'examinée et transmise');
-        });
-
-        $this->actingAs($serviceUser)->post("/circuit/{$depot->id}/cloturer", ['resolution' => 'traiter']);
-
-        Http::assertSent(function ($request) {
-            return str_contains($request->url(), 'twilio.com')
-                && str_contains($request['Body'] ?? '', 'traitée');
-        });
     }
 
     public function test_decide_notifies_the_assigned_service(): void
