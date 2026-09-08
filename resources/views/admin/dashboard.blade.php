@@ -528,7 +528,7 @@ Tableau de bord
 
 <!-- Évolution + Type de demande -->
 <div class="row">
-    <div class="col-lg-8">
+    <div class="{{ $isAdmin ? 'col-lg-8' : 'col-lg-12' }}">
         <div class="card card-chart">
             <div class="card-header">
                 <h5 class="card-category">Suivi dans le temps</h5>
@@ -546,6 +546,7 @@ Tableau de bord
             </div>
         </div>
     </div>
+    @if($isAdmin)
     <div class="col-lg-4">
         <div class="card card-chart">
             <div class="card-header">
@@ -564,10 +565,12 @@ Tableau de bord
             </div>
         </div>
     </div>
+    @endif
 </div>
 
 <!-- Acceptées/Refusées + Dernières demandes -->
 <div class="row">
+    @if($isAdmin)
     <div class="col-lg-5">
         <div class="card card-chart">
             <div class="card-header">
@@ -588,8 +591,9 @@ Tableau de bord
             </div>
         </div>
     </div>
+    @endif
 
-    <div class="col-lg-7">
+    <div class="{{ $isAdmin ? 'col-lg-7' : 'col-lg-12' }}">
         <div class="card card-tasks">
             <div class="card-header">
                 <h5 class="card-category">Activité récente</h5>
@@ -624,7 +628,7 @@ Tableau de bord
                             <th>Nom</th>
                             <th>Objet</th>
                             <th>Statut</th>
-                            <th>Date</th>
+                            <th>Dernière mise à jour</th>
                         </thead>
                         <tbody>
                             @forelse($recentServiceDemandes as $d)
@@ -632,7 +636,7 @@ Tableau de bord
                                 <td>{{ $d->nom ?: ($d->origine_detail ?: '—') }}</td>
                                 <td class="text-truncate" style="max-width:180px;" title="{{ $d->objet }}">{{ $d->objet ?: '—' }}</td>
                                 <td><span class="badge {{ \App\Models\Tabdepot::circuitStepBadgeClass($d->statut_circuit) }}">{{ $d->statutLabel() }}</span></td>
-                                <td>{{ $d->daterecpFormatted() }}</td>
+                                <td>{{ $d->updated_at->format('d/m/Y H:i') }}</td>
                             </tr>
                             @empty
                             <tr>
@@ -716,6 +720,7 @@ document.addEventListener('DOMContentLoaded', function () {
         }
     });
 
+    @if($isAdmin)
     new Chart(document.getElementById('typeChart'), {
         type: 'doughnut',
         data: {
@@ -750,6 +755,7 @@ document.addEventListener('DOMContentLoaded', function () {
             plugins: { legend: { display: false } }
         }
     });
+    @endif
 
     @if($isAdmin)
     var serviceChartEl = document.getElementById('serviceChart');

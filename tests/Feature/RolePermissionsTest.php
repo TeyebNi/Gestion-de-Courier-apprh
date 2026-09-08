@@ -260,6 +260,46 @@ class RolePermissionsTest extends TestCase
         $response->assertDontSee('2026-08-30');
     }
 
+    public function test_service_dashboard_hides_the_type_and_acceptance_charts(): void
+    {
+        $serviceUser = User::factory()->create(['role' => UserRole::User, 'service' => 'Etat Civil']);
+
+        $response = $this->actingAs($serviceUser)->get('/');
+
+        $response->assertOk();
+        $response->assertDontSee('Type de Demande');
+        $response->assertDontSee('Acceptées / Refusées');
+        $response->assertSee('Évolution des Demandes');
+    }
+
+    public function test_admin_dashboard_still_shows_the_type_and_acceptance_charts(): void
+    {
+        $admin = User::factory()->create(['role' => UserRole::Admin]);
+
+        $response = $this->actingAs($admin)->get('/');
+
+        $response->assertOk();
+        $response->assertSee('Type de Demande');
+        $response->assertSee('Acceptées / Refusées');
+    }
+
+    public function test_service_dashboard_recent_demandes_are_ordered_and_labeled_by_last_update(): void
+    {
+        $serviceUser = User::factory()->create(['role' => UserRole::User, 'service' => 'Etat Civil']);
+        $old = Tabdepot::create(['nom' => 'Ancien', 'tel' => '22222222', 'daterecp' => '2026-01-01', 'service_assigne' => 'Etat Civil']);
+        $recent = Tabdepot::create(['nom' => 'Recent', 'tel' => '22222223', 'daterecp' => '2026-01-01', 'service_assigne' => 'Etat Civil']);
+        // Eloquent ecrase updated_at a chaque save() : on force la valeur directement
+        // en base pour simuler un ordre de derniere mise a jour realiste.
+        \Illuminate\Support\Facades\DB::table('tabdepot')->where('id', $old->id)->update(['updated_at' => now()->subDays(10)]);
+        \Illuminate\Support\Facades\DB::table('tabdepot')->where('id', $recent->id)->update(['updated_at' => now()]);
+
+        $response = $this->actingAs($serviceUser)->get('/');
+
+        $response->assertOk();
+        $response->assertSee('Dernière mise à jour');
+        $response->assertSeeInOrder(['Recent', 'Ancien']);
+    }
+
     public function test_accueil_sees_a_navbar_bell_with_the_pending_count(): void
     {
         $accueil = User::factory()->create(['role' => UserRole::User]);
