@@ -283,23 +283,15 @@ class CircuitWorkflowTest extends TestCase
         $this->assertDatabaseMissing('service_notifications', ['iddmd' => $depot->id]);
     }
 
-    public function test_cabinet_can_print_the_fiche_maire(): void
+    public function test_cabinet_can_print_the_depot_receipt_to_carry_to_the_maire(): void
     {
         $fatou = User::factory()->create(['role' => UserRole::Fatou]);
         $depot = $this->makeDepot();
         $depot->update(['statut_circuit' => 'fatou']);
 
-        $this->actingAs($fatou)->get("/circuit/{$depot->id}/fiche-maire")
+        $this->actingAs($fatou)->get("/depot/print_re%C3%A7u/{$depot->id}")
             ->assertOk()
             ->assertHeader('Content-Type', 'application/pdf');
-    }
-
-    public function test_non_cabinet_cannot_print_the_fiche_maire(): void
-    {
-        $serviceUser = User::factory()->create(['role' => UserRole::User, 'service' => 'Etat Civil']);
-        $depot = $this->makeDepot();
-
-        $this->actingAs($serviceUser)->get("/circuit/{$depot->id}/fiche-maire")->assertForbidden();
     }
 
     public function test_decide_marks_the_demande_as_unseen_by_accueil(): void

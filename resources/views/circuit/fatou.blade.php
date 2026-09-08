@@ -63,8 +63,8 @@ document.addEventListener('DOMContentLoaded', function () {
                                 </p>
                                 @endif
                                 <p>
-                                    <a href="{{ route('circuit.fiche-maire', $d) }}" target="_blank" class="btn btn-secondary btn-sm">
-                                        <i class="fas fa-print"></i> Imprimer la fiche pour le Maire
+                                    <a href="{{ route('depot.print_reçu', $d->id) }}" target="_blank" class="btn btn-secondary btn-sm">
+                                        <i class="fas fa-print"></i> Imprimer le reçu pour le Maire
                                     </a>
                                 </p>
                             </div>

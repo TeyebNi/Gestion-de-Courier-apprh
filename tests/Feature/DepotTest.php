@@ -614,11 +614,11 @@ class DepotTest extends TestCase
         $this->actingAs($serviceUser)->get("/depot/print_re%C3%A7u/{$demande->id}")->assertForbidden();
     }
 
-    public function test_cabinet_cannot_print_a_receipt(): void
+    public function test_cabinet_can_print_a_receipt_to_carry_to_the_maire(): void
     {
         $cabinet = User::factory()->create(['role' => UserRole::Fatou]);
         $demande = Tabdepot::create(['nom' => 'Ahmed Ould Sidi', 'tel' => '22334455', 'daterecp' => now()->format('Y-m-d')]);
 
-        $this->actingAs($cabinet)->get("/depot/print_re%C3%A7u/{$demande->id}")->assertForbidden();
+        $this->actingAs($cabinet)->get("/depot/print_re%C3%A7u/{$demande->id}")->assertOk();
     }
 }

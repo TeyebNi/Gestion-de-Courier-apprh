@@ -69,8 +69,10 @@ class TabdepotController extends Controller
 
     public function print_facture($idt)
     {
-        if (! auth()->user()->canAccessDepot()) {
-            abort(403, "Cette page est réservée à l'accueil et aux administrateurs.");
+        // Accueil imprime ce reçu au dépôt ; le Cabinet de Maire réimprime le
+        // même document pour le porter physiquement au Maire (voir decide()).
+        if (! auth()->user()->canAccessDepot() && ! auth()->user()->canAccessCabinet()) {
+            abort(403, "Cette page est réservée à l'accueil, au Cabinet de Maire et aux administrateurs.");
         }
 
         $detailf = Tabdepot::where('id', $idt)->firstOrFail();
