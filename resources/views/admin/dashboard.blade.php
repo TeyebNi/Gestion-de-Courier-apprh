@@ -219,6 +219,7 @@ Tableau de bord
                     <table class="table">
                         <thead class="text-primary">
                             <th>Nom</th>
+                            <th>Origine</th>
                             <th>Objet</th>
                             <th>Téléphone</th>
                             <th>Type</th>
@@ -229,10 +230,14 @@ Tableau de bord
                             <tr>
                                 <td>
                                     {{ $d->nom ?: ($d->origine_detail ?: '—') }}
+                                    @if($d->piece_jointe)
+                                        <a href="{{ asset('storage/' . $d->piece_jointe) }}" target="_blank" title="Voir la pièce jointe"><i class="fas fa-paperclip text-info"></i></a>
+                                    @endif
                                     @if($d->nni)
                                         <br><small class="text-muted">NNI: {{ $d->nni }}</small>
                                     @endif
                                 </td>
+                                <td>@include('partials.origine-badge', ['demande' => $d])</td>
                                 <td class="text-truncate" style="max-width:220px;" title="{{ $d->objet }}">{{ $d->objet ?: '—' }}</td>
                                 <td>{{ $d->tel ?: '—' }}</td>
                                 <td>{{ $d->typdm ?: '—' }}</td>
@@ -240,7 +245,7 @@ Tableau de bord
                             </tr>
                             @empty
                             <tr>
-                                <td colspan="5" class="text-center text-muted">Aucune demande pour le moment.</td>
+                                <td colspan="6" class="text-center text-muted">Aucune demande pour le moment.</td>
                             </tr>
                             @endforelse
                         </tbody>

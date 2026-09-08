@@ -348,6 +348,32 @@ class RolePermissionsTest extends TestCase
         $response->assertDontSee('circuitBellDropdown', false);
     }
 
+    public function test_accueil_mini_dashboard_shows_origine_badge_and_piece_jointe_link(): void
+    {
+        $accueilLikeAdmin = User::factory()->create([
+            'role' => UserRole::Admin,
+            'can_manage_users' => false,
+            'can_access_cabinet' => false,
+            'can_access_maire' => false,
+            'can_access_all_services' => false,
+        ]);
+        Tabdepot::create([
+            'nom' => 'Ahmed Ould Sidi',
+            'tel' => '22222222',
+            'daterecp' => now()->format('Y-m-d'),
+            'origine' => 'interne',
+            'origine_detail' => 'Etat Civil',
+            'piece_jointe' => 'pieces_jointes/test.pdf',
+        ]);
+
+        $response = $this->actingAs($accueilLikeAdmin)->get('/');
+
+        $response->assertOk();
+        $response->assertSee('Interne');
+        $response->assertSee('Etat Civil');
+        $response->assertSee('fa-paperclip', false);
+    }
+
     public function test_accueil_mini_dashboard_shows_institution_name_objet_and_a_localized_date(): void
     {
         $accueilLikeAdmin = User::factory()->create([
