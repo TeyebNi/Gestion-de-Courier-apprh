@@ -74,7 +74,7 @@ document.addEventListener('DOMContentLoaded', function () {
                                         <select class="form-control service-pick" data-card="{{ $d->id }}"></select>
                                     </div>
                                     <div class="form-group" id="division_pick_wrap_{{ $d->id }}" style="display:none;">
-                                        <label>Quelle Division (optionnel) ?</label>
+                                        <label>Précisez</label>
                                         <select class="form-control division-pick" data-card="{{ $d->id }}"></select>
                                     </div>
                                     <div class="form-group" id="person_pick_wrap_{{ $d->id }}" style="display:none;">
@@ -210,27 +210,40 @@ document.addEventListener('DOMContentLoaded', function () {
     function onServicePickChange(select) {
         var cardId = select.dataset.card;
         var divisionWrap = document.getElementById('division_pick_wrap_' + cardId);
-        var divisions = DIVISIONS_BY_SERVICE[select.value] || [];
 
-        setFinal(cardId, 'service', select.value);
-
-        if (select.value && divisions.length > 0) {
-            var divisionPick = divisionWrap.querySelector('select');
-            populateSelect(divisionPick, divisions, 'Aucune (service directement)');
-            divisionWrap.style.display = '';
-        } else {
+        if (!select.value) {
             divisionWrap.style.display = 'none';
+            setFinal(cardId, 'service', '');
+            return;
         }
+
+        // Une seule liste combinée : le service lui-même en premier (choix par
+        // défaut), suivi de ses divisions — pas un champ "division" séparé et
+        // optionnel à côté du service.
+        var divisionPick = divisionWrap.querySelector('select');
+        divisionPick.innerHTML = '';
+        var serviceOpt = document.createElement('option');
+        serviceOpt.value = '__service__';
+        serviceOpt.textContent = 'Service ' + select.value;
+        divisionPick.appendChild(serviceOpt);
+        (DIVISIONS_BY_SERVICE[select.value] || []).forEach(function (name) {
+            var opt = document.createElement('option');
+            opt.value = name;
+            opt.textContent = 'Division ' + name;
+            divisionPick.appendChild(opt);
+        });
+        divisionWrap.style.display = '';
+        onDivisionPickChange(divisionPick);
     }
 
     function onDivisionPickChange(select) {
         var cardId = select.dataset.card;
         var servicePick = document.getElementById('service_pick_wrap_' + cardId).querySelector('select');
 
-        if (select.value) {
-            setFinal(cardId, 'division', select.value);
-        } else {
+        if (select.value === '__service__' || !select.value) {
             setFinal(cardId, 'service', servicePick.value);
+        } else {
+            setFinal(cardId, 'division', select.value);
         }
     }
 
