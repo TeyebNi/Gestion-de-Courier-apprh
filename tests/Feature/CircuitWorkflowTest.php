@@ -4,7 +4,6 @@ namespace Tests\Feature;
 
 use App\Enums\UserRole;
 use App\Models\DemandeHistorique;
-use App\Models\MaireAdjoint;
 use App\Models\Orientation;
 use App\Models\Tabdepot;
 use App\Models\User;
@@ -285,36 +284,34 @@ class CircuitWorkflowTest extends TestCase
         $suiviResponse->assertSee('Clôturée (Convoquée)');
     }
 
-    public function test_cabinet_can_route_a_demande_to_a_maire_adjoint(): void
+    public function test_cabinet_can_route_a_demande_to_the_maire_adjoint(): void
     {
         $fatou = User::factory()->create(['role' => UserRole::Fatou]);
-        MaireAdjoint::create(['name' => 'Ould Mohamed Lagdhaf']);
         $depot = $this->makeDepot();
         $depot->update(['statut_circuit' => 'fatou']);
 
         $this->actingAs($fatou)->post("/circuit/{$depot->id}/decider", [
             'remarque_maire' => 'RAS',
-            'adjoint_destination' => 'Ould Mohamed Lagdhaf',
+            'adjoint_destination' => '1',
         ])->assertRedirect();
 
         $depot->refresh();
         $this->assertSame('service', $depot->statut_circuit);
-        $this->assertSame('Ould Mohamed Lagdhaf', $depot->service_assigne);
+        $this->assertSame(User::MAIRE_ADJOINT_LABEL, $depot->service_assigne);
         $this->assertSame('maire_adjoint', $depot->destination_type);
     }
 
-    public function test_cannot_route_a_demande_to_both_a_service_and_a_maire_adjoint_at_once(): void
+    public function test_cannot_route_a_demande_to_both_a_service_and_the_maire_adjoint_at_once(): void
     {
         $fatou = User::factory()->create(['role' => UserRole::Fatou]);
         Orientation::create(['name' => 'Etat Civil']);
-        MaireAdjoint::create(['name' => 'Ould Mohamed Lagdhaf']);
         $depot = $this->makeDepot();
         $depot->update(['statut_circuit' => 'fatou']);
 
         $this->actingAs($fatou)->post("/circuit/{$depot->id}/decider", [
             'remarque_maire' => 'RAS',
             'service_destination' => 'Etat Civil',
-            'adjoint_destination' => 'Ould Mohamed Lagdhaf',
+            'adjoint_destination' => '1',
         ])->assertSessionHasErrors();
 
         $this->assertSame('fatou', $depot->fresh()->statut_circuit);
@@ -323,14 +320,13 @@ class CircuitWorkflowTest extends TestCase
     public function test_a_maire_adjoint_account_sees_and_closes_its_own_demandes_like_a_service(): void
     {
         $fatou = User::factory()->create(['role' => UserRole::Fatou]);
-        MaireAdjoint::create(['name' => 'Ould Mohamed Lagdhaf']);
-        $adjointUser = User::factory()->create(['role' => UserRole::User, 'service' => 'Ould Mohamed Lagdhaf']);
+        $adjointUser = User::factory()->create(['role' => UserRole::User, 'service' => User::MAIRE_ADJOINT_LABEL]);
         $depot = $this->makeDepot();
         $depot->update(['statut_circuit' => 'fatou']);
 
         $this->actingAs($fatou)->post("/circuit/{$depot->id}/decider", [
             'remarque_maire' => 'RAS',
-            'adjoint_destination' => 'Ould Mohamed Lagdhaf',
+            'adjoint_destination' => '1',
         ]);
 
         $response = $this->actingAs($adjointUser)->get('/circuit/service');
@@ -343,19 +339,40 @@ class CircuitWorkflowTest extends TestCase
         $this->assertSame('cloture', $depot->fresh()->statut_circuit);
     }
 
+    public function test_all_maire_adjoint_accounts_share_the_same_queue(): void
+    {
+        // Comme le Cabinet de Maire : une seule file commune, pas une par personne.
+        $fatou = User::factory()->create(['role' => UserRole::Fatou]);
+        $adjoint1 = User::factory()->create(['role' => UserRole::User, 'service' => User::MAIRE_ADJOINT_LABEL]);
+        $adjoint2 = User::factory()->create(['role' => UserRole::User, 'service' => User::MAIRE_ADJOINT_LABEL]);
+        $depot = $this->makeDepot();
+        $depot->update(['statut_circuit' => 'fatou']);
+
+        $this->actingAs($fatou)->post("/circuit/{$depot->id}/decider", [
+            'remarque_maire' => 'RAS',
+            'adjoint_destination' => '1',
+        ]);
+
+        foreach ([$adjoint1, $adjoint2] as $user) {
+            $response = $this->actingAs($user)->get('/circuit/service');
+            $response->assertOk();
+            $response->assertViewHas('demandes', fn ($demandes) => $demandes->contains('id', $depot->id));
+        }
+    }
+
     public function test_maire_adjoint_label_appears_wherever_the_status_is_shown(): void
     {
         $accueil = User::factory()->create(['role' => UserRole::User]);
         $depot = $this->makeDepot();
         $depot->update([
             'statut_circuit' => 'service',
-            'service_assigne' => 'Ould Mohamed Lagdhaf',
+            'service_assigne' => User::MAIRE_ADJOINT_LABEL,
             'destination_type' => 'maire_adjoint',
         ]);
 
         $response = $this->actingAs($accueil)->get('/circuit/suivi');
 
-        $response->assertSee("Chez l&#039;Adjoint au Maire : Ould Mohamed Lagdhaf", false);
+        $response->assertSee("Chez l&#039;Adjoint au Maire", false);
     }
 
     public function test_service_close_buttons_directly_set_the_resolution(): void

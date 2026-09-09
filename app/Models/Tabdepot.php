@@ -50,7 +50,9 @@ class Tabdepot extends Model
             'accueil' => 'À l\'accueil',
             'fatou' => 'Chez le Cabinet de Maire',
             'maire' => 'Chez le Maire',
-            'service' => ($this->destination_type === 'maire_adjoint' ? "Chez l'Adjoint au Maire : " : 'Chez le service : ') . ($this->service_assigne ?? '—'),
+            'service' => $this->destination_type === 'maire_adjoint'
+                ? "Chez l'Adjoint au Maire"
+                : 'Chez le service : ' . ($this->service_assigne ?? '—'),
             'cloture' => 'Clôturée (' . ($this->resolutionLabel() ?: 'traitée par le service') . ')',
             default => $this->statut_circuit ?? 'À l\'accueil',
         };

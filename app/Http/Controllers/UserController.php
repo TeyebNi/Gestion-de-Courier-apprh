@@ -4,7 +4,6 @@ namespace App\Http\Controllers;
 
 use App\Enums\UserRole;
 use App\Models\User;
-use App\Models\MaireAdjoint;
 use App\Models\Orientation;
 use App\Models\UserAuditLog;
 use Illuminate\Http\Request;
@@ -50,9 +49,8 @@ class UserController extends Controller
     }
     $users = $query->paginate(5)->appends(['search' => $search]);
     $services = Orientation::pluck('name');
-    $maireAdjoints = MaireAdjoint::pluck('name');
     $adminCount = User::where('role', 'admin')->count();
-    return view('users.index', compact('users', 'services', 'maireAdjoints', 'adminCount', 'search'));
+    return view('users.index', compact('users', 'services', 'adminCount', 'search'));
 }
 
     public function store(Request $request)
@@ -67,22 +65,17 @@ class UserController extends Controller
             'password' => ['required', 'string', 'min:8', 'confirmed'],
             'role' => ['required', 'in:admin,user,fatou'],
             'role_kind' => ['nullable', 'in:user,maire_adjoint'],
-            'service' => [
-                Rule::requiredIf($request->role_kind === 'maire_adjoint'),
-                'nullable', 'string', 'max:255',
-                Rule::when($request->role_kind === 'maire_adjoint', [Rule::in(MaireAdjoint::pluck('name'))]),
-            ],
-            'can_manage_users' => ['nullable', 'boolean'],
-            'can_access_cabinet' => ['nullable', 'boolean'],
-            'can_access_all_services' => ['nullable', 'boolean'],
+            'service' => ['nullable', 'string', 'max:255'],
         ], [
             'name.regex' => 'Le nom ne doit contenir que des lettres.',
             'email.unique' => 'Cet email est déjà utilisé par un autre utilisateur.',
-            'service.required' => "Veuillez choisir l'adjoint au maire concerné.",
-            'service.in' => "Veuillez choisir un adjoint au maire valide.",
         ]);
 
-        $service = in_array($request->role, ['admin', 'fatou']) ? null : $request->service;
+        $service = match (true) {
+            in_array($request->role, ['admin', 'fatou']) => null,
+            $request->role_kind === 'maire_adjoint' => User::MAIRE_ADJOINT_LABEL,
+            default => $request->service,
+        };
 
         $user = User::create([
             'name' => $request->name,
@@ -147,19 +140,13 @@ class UserController extends Controller
         'email' => ['required', 'email', 'max:255', Rule::unique('users', 'email')->ignore($user->id)],
         'role' => ['required', 'in:admin,user,fatou'],
         'role_kind' => ['nullable', 'in:user,maire_adjoint'],
-        'service' => [
-            Rule::requiredIf($request->role_kind === 'maire_adjoint'),
-            'nullable', 'string', 'max:255',
-            Rule::when($request->role_kind === 'maire_adjoint', [Rule::in(MaireAdjoint::pluck('name'))]),
-        ],
+        'service' => ['nullable', 'string', 'max:255'],
         'can_manage_users' => ['nullable', 'boolean'],
         'can_access_cabinet' => ['nullable', 'boolean'],
         'can_access_all_services' => ['nullable', 'boolean'],
     ], [
         'name.regex' => 'Le nom ne doit contenir que des lettres.',
         'email.unique' => 'Cet email est déjà utilisé par un autre utilisateur.',
-        'service.required' => "Veuillez choisir l'adjoint au maire concerné.",
-        'service.in' => "Veuillez choisir un adjoint au maire valide.",
     ]);
 
     if ($user->isAdmin() && $request->role === 'user' && User::where('role', 'admin')->count() <= 1) {
@@ -176,7 +163,11 @@ class UserController extends Controller
         return redirect()->route('users.index')->with('error', "Impossible de retirer l'accès à \"Les Utilisateurs\" : aucun autre administrateur ne pourrait plus gérer les comptes.");
     }
 
-    $service = in_array($request->role, ['admin', 'fatou']) ? null : $request->service;
+    $service = match (true) {
+        in_array($request->role, ['admin', 'fatou']) => null,
+        $request->role_kind === 'maire_adjoint' => User::MAIRE_ADJOINT_LABEL,
+        default => $request->service,
+    };
 
     $user->update([
         'name' => $request->name,

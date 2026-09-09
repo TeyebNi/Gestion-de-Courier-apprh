@@ -43,16 +43,11 @@ Les Utilisateurs
                                 <td>{{ $u->name }}</td>
                                 <td>{{ $u->email }}</td>
                                 <td>
-                                    <span class="badge badge-{{ $u->isAdmin() ? 'danger' : 'info' }}">
-                                        {{ $u->isAdmin() ? 'Admin' : 'User' }}
+                                    <span class="badge badge-{{ $u->isAdmin() ? 'danger' : ($u->isMaireAdjoint() ? 'warning' : 'info') }}">
+                                        {{ $u->isAdmin() ? 'Admin' : ($u->isMaireAdjoint() ? 'Adjoint au Maire' : 'User') }}
                                     </span>
                                 </td>
-                                <td>
-                                    {{ $u->service ?: '—' }}
-                                    @if($u->isMaireAdjoint())
-                                        <span class="badge badge-warning">Adjoint au Maire</span>
-                                    @endif
-                                </td>
+                                <td>{{ $u->service ?: '—' }}</td>
                                 <td>{{ $u->created_at?->format('d/m/Y') }}</td>
                                 <td class="text-right">
                                     <a data-id="{{ $u->id }}"
@@ -163,22 +158,18 @@ Les Utilisateurs
                     </div>
                     <div class="input-group" id="create_service_group">
                         <div class="input-group-prepend">
-                            <span class="input-group-text" id="create_service_label">Service</span>
+                            <span class="input-group-text">Service</span>
                         </div>
                         <select class="form-control" name="service" id="create_service">
-                            <option value="" id="create_service_none">Aucun</option>
-                            <optgroup label="Services" id="create_service_options">
-                                @foreach($services as $s)
-                                    <option value="{{ $s }}">{{ $s }}</option>
-                                @endforeach
-                            </optgroup>
-                            <optgroup label="Adjoints au Maire" id="create_adjoint_options">
-                                @foreach($maireAdjoints as $m)
-                                    <option value="{{ $m }}">{{ $m }}</option>
-                                @endforeach
-                            </optgroup>
+                            <option value="">Aucun</option>
+                            @foreach($services as $s)
+                                <option value="{{ $s }}">{{ $s }}</option>
+                            @endforeach
                         </select>
                     </div>
+                    <p class="text-muted mb-0" id="create_adjoint_note" style="display:none; font-size:0.85em;">
+                        Ce compte partagera la file commune "Adjoint au Maire" (comme tout autre Adjoint).
+                    </p>
                     <div id="create_admin_permissions_group" style="display:none;">
                         <hr>
                         <p class="text-muted mb-2" style="font-size:0.85em;">Droits admin supplémentaires (décochez pour restreindre ce compte, ex: Accueil) :</p>
@@ -245,22 +236,18 @@ Les Utilisateurs
                     </div>
                     <div class="input-group" id="edit_service_group">
                         <div class="input-group-prepend">
-                            <span class="input-group-text" id="edit_service_label">Service</span>
+                            <span class="input-group-text">Service</span>
                         </div>
                         <select class="form-control" name="service" id="edit_service">
-                            <option value="" id="edit_service_none">Aucun</option>
-                            <optgroup label="Services" id="edit_service_options">
-                                @foreach($services as $s)
-                                    <option value="{{ $s }}">{{ $s }}</option>
-                                @endforeach
-                            </optgroup>
-                            <optgroup label="Adjoints au Maire" id="edit_adjoint_options">
-                                @foreach($maireAdjoints as $m)
-                                    <option value="{{ $m }}">{{ $m }}</option>
-                                @endforeach
-                            </optgroup>
+                            <option value="">Aucun</option>
+                            @foreach($services as $s)
+                                <option value="{{ $s }}">{{ $s }}</option>
+                            @endforeach
                         </select>
                     </div>
+                    <p class="text-muted mb-0" id="edit_adjoint_note" style="display:none; font-size:0.85em;">
+                        Ce compte partagera la file commune "Adjoint au Maire" (comme tout autre Adjoint).
+                    </p>
                     <div id="edit_admin_permissions_group" style="display:none;">
                         <hr>
                         <p class="text-muted mb-2" style="font-size:0.85em;">Droits admin supplémentaires (décochez pour restreindre ce compte, ex: Accueil) :</p>
@@ -375,14 +362,14 @@ Les Utilisateurs
 
 @section('scripts')
 <script>
-var maireAdjointNames = @json($maireAdjoints);
+var MAIRE_ADJOINT_LABEL = @json(\App\Models\User::MAIRE_ADJOINT_LABEL);
 
 $('#editUserModal').on('show.bs.modal', function (event) {
     var button = $(event.relatedTarget);
     var id = button.data('id');
     var role = button.data('role');
     var service = button.data('service');
-    var kind = role === 'user' && maireAdjointNames.includes(service) ? 'maire_adjoint' : role;
+    var kind = role === 'user' && service === MAIRE_ADJOINT_LABEL ? 'maire_adjoint' : role;
 
     $('#editUserForm').attr('action', '{{ url('/utilisateurs') }}/' + id);
     $('#edit_name').val(button.data('name'));
@@ -396,7 +383,9 @@ $('#editUserModal').on('show.bs.modal', function (event) {
     $('#edit_role option[value="user"]').prop('disabled', isLastAdmin);
 
     toggleServiceField(kind, 'edit');
-    $('#edit_service').val(service);
+    if (kind === 'user') {
+        $('#edit_service').val(service);
+    }
 });
 
 $('#edit_role').on('change', function () {
@@ -412,40 +401,19 @@ $('#create_role').on('change', function () {
 function toggleServiceField(kind, prefix) {
     document.getElementById(prefix + '_role_kind').value = kind === 'maire_adjoint' ? 'maire_adjoint' : 'user';
 
-    if (kind === 'admin' || kind === 'fatou') {
-        $('#' + prefix + '_service_group').hide();
+    // "Adjoint au Maire" partage une file commune (comme Cabinet) : aucun nom
+    // à choisir, donc pas de champ Service du tout pour ce choix de rôle.
+    $('#' + prefix + '_service_group').toggle(kind === 'user');
+    document.getElementById(prefix + '_adjoint_note').style.display = kind === 'maire_adjoint' ? '' : 'none';
+    if (kind !== 'user') {
         $('#' + prefix + '_service').val('');
-        $('#' + prefix + '_admin_permissions_group').toggle(kind === 'admin');
-        if (kind !== 'admin') {
-            $('#' + prefix + '_can_manage_users').prop('checked', false);
-            $('#' + prefix + '_can_access_cabinet').prop('checked', false);
-            $('#' + prefix + '_can_access_all_services').prop('checked', false);
-        }
-    } else {
-        $('#' + prefix + '_service_group').show();
-        $('#' + prefix + '_admin_permissions_group').hide();
+    }
+
+    $('#' + prefix + '_admin_permissions_group').toggle(kind === 'admin');
+    if (kind !== 'admin') {
         $('#' + prefix + '_can_manage_users').prop('checked', false);
         $('#' + prefix + '_can_access_cabinet').prop('checked', false);
         $('#' + prefix + '_can_access_all_services').prop('checked', false);
-
-        var isAdjoint = kind === 'maire_adjoint';
-        document.getElementById(prefix + '_service_label').textContent = isAdjoint ? 'Adjoint au Maire' : 'Service';
-        document.getElementById(prefix + '_service_options').hidden = isAdjoint;
-        document.getElementById(prefix + '_adjoint_options').hidden = !isAdjoint;
-        // "Aucun" n'a de sens que pour un User sans service (= Accueil) : un
-        // compte explicitement déclaré "Adjoint au Maire" doit obligatoirement
-        // pointer vers un nom précis.
-        document.getElementById(prefix + '_service_none').hidden = isAdjoint;
-        var serviceSelect = document.getElementById(prefix + '_service');
-        serviceSelect.required = isAdjoint;
-        // Quand "Aucun" est masqué, le laisser sélectionné afficherait quand
-        // même son texte dans la case fermée : ne rien présélectionner plutôt
-        // qu'un choix cohérent avec le rôle mais invisible dans la liste.
-        if (isAdjoint) {
-            serviceSelect.selectedIndex = -1;
-        } else {
-            $('#' + prefix + '_service').val('');
-        }
     }
 }
 

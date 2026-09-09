@@ -3,10 +3,10 @@
 namespace App\Http\Controllers;
 
 use App\Models\DemandeHistorique;
-use App\Models\MaireAdjoint;
 use App\Models\Orientation;
 use App\Models\ServiceNotification;
 use App\Models\Tabdepot;
+use App\Models\User;
 use Illuminate\Http\Request;
 
 class CircuitController extends Controller
@@ -65,7 +65,6 @@ class CircuitController extends Controller
             ->orderByDesc('id')
             ->paginate(5, ['*'], 'a_envoyer_page');
         $orientations = Orientation::orderBy('name')->get();
-        $maireAdjoints = MaireAdjoint::orderBy('name')->get();
 
         // Le Cabinet n'a pas accès à Suivi (vue globale tous services) : ce
         // second tableau lui donne uniquement la trace de son propre travail
@@ -74,7 +73,7 @@ class CircuitController extends Controller
             ->orderByDesc('updated_at')
             ->paginate(5, ['*'], 'annotees_page');
 
-        return view('circuit.fatou', compact('aEnvoyer', 'orientations', 'maireAdjoints', 'dejaAnnotees'));
+        return view('circuit.fatou', compact('aEnvoyer', 'orientations', 'dejaAnnotees'));
     }
 
     /**
@@ -95,16 +94,18 @@ class CircuitController extends Controller
         $request->validate([
             'remarque_maire' => ['required', 'string', 'max:2000'],
             'service_destination' => ['nullable', 'string', 'max:255'],
-            'adjoint_destination' => ['nullable', 'string', 'max:255'],
+            'adjoint_destination' => ['nullable', 'boolean'],
         ], [
             'remarque_maire.required' => "Les annotations du Maire sont obligatoires.",
         ]);
 
         $serviceDestination = $request->service_destination ?: null;
-        $adjointDestination = $request->adjoint_destination ?: null;
+        // Un seul Adjoint au Maire "logique" : peu importe la valeur envoyée,
+        // seule sa présence compte, jamais un nom saisi par le client.
+        $adjointDestination = $request->boolean('adjoint_destination') ? User::MAIRE_ADJOINT_LABEL : null;
 
         if ($serviceDestination && $adjointDestination) {
-            return back()->withErrors(['service_destination' => "Choisissez soit un service, soit un Adjoint au Maire, pas les deux."])->withInput();
+            return back()->withErrors(['service_destination' => "Choisissez soit un service, soit l'Adjoint au Maire, pas les deux."])->withInput();
         }
 
         $destination = $serviceDestination ?: $adjointDestination;
@@ -190,7 +191,8 @@ class CircuitController extends Controller
             'resolution_service' => $request->resolution,
         ]);
 
-        $this->logHistorique($tabdepot, 'service', 'cloture', $tabdepot->resolutionLabel() . ' par ' . ($tabdepot->destination_type === 'maire_adjoint' ? "l'Adjoint au Maire " : 'le service ') . $tabdepot->service_assigne);
+        $qui = $tabdepot->destination_type === 'maire_adjoint' ? "l'Adjoint au Maire" : 'le service ' . $tabdepot->service_assigne;
+        $this->logHistorique($tabdepot, 'service', 'cloture', $tabdepot->resolutionLabel() . ' par ' . $qui);
 
         // La demande est traitée : la notification qui l'annonçait n'a plus
         // besoin d'apparaître comme "à traiter" dans la cloche du service.

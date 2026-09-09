@@ -66,14 +66,9 @@ document.addEventListener('DOMContentLoaded', function () {
                                             @endforeach
                                         </select>
                                     </div>
-                                    <div class="form-group">
-                                        <label>Adjoint au Maire concerné (optionnel)</label>
-                                        <select name="adjoint_destination" class="form-control destination-select" data-group="adjoint">
-                                            <option value="">Aucun</option>
-                                            @foreach($maireAdjoints as $m)
-                                                <option value="{{ $m->name }}">{{ $m->name }}</option>
-                                            @endforeach
-                                        </select>
+                                    <div class="form-check mb-3">
+                                        <input type="checkbox" class="form-check-input destination-checkbox" name="adjoint_destination" value="1" id="adjoint_{{ $d->id }}">
+                                        <label class="form-check-label" for="adjoint_{{ $d->id }}">Envoyer à l'Adjoint au Maire</label>
                                     </div>
                                     <button type="submit" class="btn btn-primary btn-block">Enregistrer les annotations</button>
                                 </form>
@@ -148,6 +143,19 @@ document.addEventListener('DOMContentLoaded', function () {
             var form = this.closest('form');
             form.querySelectorAll('.destination-select').forEach(function (other) {
                 if (other !== select) { other.value = ''; }
+            });
+            form.querySelectorAll('.destination-checkbox').forEach(function (checkbox) {
+                checkbox.checked = false;
+            });
+        });
+    });
+
+    document.querySelectorAll('.destination-checkbox').forEach(function (checkbox) {
+        checkbox.addEventListener('change', function () {
+            if (!this.checked) { return; }
+            var form = this.closest('form');
+            form.querySelectorAll('.destination-select').forEach(function (select) {
+                select.value = '';
             });
         });
     });

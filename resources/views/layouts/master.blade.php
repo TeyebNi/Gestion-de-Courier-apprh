@@ -89,12 +89,6 @@
                             <p>Orientation</p>
                         </a>
                     </li>
-                    <li class="{{ request()->is('adjoints-maire*') ? 'active' : '' }}">
-                        <a href="{{ route('maire-adjoint.index') }}">
-                            <i class="now-ui-icons users_single-02"></i>
-                            <p>Adjoints au Maire</p>
-                        </a>
-                    </li>
                     @endif
 
                     @if(auth()->user()->canAccessDepot())

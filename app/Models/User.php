@@ -15,6 +15,13 @@ class User extends Authenticatable
     use HasFactory, Notifiable;
 
     /**
+     * Valeur fixe de "service" pour un Adjoint au Maire : tous les comptes
+     * Adjoint au Maire partagent une seule file commune (comme le Cabinet de
+     * Maire), pas une file par personne.
+     */
+    public const MAIRE_ADJOINT_LABEL = 'Adjoint au Maire';
+
+    /**
      * The attributes that are mass assignable.
      *
      * @var list<string>
@@ -125,15 +132,13 @@ class User extends Authenticatable
     }
 
     /**
-     * Whether this service-scoped account represents an Adjoint au Maire
-     * rather than a real department (Orientation). Derived from the name in
-     * "service" matching the roster of Adjoints, not a stored flag : the
-     * dropdown that assigns "service" already draws from either list, so
-     * this stays correct even if an Adjoint is later renamed.
+     * Whether this account is an Adjoint au Maire : a service-like queue
+     * shared by everyone with this role (see MAIRE_ADJOINT_LABEL), not a
+     * real department.
      */
     public function isMaireAdjoint(): bool
     {
-        return ! empty($this->service) && MaireAdjoint::where('name', $this->service)->exists();
+        return $this->service === self::MAIRE_ADJOINT_LABEL;
     }
 
     /**
