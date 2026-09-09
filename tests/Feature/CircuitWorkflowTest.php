@@ -197,6 +197,7 @@ class CircuitWorkflowTest extends TestCase
         $this->actingAs($fatou)
             ->post("/circuit/{$depot->id}/decider", [
                 'remarque_maire' => 'Vu par le Maire, à traiter en urgence.',
+                'destination_category' => 'service',
                 'service_destination' => 'Etat Civil',
             ])
             ->assertRedirect();
@@ -228,6 +229,7 @@ class CircuitWorkflowTest extends TestCase
 
         $this->actingAs($fatou)->post("/circuit/{$depot->id}/decider", [
             'remarque_maire' => 'RAS',
+            'destination_category' => 'service',
             'service_destination' => 'Etat Civil',
         ]);
 
@@ -293,7 +295,7 @@ class CircuitWorkflowTest extends TestCase
 
         $this->actingAs($fatou)->post("/circuit/{$depot->id}/decider", [
             'remarque_maire' => 'RAS',
-            'adjoint_destination' => '1',
+            'destination_category' => 'maire_adjoint',
         ])->assertRedirect();
 
         $depot->refresh();
@@ -302,18 +304,17 @@ class CircuitWorkflowTest extends TestCase
         $this->assertSame('maire_adjoint', $depot->destination_type);
     }
 
-    public function test_cannot_route_a_demande_to_both_a_service_and_the_maire_adjoint_at_once(): void
+    public function test_choosing_service_as_the_category_requires_picking_an_actual_service(): void
     {
         $fatou = User::factory()->create(['role' => UserRole::Fatou]);
-        Orientation::create(['name' => 'Etat Civil']);
         $depot = $this->makeDepot();
         $depot->update(['statut_circuit' => 'fatou']);
 
         $this->actingAs($fatou)->post("/circuit/{$depot->id}/decider", [
             'remarque_maire' => 'RAS',
-            'service_destination' => 'Etat Civil',
-            'adjoint_destination' => '1',
-        ])->assertSessionHasErrors();
+            'destination_category' => 'service',
+            'service_destination' => '',
+        ])->assertSessionHasErrors('service_destination');
 
         $this->assertSame('fatou', $depot->fresh()->statut_circuit);
     }
@@ -327,7 +328,7 @@ class CircuitWorkflowTest extends TestCase
 
         $this->actingAs($fatou)->post("/circuit/{$depot->id}/decider", [
             'remarque_maire' => 'RAS',
-            'adjoint_destination' => '1',
+            'destination_category' => 'maire_adjoint',
         ]);
 
         $response = $this->actingAs($adjointUser)->get('/circuit/service');
@@ -351,7 +352,7 @@ class CircuitWorkflowTest extends TestCase
 
         $this->actingAs($fatou)->post("/circuit/{$depot->id}/decider", [
             'remarque_maire' => 'RAS',
-            'adjoint_destination' => '1',
+            'destination_category' => 'maire_adjoint',
         ]);
 
         foreach ([$adjoint1, $adjoint2] as $user) {
@@ -379,13 +380,13 @@ class CircuitWorkflowTest extends TestCase
     public static function specialDestinationsProvider(): array
     {
         return [
-            'Division' => ['division_destination', 'division', User::DIVISION_LABEL, 'Chez la Division'],
-            'Conseiller' => ['conseiller_destination', 'conseiller', User::CONSEILLER_LABEL, 'Chez le Conseiller'],
+            'Division' => ['division', User::DIVISION_LABEL, 'Chez la Division'],
+            'Conseiller' => ['conseiller', User::CONSEILLER_LABEL, 'Chez le Conseiller'],
         ];
     }
 
     #[DataProvider('specialDestinationsProvider')]
-    public function test_cabinet_can_route_a_demande_to_the_other_special_destinations(string $checkboxField, string $expectedType, string $expectedLabel, string $expectedStatutPhrase): void
+    public function test_cabinet_can_route_a_demande_to_the_other_special_destinations(string $category, string $expectedLabel, string $expectedStatutPhrase): void
     {
         $fatou = User::factory()->create(['role' => UserRole::Fatou]);
         $depot = $this->makeDepot();
@@ -393,18 +394,18 @@ class CircuitWorkflowTest extends TestCase
 
         $this->actingAs($fatou)->post("/circuit/{$depot->id}/decider", [
             'remarque_maire' => 'RAS',
-            $checkboxField => '1',
+            'destination_category' => $category,
         ])->assertRedirect();
 
         $depot->refresh();
         $this->assertSame('service', $depot->statut_circuit);
         $this->assertSame($expectedLabel, $depot->service_assigne);
-        $this->assertSame($expectedType, $depot->destination_type);
+        $this->assertSame($category, $depot->destination_type);
         $this->assertSame($expectedStatutPhrase, $depot->statutLabel());
     }
 
     #[DataProvider('specialDestinationsProvider')]
-    public function test_all_accounts_of_a_special_role_share_the_same_queue(string $checkboxField, string $expectedType, string $expectedLabel): void
+    public function test_all_accounts_of_a_special_role_share_the_same_queue(string $category, string $expectedLabel): void
     {
         $fatou = User::factory()->create(['role' => UserRole::Fatou]);
         $account1 = User::factory()->create(['role' => UserRole::User, 'service' => $expectedLabel]);
@@ -414,7 +415,7 @@ class CircuitWorkflowTest extends TestCase
 
         $this->actingAs($fatou)->post("/circuit/{$depot->id}/decider", [
             'remarque_maire' => 'RAS',
-            $checkboxField => '1',
+            'destination_category' => $category,
         ]);
 
         foreach ([$account1, $account2] as $user) {
@@ -424,7 +425,7 @@ class CircuitWorkflowTest extends TestCase
         }
     }
 
-    public function test_cannot_route_a_demande_to_more_than_one_special_destination_at_once(): void
+    public function test_an_unknown_destination_category_is_rejected(): void
     {
         $fatou = User::factory()->create(['role' => UserRole::Fatou]);
         $depot = $this->makeDepot();
@@ -432,9 +433,8 @@ class CircuitWorkflowTest extends TestCase
 
         $this->actingAs($fatou)->post("/circuit/{$depot->id}/decider", [
             'remarque_maire' => 'RAS',
-            'adjoint_destination' => '1',
-            'division_destination' => '1',
-        ])->assertSessionHasErrors();
+            'destination_category' => 'not_a_real_category',
+        ])->assertSessionHasErrors('destination_category');
 
         $this->assertSame('fatou', $depot->fresh()->statut_circuit);
     }
@@ -478,6 +478,7 @@ class CircuitWorkflowTest extends TestCase
 
         $this->actingAs($fatou)->post("/circuit/{$depot->id}/decider", [
             'remarque_maire' => 'Dossier vu, à traiter en priorité.',
+            'destination_category' => 'service',
             'service_destination' => 'Etat Civil',
         ]);
 
@@ -615,6 +616,7 @@ class CircuitWorkflowTest extends TestCase
         $this->actingAs($fatou)
             ->post("/circuit/{$depot->id}/decider", [
                 'remarque_maire' => 'RAS',
+                'destination_category' => 'service',
                 'service_destination' => 'Etat Civil',
             ])
             ->assertForbidden();
@@ -644,6 +646,7 @@ class CircuitWorkflowTest extends TestCase
         $depotForMe->update(['statut_circuit' => 'fatou', 'reference' => 'MI/2026/001']);
         $this->actingAs($fatou)->post("/circuit/{$depotForMe->id}/decider", [
             'remarque_maire' => 'RAS',
+            'destination_category' => 'service',
             'service_destination' => 'Etat Civil',
         ]);
 
@@ -651,6 +654,7 @@ class CircuitWorkflowTest extends TestCase
         $depotForOther->update(['statut_circuit' => 'fatou', 'reference' => 'MI/2026/002']);
         $this->actingAs($fatou)->post("/circuit/{$depotForOther->id}/decider", [
             'remarque_maire' => 'RAS',
+            'destination_category' => 'service',
             'service_destination' => 'Urbanisme',
         ]);
 

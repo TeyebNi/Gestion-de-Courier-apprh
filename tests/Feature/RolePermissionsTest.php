@@ -166,7 +166,7 @@ class RolePermissionsTest extends TestCase
         $this->actingAs($accueil)->post("/circuit/{$depotA->id}/envoyer-fatou");
         $this->actingAs($accueil)->post("/circuit/{$depotB->id}/envoyer-fatou");
         $this->actingAs($cabinet)->post("/circuit/{$depotA->id}/decider", ['remarque_maire' => 'Vu, à traiter.']);
-        $this->actingAs($cabinet)->post("/circuit/{$depotB->id}/decider", ['remarque_maire' => 'Vu, à traiter.', 'service_destination' => 'Etat Civil']);
+        $this->actingAs($cabinet)->post("/circuit/{$depotB->id}/decider", ['remarque_maire' => 'Vu, à traiter.', 'destination_category' => 'service', 'service_destination' => 'Etat Civil']);
 
         $response = $this->actingAs($cabinet)->get('/');
 

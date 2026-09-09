@@ -8,6 +8,7 @@ use App\Models\ServiceNotification;
 use App\Models\Tabdepot;
 use App\Models\User;
 use Illuminate\Http\Request;
+use Illuminate\Validation\Rule;
 
 class CircuitController extends Controller
 {
@@ -93,30 +94,24 @@ class CircuitController extends Controller
 
         $request->validate([
             'remarque_maire' => ['required', 'string', 'max:2000'],
+            'destination_category' => ['nullable', Rule::in(array_merge(['service'], array_keys(User::specialServiceRoles())))],
             'service_destination' => ['nullable', 'string', 'max:255'],
-            'adjoint_destination' => ['nullable', 'boolean'],
-            'division_destination' => ['nullable', 'boolean'],
-            'conseiller_destination' => ['nullable', 'boolean'],
         ], [
             'remarque_maire.required' => "Les annotations du Maire sont obligatoires.",
         ]);
 
-        $serviceDestination = $request->service_destination ?: null;
-        // File commune par rôle spécial : peu importe la valeur envoyée par le
-        // client, seule la présence de la case cochée compte, jamais un nom
-        // saisi par lui.
-        $specialDestinations = array_filter([
-            'maire_adjoint' => $request->boolean('adjoint_destination'),
-            'division' => $request->boolean('division_destination'),
-            'conseiller' => $request->boolean('conseiller_destination'),
-        ]);
+        $category = $request->destination_category ?: null;
 
-        if (($serviceDestination ? 1 : 0) + count($specialDestinations) > 1) {
-            return back()->withErrors(['service_destination' => "Choisissez une seule destination : un service, ou l'Adjoint au Maire, ou la Division, ou le Conseiller."])->withInput();
+        if ($category === 'service' && ! $request->service_destination) {
+            return back()->withErrors(['service_destination' => "Veuillez choisir un service."])->withInput();
         }
 
-        $destinationType = $serviceDestination ? 'service' : (array_key_first($specialDestinations) ?: null);
-        $destination = $serviceDestination ?: ($destinationType ? User::specialServiceRoles()[$destinationType] : null);
+        $destinationType = $category;
+        $destination = match (true) {
+            $category === 'service' => $request->service_destination,
+            $category !== null => User::specialServiceRoles()[$category],
+            default => null,
+        };
 
         $tabdepot->update([
             'remarque_maire' => $request->remarque_maire,

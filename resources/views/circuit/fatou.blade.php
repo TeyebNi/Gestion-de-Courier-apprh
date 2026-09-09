@@ -57,26 +57,27 @@ document.addEventListener('DOMContentLoaded', function () {
                                         <label>Annotations du Maire <span class="text-danger">*</span></label>
                                         <textarea name="remarque_maire" class="form-control" rows="4" placeholder="Ce que le Maire a annoté sur le dossier..." required></textarea>
                                     </div>
+                                    @php
+                                        $preselected = $d->origine === 'interne' ? $orientations->firstWhere('name', $d->origine_detail) : null;
+                                    @endphp
                                     <div class="form-group">
-                                        <label>Service concerné (optionnel)</label>
-                                        <select name="service_destination" class="form-control destination-select" data-group="service">
+                                        <label>Destination (optionnel)</label>
+                                        <select name="destination_category" class="form-control destination-category" data-target="#service_wrap_{{ $d->id }}">
                                             <option value="">Aucun (classer directement)</option>
-                                            @foreach($orientations as $o)
-                                                <option value="{{ $o->name }}" {{ $d->origine === 'interne' && $d->origine_detail === $o->name ? 'selected' : '' }}>{{ $o->name }}</option>
-                                            @endforeach
+                                            <option value="service" {{ $preselected ? 'selected' : '' }}>Service</option>
+                                            <option value="maire_adjoint">Adjoint au Maire</option>
+                                            <option value="division">Division</option>
+                                            <option value="conseiller">Conseiller</option>
                                         </select>
                                     </div>
-                                    <div class="form-check mb-2">
-                                        <input type="checkbox" class="form-check-input destination-checkbox" name="adjoint_destination" value="1" id="adjoint_{{ $d->id }}">
-                                        <label class="form-check-label" for="adjoint_{{ $d->id }}">Envoyer à l'Adjoint au Maire</label>
-                                    </div>
-                                    <div class="form-check mb-2">
-                                        <input type="checkbox" class="form-check-input destination-checkbox" name="division_destination" value="1" id="division_{{ $d->id }}">
-                                        <label class="form-check-label" for="division_{{ $d->id }}">Envoyer à la Division</label>
-                                    </div>
-                                    <div class="form-check mb-3">
-                                        <input type="checkbox" class="form-check-input destination-checkbox" name="conseiller_destination" value="1" id="conseiller_{{ $d->id }}">
-                                        <label class="form-check-label" for="conseiller_{{ $d->id }}">Envoyer au Conseiller</label>
+                                    <div class="form-group" id="service_wrap_{{ $d->id }}" style="{{ $preselected ? '' : 'display:none;' }}">
+                                        <label>Quel service ?</label>
+                                        <select name="service_destination" class="form-control">
+                                            <option value="">Sélectionner un service</option>
+                                            @foreach($orientations as $o)
+                                                <option value="{{ $o->name }}" {{ $preselected && $preselected->name === $o->name ? 'selected' : '' }}>{{ $o->name }}</option>
+                                            @endforeach
+                                        </select>
                                     </div>
                                     <button type="submit" class="btn btn-primary btn-block">Enregistrer les annotations</button>
                                 </form>
@@ -145,30 +146,13 @@ document.addEventListener('DOMContentLoaded', function () {
 @section('scripts')
 <script>
 document.addEventListener('DOMContentLoaded', function () {
-    document.querySelectorAll('.destination-select').forEach(function (select) {
+    document.querySelectorAll('.destination-category').forEach(function (select) {
+        var wrap = document.querySelector(select.dataset.target);
         select.addEventListener('change', function () {
-            if (!this.value) { return; }
-            var form = this.closest('form');
-            form.querySelectorAll('.destination-select').forEach(function (other) {
-                if (other !== select) { other.value = ''; }
-            });
-            form.querySelectorAll('.destination-checkbox').forEach(function (checkbox) {
-                checkbox.checked = false;
-            });
-        });
-    });
-
-    document.querySelectorAll('.destination-checkbox').forEach(function (checkbox) {
-        checkbox.addEventListener('change', function () {
-            if (!this.checked) { return; }
-            var form = this.closest('form');
-            var self = this;
-            form.querySelectorAll('.destination-select').forEach(function (select) {
-                select.value = '';
-            });
-            form.querySelectorAll('.destination-checkbox').forEach(function (other) {
-                if (other !== self) { other.checked = false; }
-            });
+            wrap.style.display = this.value === 'service' ? '' : 'none';
+            if (this.value !== 'service') {
+                wrap.querySelector('select').value = '';
+            }
         });
     });
 });
