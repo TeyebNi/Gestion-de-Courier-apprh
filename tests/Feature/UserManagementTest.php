@@ -43,6 +43,7 @@ class UserManagementTest extends TestCase
             'password' => 'motdepasse123',
             'password_confirmation' => 'motdepasse123',
             'role' => 'user',
+            'role_kind' => 'maire_adjoint',
             'service' => 'Ould Mohamed Lagdhaf',
         ]);
 
@@ -51,6 +52,47 @@ class UserManagementTest extends TestCase
         $newUser = User::where('email', 'lagdhaf@commune.mr')->firstOrFail();
         $this->assertSame('Ould Mohamed Lagdhaf', $newUser->service);
         $this->assertTrue($newUser->isMaireAdjoint());
+    }
+
+    public function test_cannot_create_a_maire_adjoint_account_without_choosing_a_name(): void
+    {
+        // C'est exactement l'erreur qui a motivé ce garde-fou : un compte "User"
+        // sans service se retrouve avec le dashboard Accueil, pas un dashboard
+        // de service — silencieusement incohérent pour un Adjoint au Maire déclaré.
+        $admin = User::factory()->create(['role' => UserRole::Admin]);
+        MaireAdjoint::create(['name' => 'Ould Mohamed Lagdhaf']);
+
+        $response = $this->actingAs($admin)->post('/utilisateurs', [
+            'name' => 'Sans Nom',
+            'email' => 'sansnom@commune.mr',
+            'password' => 'motdepasse123',
+            'password_confirmation' => 'motdepasse123',
+            'role' => 'user',
+            'role_kind' => 'maire_adjoint',
+            'service' => '',
+        ]);
+
+        $response->assertSessionHasErrors('service');
+        $this->assertDatabaseMissing('users', ['email' => 'sansnom@commune.mr']);
+    }
+
+    public function test_cannot_create_a_maire_adjoint_account_with_a_name_outside_the_roster(): void
+    {
+        $admin = User::factory()->create(['role' => UserRole::Admin]);
+        MaireAdjoint::create(['name' => 'Ould Mohamed Lagdhaf']);
+
+        $response = $this->actingAs($admin)->post('/utilisateurs', [
+            'name' => 'Inconnu',
+            'email' => 'inconnu@commune.mr',
+            'password' => 'motdepasse123',
+            'password_confirmation' => 'motdepasse123',
+            'role' => 'user',
+            'role_kind' => 'maire_adjoint',
+            'service' => 'Nom Inventé',
+        ]);
+
+        $response->assertSessionHasErrors('service');
+        $this->assertDatabaseMissing('users', ['email' => 'inconnu@commune.mr']);
     }
 
     public function test_users_index_offers_the_maire_adjoint_role_and_roster_in_the_form(): void

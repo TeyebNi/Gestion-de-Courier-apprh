@@ -115,6 +115,7 @@ Les Utilisateurs
             </div>
             <form id="createUserForm" method="POST" action="{{ route('users.store') }}">
                 @csrf
+                <input type="hidden" name="role_kind" id="create_role_kind" value="user">
                 <div class="modal-body">
                     @if ($errors->any())
                         <div class="alert alert-danger">
@@ -165,7 +166,7 @@ Les Utilisateurs
                             <span class="input-group-text" id="create_service_label">Service</span>
                         </div>
                         <select class="form-control" name="service" id="create_service">
-                            <option value="">Aucun</option>
+                            <option value="" id="create_service_none">Aucun</option>
                             <optgroup label="Services" id="create_service_options">
                                 @foreach($services as $s)
                                     <option value="{{ $s }}">{{ $s }}</option>
@@ -217,6 +218,7 @@ Les Utilisateurs
             <form id="editUserForm" method="POST" action="">
                 @csrf
                 @method('PUT')
+                <input type="hidden" name="role_kind" id="edit_role_kind" value="user">
                 <div class="modal-body">
                     <div class="input-group mb-3">
                         <div class="input-group-prepend">
@@ -246,7 +248,7 @@ Les Utilisateurs
                             <span class="input-group-text" id="edit_service_label">Service</span>
                         </div>
                         <select class="form-control" name="service" id="edit_service">
-                            <option value="">Aucun</option>
+                            <option value="" id="edit_service_none">Aucun</option>
                             <optgroup label="Services" id="edit_service_options">
                                 @foreach($services as $s)
                                     <option value="{{ $s }}">{{ $s }}</option>
@@ -408,6 +410,8 @@ $('#create_role').on('change', function () {
 });
 
 function toggleServiceField(kind, prefix) {
+    document.getElementById(prefix + '_role_kind').value = kind === 'maire_adjoint' ? 'maire_adjoint' : 'user';
+
     if (kind === 'admin' || kind === 'fatou') {
         $('#' + prefix + '_service_group').hide();
         $('#' + prefix + '_service').val('');
@@ -428,6 +432,11 @@ function toggleServiceField(kind, prefix) {
         document.getElementById(prefix + '_service_label').textContent = isAdjoint ? 'Adjoint au Maire' : 'Service';
         document.getElementById(prefix + '_service_options').hidden = isAdjoint;
         document.getElementById(prefix + '_adjoint_options').hidden = !isAdjoint;
+        // "Aucun" n'a de sens que pour un User sans service (= Accueil) : un
+        // compte explicitement déclaré "Adjoint au Maire" doit obligatoirement
+        // pointer vers un nom précis.
+        document.getElementById(prefix + '_service_none').hidden = isAdjoint;
+        document.getElementById(prefix + '_service').required = isAdjoint;
         $('#' + prefix + '_service').val('');
     }
 }

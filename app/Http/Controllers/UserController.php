@@ -66,13 +66,20 @@ class UserController extends Controller
             'email' => ['required', 'email', 'max:255', Rule::unique('users', 'email')],
             'password' => ['required', 'string', 'min:8', 'confirmed'],
             'role' => ['required', 'in:admin,user,fatou'],
-            'service' => ['nullable', 'string', 'max:255'],
+            'role_kind' => ['nullable', 'in:user,maire_adjoint'],
+            'service' => [
+                Rule::requiredIf($request->role_kind === 'maire_adjoint'),
+                'nullable', 'string', 'max:255',
+                Rule::when($request->role_kind === 'maire_adjoint', [Rule::in(MaireAdjoint::pluck('name'))]),
+            ],
             'can_manage_users' => ['nullable', 'boolean'],
             'can_access_cabinet' => ['nullable', 'boolean'],
             'can_access_all_services' => ['nullable', 'boolean'],
         ], [
             'name.regex' => 'Le nom ne doit contenir que des lettres.',
             'email.unique' => 'Cet email est déjà utilisé par un autre utilisateur.',
+            'service.required' => "Veuillez choisir l'adjoint au maire concerné.",
+            'service.in' => "Veuillez choisir un adjoint au maire valide.",
         ]);
 
         $service = in_array($request->role, ['admin', 'fatou']) ? null : $request->service;
@@ -139,13 +146,20 @@ class UserController extends Controller
         'name' => ['required', 'string', 'max:255', 'regex:/^[\pL\s]+$/u'],
         'email' => ['required', 'email', 'max:255', Rule::unique('users', 'email')->ignore($user->id)],
         'role' => ['required', 'in:admin,user,fatou'],
-        'service' => ['nullable', 'string', 'max:255'],
+        'role_kind' => ['nullable', 'in:user,maire_adjoint'],
+        'service' => [
+            Rule::requiredIf($request->role_kind === 'maire_adjoint'),
+            'nullable', 'string', 'max:255',
+            Rule::when($request->role_kind === 'maire_adjoint', [Rule::in(MaireAdjoint::pluck('name'))]),
+        ],
         'can_manage_users' => ['nullable', 'boolean'],
         'can_access_cabinet' => ['nullable', 'boolean'],
         'can_access_all_services' => ['nullable', 'boolean'],
     ], [
         'name.regex' => 'Le nom ne doit contenir que des lettres.',
         'email.unique' => 'Cet email est déjà utilisé par un autre utilisateur.',
+        'service.required' => "Veuillez choisir l'adjoint au maire concerné.",
+        'service.in' => "Veuillez choisir un adjoint au maire valide.",
     ]);
 
     if ($user->isAdmin() && $request->role === 'user' && User::where('role', 'admin')->count() <= 1) {
