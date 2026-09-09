@@ -436,8 +436,16 @@ function toggleServiceField(kind, prefix) {
         // compte explicitement déclaré "Adjoint au Maire" doit obligatoirement
         // pointer vers un nom précis.
         document.getElementById(prefix + '_service_none').hidden = isAdjoint;
-        document.getElementById(prefix + '_service').required = isAdjoint;
-        $('#' + prefix + '_service').val('');
+        var serviceSelect = document.getElementById(prefix + '_service');
+        serviceSelect.required = isAdjoint;
+        // Quand "Aucun" est masqué, le laisser sélectionné afficherait quand
+        // même son texte dans la case fermée : ne rien présélectionner plutôt
+        // qu'un choix cohérent avec le rôle mais invisible dans la liste.
+        if (isAdjoint) {
+            serviceSelect.selectedIndex = -1;
+        } else {
+            $('#' + prefix + '_service').val('');
+        }
     }
 }
 
