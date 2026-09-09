@@ -542,6 +542,22 @@ class CircuitWorkflowTest extends TestCase
         $byReference->assertDontSee('AUTRE/2026/999');
     }
 
+    public function test_suivi_search_matches_the_zero_padded_id_encoded_in_the_receipt_qr_code(): void
+    {
+        // Le QR code du reçu encode l'id sur 6 chiffres (voir print_reçu.blade.php) :
+        // un lecteur de code-barres/QR physique le tape tel quel dans le champ de
+        // recherche (aucun scan par caméra n'est plus nécessaire côté navigateur).
+        $accueil = User::factory()->create(['role' => UserRole::User]);
+        $depot = $this->makeDepot();
+        $depot->update(['statut_circuit' => 'fatou', 'reference' => 'MI/2026/245']);
+
+        $qrValue = str_pad((string) $depot->id, 6, '0', STR_PAD_LEFT);
+
+        $response = $this->actingAs($accueil)->get('/circuit/suivi?search=' . $qrValue);
+
+        $response->assertSee('MI/2026/245');
+    }
+
     public function test_suivi_can_be_filtered_by_statut(): void
     {
         $accueil = User::factory()->create(['role' => UserRole::User]);
