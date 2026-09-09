@@ -573,6 +573,27 @@ class CircuitWorkflowTest extends TestCase
         $this->actingAs($serviceUser)->get('/circuit/suivi')->assertForbidden();
     }
 
+    public function test_cabinet_cannot_access_circuit_service_directly_by_url(): void
+    {
+        $cabinet = User::factory()->create(['role' => UserRole::Fatou]);
+
+        $this->actingAs($cabinet)->get('/circuit/service')->assertForbidden();
+    }
+
+    public function test_accueil_cannot_access_circuit_service_directly_by_url(): void
+    {
+        $accueil = User::factory()->create(['role' => UserRole::User]);
+
+        $this->actingAs($accueil)->get('/circuit/service')->assertForbidden();
+    }
+
+    public function test_admin_can_access_circuit_service(): void
+    {
+        $admin = User::factory()->create(['role' => UserRole::Admin]);
+
+        $this->actingAs($admin)->get('/circuit/service')->assertOk();
+    }
+
     public function test_service_user_cannot_view_the_historique_of_a_demande_assigned_to_another_service(): void
     {
         $serviceUser = User::factory()->create(['role' => UserRole::User, 'service' => 'Etat Civil']);

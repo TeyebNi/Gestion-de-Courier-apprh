@@ -81,6 +81,8 @@ class TabdepotController extends Controller
             abort(403, "Cette page est réservée à l'accueil et aux administrateurs.");
         }
 
+        $request->merge(['reference' => trim((string) $request->input('reference'))]);
+
         $request->validate([
             'origine' => ['required', 'in:interne,externe'],
             'reference' => ['required', 'string', 'max:100', Rule::unique('tabdepot', 'reference')],
@@ -112,6 +114,8 @@ class TabdepotController extends Controller
         if (! auth()->user()->canAccessDepot()) {
             abort(403, "Cette page est réservée à l'accueil et aux administrateurs.");
         }
+
+        $request->merge(['reference' => trim((string) $request->input('reference'))]);
 
         $request->validate([
             'origine' => ['required', 'in:interne,externe'],

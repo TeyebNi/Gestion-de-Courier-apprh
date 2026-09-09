@@ -92,6 +92,33 @@ class DepotTest extends TestCase
         $this->assertDatabaseCount('tabdepot', 1);
     }
 
+    public function test_store_trims_the_code_before_saving_and_checking_uniqueness(): void
+    {
+        $user = User::factory()->create(['role' => UserRole::User]);
+        $this->makeDepot(['reference' => 'MI/2026/245']);
+
+        $response = $this->actingAs($user)->post('/depot', [
+            'origine' => 'externe',
+            'reference' => '  MI/2026/245  ',
+        ]);
+
+        $response->assertSessionHasErrors('reference');
+        $this->assertDatabaseCount('tabdepot', 1);
+    }
+
+    public function test_store_saves_the_code_without_surrounding_whitespace(): void
+    {
+        $user = User::factory()->create(['role' => UserRole::User]);
+
+        $this->actingAs($user)->post('/depot', [
+            'origine' => 'externe',
+            'reference' => '  MI/2026/999  ',
+        ]);
+
+        $demande = Tabdepot::firstOrFail();
+        $this->assertSame('MI/2026/999', $demande->reference);
+    }
+
     public function test_store_rejects_a_code_already_used_by_a_trashed_demande(): void
     {
         $user = User::factory()->create(['role' => UserRole::User]);

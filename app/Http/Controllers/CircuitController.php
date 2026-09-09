@@ -133,6 +133,10 @@ class CircuitController extends Controller
     {
         $user = auth()->user();
 
+        if (! $user->isAdmin() && empty($user->service)) {
+            abort(403, "Cette page est réservée aux agents de service et aux administrateurs.");
+        }
+
         $demandes = Tabdepot::where('statut_circuit', 'service')
             ->when(! $user->canAccessAllServices(), fn ($q) => $q->where('service_assigne', $user->service))
             ->orderByDesc('id')

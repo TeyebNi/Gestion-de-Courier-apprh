@@ -127,7 +127,7 @@ class User extends Authenticatable
     /**
      * Whether this account is a "full" admin (sees everything) as opposed to
      * an admin restricted to specific config areas (ex: le compte Accueil,
-     * qui garde Orientation/Types de demande mais pas Cabinet/Maire/Utilisateurs).
+     * qui garde Orientation mais pas Cabinet/Utilisateurs).
      * Used to decide which dashboard variant to show.
      */
     public function isUnrestrictedAdmin(): bool
