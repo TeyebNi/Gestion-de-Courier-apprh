@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Models\DemandeHistorique;
+use App\Models\MaireAdjoint;
 use App\Models\Orientation;
 use App\Models\ServiceNotification;
 use App\Models\Tabdepot;
@@ -44,6 +45,7 @@ class CircuitController extends Controller
             'decision_maire' => null,
             'remarque_maire' => null,
             'service_assigne' => null,
+            'destination_type' => null,
         ]);
 
         $this->logHistorique($tabdepot, $ancien, 'fatou');
@@ -63,6 +65,7 @@ class CircuitController extends Controller
             ->orderByDesc('id')
             ->paginate(5, ['*'], 'a_envoyer_page');
         $orientations = Orientation::orderBy('name')->get();
+        $maireAdjoints = MaireAdjoint::orderBy('name')->get();
 
         // Le Cabinet n'a pas accès à Suivi (vue globale tous services) : ce
         // second tableau lui donne uniquement la trace de son propre travail
@@ -71,7 +74,7 @@ class CircuitController extends Controller
             ->orderByDesc('updated_at')
             ->paginate(5, ['*'], 'annotees_page');
 
-        return view('circuit.fatou', compact('aEnvoyer', 'orientations', 'dejaAnnotees'));
+        return view('circuit.fatou', compact('aEnvoyer', 'orientations', 'maireAdjoints', 'dejaAnnotees'));
     }
 
     /**
@@ -92,37 +95,47 @@ class CircuitController extends Controller
         $request->validate([
             'remarque_maire' => ['required', 'string', 'max:2000'],
             'service_destination' => ['nullable', 'string', 'max:255'],
+            'adjoint_destination' => ['nullable', 'string', 'max:255'],
         ], [
             'remarque_maire.required' => "Les annotations du Maire sont obligatoires.",
         ]);
 
         $serviceDestination = $request->service_destination ?: null;
+        $adjointDestination = $request->adjoint_destination ?: null;
+
+        if ($serviceDestination && $adjointDestination) {
+            return back()->withErrors(['service_destination' => "Choisissez soit un service, soit un Adjoint au Maire, pas les deux."])->withInput();
+        }
+
+        $destination = $serviceDestination ?: $adjointDestination;
+        $destinationType = $adjointDestination ? 'maire_adjoint' : ($serviceDestination ? 'service' : null);
 
         $tabdepot->update([
             'remarque_maire' => $request->remarque_maire,
-            'statut_circuit' => $serviceDestination ? 'service' : 'cloture',
-            'service_assigne' => $serviceDestination,
+            'statut_circuit' => $destination ? 'service' : 'cloture',
+            'service_assigne' => $destination,
+            'destination_type' => $destinationType,
             'vue_accueil' => false,
         ]);
 
         $this->logHistorique(
             $tabdepot,
             'fatou',
-            $serviceDestination ? 'service' : 'cloture',
+            $destination ? 'service' : 'cloture',
             'Annotations du Maire : ' . $request->remarque_maire
-                . ($serviceDestination ? ' — Envoyée vers ' . $serviceDestination : ' — Classée sans service concerné')
+                . ($destination ? ' — Envoyée vers ' . $destination : ' — Classée sans destination concernée')
         );
 
-        if ($serviceDestination) {
+        if ($destination) {
             ServiceNotification::create([
-                'service' => $serviceDestination,
+                'service' => $destination,
                 'iddmd' => $tabdepot->id,
-                'message' => "Nouvelle demande affectée à votre service (Code demande : {$tabdepot->id}).",
+                'message' => "Nouvelle demande vous a été affectée (Code demande : {$tabdepot->id}).",
             ]);
         }
 
-        return back()->with('success', $serviceDestination
-            ? 'Les annotations ont été enregistrées et la demande envoyée au service.'
+        return back()->with('success', $destination
+            ? 'Les annotations ont été enregistrées et la demande envoyée.'
             : 'Les annotations ont été enregistrées et la demande classée.');
     }
 
@@ -177,7 +190,7 @@ class CircuitController extends Controller
             'resolution_service' => $request->resolution,
         ]);
 
-        $this->logHistorique($tabdepot, 'service', 'cloture', $tabdepot->resolutionLabel() . ' par le service ' . $tabdepot->service_assigne);
+        $this->logHistorique($tabdepot, 'service', 'cloture', $tabdepot->resolutionLabel() . ' par ' . ($tabdepot->destination_type === 'maire_adjoint' ? "l'Adjoint au Maire " : 'le service ') . $tabdepot->service_assigne);
 
         // La demande est traitée : la notification qui l'annonçait n'a plus
         // besoin d'apparaître comme "à traiter" dans la cloche du service.

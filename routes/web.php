@@ -3,6 +3,7 @@ use Barryvdh\DomPDF\Facade\Pdf;
 use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\TabdepotController;
 use App\Http\Controllers\OrientationController;
+use App\Http\Controllers\MaireAdjointController;
 use App\Http\Controllers\UserController;
 use App\Http\Controllers\ServiceNotificationController;
 use App\Http\Controllers\CircuitController;
@@ -65,6 +66,12 @@ Route::middleware('auth')->group(function () {
         Route::post('orientation', [OrientationController::class, 'store'])->name('orientation.store');
         Route::put('orientation/{orientation}', [OrientationController::class, 'update'])->name('orientation.update');
         Route::delete('orientation/{orientation}', [OrientationController::class, 'destroy'])->name('orientation.destroy');
+
+        Route::get('adjoints-maire', [MaireAdjointController::class, 'index'])->name('maire-adjoint.index');
+        Route::get('adjoints-maire/export', [MaireAdjointController::class, 'exportExcel'])->name('maire-adjoint.export');
+        Route::post('adjoints-maire', [MaireAdjointController::class, 'store'])->name('maire-adjoint.store');
+        Route::put('adjoints-maire/{maireAdjoint}', [MaireAdjointController::class, 'update'])->name('maire-adjoint.update');
+        Route::delete('adjoints-maire/{maireAdjoint}', [MaireAdjointController::class, 'destroy'])->name('maire-adjoint.destroy');
 
         Route::get('utilisateurs', [UserController::class, 'index'])->name('users.index');
         Route::get('utilisateurs/journal', [UserController::class, 'auditLog'])->name('users.audit-log');

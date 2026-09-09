@@ -59,10 +59,19 @@ document.addEventListener('DOMContentLoaded', function () {
                                     </div>
                                     <div class="form-group">
                                         <label>Service concerné (optionnel)</label>
-                                        <select name="service_destination" class="form-control">
+                                        <select name="service_destination" class="form-control destination-select" data-group="service">
                                             <option value="">Aucun (classer directement)</option>
                                             @foreach($orientations as $o)
                                                 <option value="{{ $o->name }}" {{ $d->origine === 'interne' && $d->origine_detail === $o->name ? 'selected' : '' }}>{{ $o->name }}</option>
+                                            @endforeach
+                                        </select>
+                                    </div>
+                                    <div class="form-group">
+                                        <label>Adjoint au Maire concerné (optionnel)</label>
+                                        <select name="adjoint_destination" class="form-control destination-select" data-group="adjoint">
+                                            <option value="">Aucun</option>
+                                            @foreach($maireAdjoints as $m)
+                                                <option value="{{ $m->name }}">{{ $m->name }}</option>
                                             @endforeach
                                         </select>
                                     </div>
@@ -128,4 +137,20 @@ document.addEventListener('DOMContentLoaded', function () {
     </div>
 </div>
 
+@endsection
+
+@section('scripts')
+<script>
+document.addEventListener('DOMContentLoaded', function () {
+    document.querySelectorAll('.destination-select').forEach(function (select) {
+        select.addEventListener('change', function () {
+            if (!this.value) { return; }
+            var form = this.closest('form');
+            form.querySelectorAll('.destination-select').forEach(function (other) {
+                if (other !== select) { other.value = ''; }
+            });
+        });
+    });
+});
+</script>
 @endsection

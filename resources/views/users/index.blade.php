@@ -47,7 +47,12 @@ Les Utilisateurs
                                         {{ $u->isAdmin() ? 'Admin' : 'User' }}
                                     </span>
                                 </td>
-                                <td>{{ $u->service ?: '—' }}</td>
+                                <td>
+                                    {{ $u->service ?: '—' }}
+                                    @if($u->isMaireAdjoint())
+                                        <span class="badge badge-warning">Adjoint au Maire</span>
+                                    @endif
+                                </td>
                                 <td>{{ $u->created_at?->format('d/m/Y') }}</td>
                                 <td class="text-right">
                                     <a data-id="{{ $u->id }}"
@@ -160,9 +165,16 @@ Les Utilisateurs
                         </div>
                         <select class="form-control" name="service" id="create_service">
                             <option value="">Aucun</option>
-                            @foreach($services as $s)
-                                <option value="{{ $s }}">{{ $s }}</option>
-                            @endforeach
+                            <optgroup label="Services">
+                                @foreach($services as $s)
+                                    <option value="{{ $s }}">{{ $s }}</option>
+                                @endforeach
+                            </optgroup>
+                            <optgroup label="Adjoints au Maire">
+                                @foreach($maireAdjoints as $m)
+                                    <option value="{{ $m }}">{{ $m }}</option>
+                                @endforeach
+                            </optgroup>
                         </select>
                     </div>
                     <div id="create_admin_permissions_group" style="display:none;">
@@ -233,9 +245,16 @@ Les Utilisateurs
                         </div>
                         <select class="form-control" name="service" id="edit_service">
                             <option value="">Aucun</option>
-                            @foreach($services as $s)
-                                <option value="{{ $s }}">{{ $s }}</option>
-                            @endforeach
+                            <optgroup label="Services">
+                                @foreach($services as $s)
+                                    <option value="{{ $s }}">{{ $s }}</option>
+                                @endforeach
+                            </optgroup>
+                            <optgroup label="Adjoints au Maire">
+                                @foreach($maireAdjoints as $m)
+                                    <option value="{{ $m }}">{{ $m }}</option>
+                                @endforeach
+                            </optgroup>
                         </select>
                     </div>
                     <div id="edit_admin_permissions_group" style="display:none;">

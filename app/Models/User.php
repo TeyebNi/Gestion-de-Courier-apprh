@@ -125,6 +125,18 @@ class User extends Authenticatable
     }
 
     /**
+     * Whether this service-scoped account represents an Adjoint au Maire
+     * rather than a real department (Orientation). Derived from the name in
+     * "service" matching the roster of Adjoints, not a stored flag : the
+     * dropdown that assigns "service" already draws from either list, so
+     * this stays correct even if an Adjoint is later renamed.
+     */
+    public function isMaireAdjoint(): bool
+    {
+        return ! empty($this->service) && MaireAdjoint::where('name', $this->service)->exists();
+    }
+
+    /**
      * Whether this account is a "full" admin (sees everything) as opposed to
      * an admin restricted to specific config areas (ex: le compte Accueil,
      * qui garde Orientation mais pas Cabinet/Utilisateurs).

@@ -3,7 +3,9 @@
 namespace Tests\Feature;
 
 use App\Enums\UserRole;
+use App\Models\MaireAdjoint;
 use App\Models\Orientation;
+use App\Models\Tabdepot;
 use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Tests\TestCase;
@@ -141,5 +143,100 @@ class AdminConfigTest extends TestCase
 
         $response->assertSee('Etat Civil');
         $response->assertDontSee('Douanes');
+    }
+
+    public function test_admin_can_create_a_maire_adjoint(): void
+    {
+        $admin = User::factory()->create(['role' => UserRole::Admin]);
+
+        $this->actingAs($admin)
+            ->post('/adjoints-maire', ['name' => 'Ould Mohamed Lagdhaf'])
+            ->assertRedirect(route('maire-adjoint.index'));
+
+        $this->assertDatabaseHas('maire_adjoint', ['name' => 'Ould Mohamed Lagdhaf']);
+    }
+
+    public function test_non_admin_cannot_create_a_maire_adjoint(): void
+    {
+        $user = User::factory()->create(['role' => UserRole::User]);
+
+        $this->actingAs($user)
+            ->post('/adjoints-maire', ['name' => 'Ould Mohamed Lagdhaf'])
+            ->assertForbidden();
+
+        $this->assertDatabaseCount('maire_adjoint', 0);
+    }
+
+    public function test_non_admin_cannot_even_view_the_maire_adjoint_page(): void
+    {
+        $user = User::factory()->create(['role' => UserRole::User]);
+
+        $this->actingAs($user)->get('/adjoints-maire')->assertForbidden();
+    }
+
+    public function test_cannot_create_a_duplicate_maire_adjoint(): void
+    {
+        $admin = User::factory()->create(['role' => UserRole::Admin]);
+        MaireAdjoint::create(['name' => 'Saleh']);
+
+        $this->actingAs($admin)
+            ->post('/adjoints-maire', ['name' => 'Saleh'])
+            ->assertSessionHasErrors('name');
+
+        $this->assertDatabaseCount('maire_adjoint', 1);
+    }
+
+    public function test_admin_can_update_a_maire_adjoint(): void
+    {
+        $admin = User::factory()->create(['role' => UserRole::Admin]);
+        $adjoint = MaireAdjoint::create(['name' => 'Zeroug']);
+
+        $this->actingAs($admin)
+            ->put("/adjoints-maire/{$adjoint->id}", ['name' => 'Zeroug Ould X'])
+            ->assertRedirect(route('maire-adjoint.index'));
+
+        $this->assertSame('Zeroug Ould X', $adjoint->fresh()->name);
+    }
+
+    public function test_cannot_delete_a_maire_adjoint_still_used_by_a_demande(): void
+    {
+        $admin = User::factory()->create(['role' => UserRole::Admin]);
+        $adjoint = MaireAdjoint::create(['name' => 'Saleh']);
+        Tabdepot::create([
+            'origine' => 'externe',
+            'reference' => 'MI/2026/001',
+            'daterecp' => now()->format('Y-m-d'),
+            'statut_circuit' => 'service',
+            'service_assigne' => 'Saleh',
+            'destination_type' => 'maire_adjoint',
+        ]);
+
+        $this->actingAs($admin)->delete("/adjoints-maire/{$adjoint->id}")
+            ->assertRedirect(route('maire-adjoint.index'));
+
+        $this->assertDatabaseHas('maire_adjoint', ['id' => $adjoint->id]);
+    }
+
+    public function test_cannot_delete_a_maire_adjoint_still_used_by_a_user_account(): void
+    {
+        $admin = User::factory()->create(['role' => UserRole::Admin]);
+        $adjoint = MaireAdjoint::create(['name' => 'Saleh']);
+        User::factory()->create(['role' => UserRole::User, 'service' => 'Saleh']);
+
+        $this->actingAs($admin)->delete("/adjoints-maire/{$adjoint->id}")
+            ->assertRedirect(route('maire-adjoint.index'));
+
+        $this->assertDatabaseHas('maire_adjoint', ['id' => $adjoint->id]);
+    }
+
+    public function test_admin_can_delete_an_unused_maire_adjoint(): void
+    {
+        $admin = User::factory()->create(['role' => UserRole::Admin]);
+        $adjoint = MaireAdjoint::create(['name' => 'Zeroug']);
+
+        $this->actingAs($admin)->delete("/adjoints-maire/{$adjoint->id}")
+            ->assertRedirect(route('maire-adjoint.index'));
+
+        $this->assertDatabaseMissing('maire_adjoint', ['id' => $adjoint->id]);
     }
 }

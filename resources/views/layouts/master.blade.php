@@ -89,6 +89,12 @@
                             <p>Orientation</p>
                         </a>
                     </li>
+                    <li class="{{ request()->is('adjoints-maire*') ? 'active' : '' }}">
+                        <a href="{{ route('maire-adjoint.index') }}">
+                            <i class="now-ui-icons users_single-02"></i>
+                            <p>Adjoints au Maire</p>
+                        </a>
+                    </li>
                     @endif
 
                     @if(auth()->user()->canAccessDepot())
@@ -124,8 +130,8 @@
                     @if(!empty(auth()->user()->service) || auth()->user()->canAccessAllServices())
                     <li class="{{ request()->is('circuit/service*') ? 'active' : '' }}">
                         <a href="{{ route('circuit.service.index') }}">
-                            <i class="now-ui-icons business_briefcase-24"></i>
-                            <p>Demandes du Circuit</p>
+                            <i class="now-ui-icons {{ auth()->user()->isMaireAdjoint() ? 'users_single-02' : 'business_briefcase-24' }}"></i>
+                            <p>{{ auth()->user()->isMaireAdjoint() ? 'Adjoint au Maire' : 'Demandes du Circuit' }}</p>
                         </a>
                     </li>
                     @endif

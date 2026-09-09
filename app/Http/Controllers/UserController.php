@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Enums\UserRole;
 use App\Models\User;
+use App\Models\MaireAdjoint;
 use App\Models\Orientation;
 use App\Models\UserAuditLog;
 use Illuminate\Http\Request;
@@ -49,8 +50,9 @@ class UserController extends Controller
     }
     $users = $query->paginate(5)->appends(['search' => $search]);
     $services = Orientation::pluck('name');
+    $maireAdjoints = MaireAdjoint::pluck('name');
     $adminCount = User::where('role', 'admin')->count();
-    return view('users.index', compact('users', 'services', 'adminCount', 'search'));
+    return view('users.index', compact('users', 'services', 'maireAdjoints', 'adminCount', 'search'));
 }
 
     public function store(Request $request)

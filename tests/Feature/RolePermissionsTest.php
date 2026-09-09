@@ -4,6 +4,7 @@ namespace Tests\Feature;
 
 use App\Enums\UserRole;
 use App\Models\DemandeHistorique;
+use App\Models\MaireAdjoint;
 use App\Models\Tabdepot;
 use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
@@ -348,5 +349,32 @@ class RolePermissionsTest extends TestCase
         $response->assertSee('Demande de raccordement eau');
         $response->assertSee('30/08/2026');
         $response->assertDontSee('2026-08-30');
+    }
+
+    public function test_is_maire_adjoint_matches_the_roster_by_name(): void
+    {
+        MaireAdjoint::create(['name' => 'Ould Mohamed Lagdhaf']);
+        $adjointUser = User::factory()->create(['role' => UserRole::User, 'service' => 'Ould Mohamed Lagdhaf']);
+        $serviceUser = User::factory()->create(['role' => UserRole::User, 'service' => 'Etat Civil']);
+        $accueil = User::factory()->create(['role' => UserRole::User]);
+
+        $this->assertTrue($adjointUser->isMaireAdjoint());
+        $this->assertFalse($serviceUser->isMaireAdjoint());
+        $this->assertFalse($accueil->isMaireAdjoint());
+    }
+
+    public function test_sidebar_shows_maire_adjoint_label_instead_of_demandes_du_circuit(): void
+    {
+        MaireAdjoint::create(['name' => 'Ould Mohamed Lagdhaf']);
+        $adjointUser = User::factory()->create(['role' => UserRole::User, 'service' => 'Ould Mohamed Lagdhaf']);
+        $serviceUser = User::factory()->create(['role' => UserRole::User, 'service' => 'Etat Civil']);
+
+        $adjointResponse = $this->actingAs($adjointUser)->get('/');
+        $adjointResponse->assertSee('Adjoint au Maire');
+        $adjointResponse->assertDontSee('Demandes du Circuit');
+
+        $serviceResponse = $this->actingAs($serviceUser)->get('/');
+        $serviceResponse->assertSee('Demandes du Circuit');
+        $serviceResponse->assertDontSee('Adjoint au Maire');
     }
 }

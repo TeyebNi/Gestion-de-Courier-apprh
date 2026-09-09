@@ -33,7 +33,7 @@ document.addEventListener('DOMContentLoaded', function () {
         <div class="card">
             <div class="card-header">
                 <h4 class="card-title mb-0" style="font-weight: 700; color: #212529;">
-                    Demandes orientées vers votre service
+                    {{ auth()->user()->isMaireAdjoint() ? 'Demandes qui vous sont orientées' : 'Demandes orientées vers votre service' }}
                 </h4>
             </div>
             <div class="card-body">
