@@ -60,7 +60,7 @@ class UserController extends Controller
         }
 
         $request->validate([
-            'name' => ['required', 'string', 'max:255', 'regex:/^[\pL\s]+$/u'],
+            'name' => ['required', 'string', 'max:255', "regex:/^[\pL\s'-]+$/u"],
             'email' => ['required', 'email', 'max:255', Rule::unique('users', 'email')],
             'password' => ['required', 'string', 'min:8', 'confirmed'],
             'role' => ['required', 'in:admin,user,fatou'],
@@ -68,7 +68,7 @@ class UserController extends Controller
             'division_of' => [Rule::requiredIf($request->role_kind === 'division'), 'nullable', Rule::in(Orientation::pluck('name'))],
             'service' => ['nullable', 'string', 'max:255'],
         ], [
-            'name.regex' => 'Le nom ne doit contenir que des lettres.',
+            'name.regex' => "Le nom ne doit contenir que des lettres, espaces, apostrophes et tirets.",
             'email.unique' => 'Cet email est déjà utilisé par un autre utilisateur.',
             'division_of.required' => 'Veuillez choisir de quel service dépend cette division.',
             'division_of.in' => 'Veuillez choisir un service valide.',
@@ -147,7 +147,7 @@ class UserController extends Controller
     }
 
     $request->validate([
-        'name' => ['required', 'string', 'max:255', 'regex:/^[\pL\s]+$/u'],
+        'name' => ['required', 'string', 'max:255', "regex:/^[\pL\s'-]+$/u"],
         'email' => ['required', 'email', 'max:255', Rule::unique('users', 'email')->ignore($user->id)],
         'role' => ['required', 'in:admin,user,fatou'],
         'role_kind' => ['nullable', Rule::in(array_merge(['user'], array_keys(User::specialServiceRoles())))],
@@ -157,7 +157,7 @@ class UserController extends Controller
         'can_access_cabinet' => ['nullable', 'boolean'],
         'can_access_all_services' => ['nullable', 'boolean'],
     ], [
-        'name.regex' => 'Le nom ne doit contenir que des lettres.',
+        'name.regex' => "Le nom ne doit contenir que des lettres, espaces, apostrophes et tirets.",
         'email.unique' => 'Cet email est déjà utilisé par un autre utilisateur.',
         'division_of.required' => 'Veuillez choisir de quel service dépend cette division.',
         'division_of.in' => 'Veuillez choisir un service valide.',
