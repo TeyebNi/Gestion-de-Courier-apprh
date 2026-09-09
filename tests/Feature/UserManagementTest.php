@@ -3,6 +3,7 @@
 namespace Tests\Feature;
 
 use App\Enums\UserRole;
+use App\Models\MaireAdjoint;
 use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Tests\TestCase;
@@ -29,6 +30,39 @@ class UserManagementTest extends TestCase
         $newUser = User::where('email', 'fatimetou@commune.mr')->firstOrFail();
         $this->assertSame('Etat Civil', $newUser->service);
         $this->assertTrue(\Illuminate\Support\Facades\Hash::check('motdepasse123', $newUser->password));
+    }
+
+    public function test_admin_can_create_a_user_account_for_a_maire_adjoint(): void
+    {
+        $admin = User::factory()->create(['role' => UserRole::Admin]);
+        MaireAdjoint::create(['name' => 'Ould Mohamed Lagdhaf']);
+
+        $response = $this->actingAs($admin)->post('/utilisateurs', [
+            'name' => 'Ould Mohamed Lagdhaf',
+            'email' => 'lagdhaf@commune.mr',
+            'password' => 'motdepasse123',
+            'password_confirmation' => 'motdepasse123',
+            'role' => 'user',
+            'service' => 'Ould Mohamed Lagdhaf',
+        ]);
+
+        $response->assertRedirect(route('users.index'));
+
+        $newUser = User::where('email', 'lagdhaf@commune.mr')->firstOrFail();
+        $this->assertSame('Ould Mohamed Lagdhaf', $newUser->service);
+        $this->assertTrue($newUser->isMaireAdjoint());
+    }
+
+    public function test_users_index_offers_the_maire_adjoint_role_and_roster_in_the_form(): void
+    {
+        $admin = User::factory()->create(['role' => UserRole::Admin]);
+        MaireAdjoint::create(['name' => 'Ould Mohamed Lagdhaf']);
+
+        $response = $this->actingAs($admin)->get('/utilisateurs');
+
+        $response->assertOk();
+        $response->assertSee('Adjoint au Maire');
+        $response->assertSee('Ould Mohamed Lagdhaf');
     }
 
     public function test_admin_can_create_a_restricted_admin_account(): void

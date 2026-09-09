@@ -154,23 +154,24 @@ Les Utilisateurs
                             <span class="input-group-text">Rôle</span>
                         </div>
                         <select class="form-control" name="role" id="create_role">
-                            <option value="user">User</option>
-                            <option value="admin">Admin</option>
-                            <option value="fatou">Cabinet de Maire</option>
+                            <option value="user" data-kind="user">User</option>
+                            <option value="user" data-kind="maire_adjoint">Adjoint au Maire</option>
+                            <option value="admin" data-kind="admin">Admin</option>
+                            <option value="fatou" data-kind="fatou">Cabinet de Maire</option>
                         </select>
                     </div>
                     <div class="input-group" id="create_service_group">
                         <div class="input-group-prepend">
-                            <span class="input-group-text">Service</span>
+                            <span class="input-group-text" id="create_service_label">Service</span>
                         </div>
                         <select class="form-control" name="service" id="create_service">
                             <option value="">Aucun</option>
-                            <optgroup label="Services">
+                            <optgroup label="Services" id="create_service_options">
                                 @foreach($services as $s)
                                     <option value="{{ $s }}">{{ $s }}</option>
                                 @endforeach
                             </optgroup>
-                            <optgroup label="Adjoints au Maire">
+                            <optgroup label="Adjoints au Maire" id="create_adjoint_options">
                                 @foreach($maireAdjoints as $m)
                                     <option value="{{ $m }}">{{ $m }}</option>
                                 @endforeach
@@ -234,23 +235,24 @@ Les Utilisateurs
                             <span class="input-group-text">Rôle</span>
                         </div>
                         <select class="form-control" name="role" id="edit_role">
-                            <option value="user">User</option>
-                            <option value="admin">Admin</option>
-                            <option value="fatou">Cabinet de Maire</option>
+                            <option value="user" data-kind="user">User</option>
+                            <option value="user" data-kind="maire_adjoint">Adjoint au Maire</option>
+                            <option value="admin" data-kind="admin">Admin</option>
+                            <option value="fatou" data-kind="fatou">Cabinet de Maire</option>
                         </select>
                     </div>
                     <div class="input-group" id="edit_service_group">
                         <div class="input-group-prepend">
-                            <span class="input-group-text">Service</span>
+                            <span class="input-group-text" id="edit_service_label">Service</span>
                         </div>
                         <select class="form-control" name="service" id="edit_service">
                             <option value="">Aucun</option>
-                            <optgroup label="Services">
+                            <optgroup label="Services" id="edit_service_options">
                                 @foreach($services as $s)
                                     <option value="{{ $s }}">{{ $s }}</option>
                                 @endforeach
                             </optgroup>
-                            <optgroup label="Adjoints au Maire">
+                            <optgroup label="Adjoints au Maire" id="edit_adjoint_options">
                                 @foreach($maireAdjoints as $m)
                                     <option value="{{ $m }}">{{ $m }}</option>
                                 @endforeach
@@ -371,16 +373,19 @@ Les Utilisateurs
 
 @section('scripts')
 <script>
+var maireAdjointNames = @json($maireAdjoints);
+
 $('#editUserModal').on('show.bs.modal', function (event) {
     var button = $(event.relatedTarget);
     var id = button.data('id');
     var role = button.data('role');
+    var service = button.data('service');
+    var kind = role === 'user' && maireAdjointNames.includes(service) ? 'maire_adjoint' : role;
 
     $('#editUserForm').attr('action', '{{ url('/utilisateurs') }}/' + id);
     $('#edit_name').val(button.data('name'));
     $('#edit_email').val(button.data('email'));
-    $('#edit_role').val(role);
-    $('#edit_service').val(button.data('service'));
+    $('#edit_role option[data-kind="' + kind + '"]').prop('selected', true);
     $('#edit_can_manage_users').prop('checked', button.data('can-manage-users') == 1);
     $('#edit_can_access_cabinet').prop('checked', button.data('can-access-cabinet') == 1);
     $('#edit_can_access_all_services').prop('checked', button.data('can-access-all-services') == 1);
@@ -388,28 +393,42 @@ $('#editUserModal').on('show.bs.modal', function (event) {
     var isLastAdmin = (role === 'admin' && {{ $adminCount }} <= 1);
     $('#edit_role option[value="user"]').prop('disabled', isLastAdmin);
 
-    toggleServiceField(role, 'edit');
+    toggleServiceField(kind, 'edit');
+    $('#edit_service').val(service);
 });
 
 $('#edit_role').on('change', function () {
-    toggleServiceField($(this).val(), 'edit');
+    var kind = this.options[this.selectedIndex].dataset.kind;
+    toggleServiceField(kind, 'edit');
 });
 
 $('#create_role').on('change', function () {
-    toggleServiceField($(this).val(), 'create');
+    var kind = this.options[this.selectedIndex].dataset.kind;
+    toggleServiceField(kind, 'create');
 });
 
-function toggleServiceField(role, prefix) {
-    if (role === 'admin') {
+function toggleServiceField(kind, prefix) {
+    if (kind === 'admin' || kind === 'fatou') {
         $('#' + prefix + '_service_group').hide();
         $('#' + prefix + '_service').val('');
-        $('#' + prefix + '_admin_permissions_group').show();
+        $('#' + prefix + '_admin_permissions_group').toggle(kind === 'admin');
+        if (kind !== 'admin') {
+            $('#' + prefix + '_can_manage_users').prop('checked', false);
+            $('#' + prefix + '_can_access_cabinet').prop('checked', false);
+            $('#' + prefix + '_can_access_all_services').prop('checked', false);
+        }
     } else {
         $('#' + prefix + '_service_group').show();
         $('#' + prefix + '_admin_permissions_group').hide();
         $('#' + prefix + '_can_manage_users').prop('checked', false);
         $('#' + prefix + '_can_access_cabinet').prop('checked', false);
         $('#' + prefix + '_can_access_all_services').prop('checked', false);
+
+        var isAdjoint = kind === 'maire_adjoint';
+        document.getElementById(prefix + '_service_label').textContent = isAdjoint ? 'Adjoint au Maire' : 'Service';
+        document.getElementById(prefix + '_service_options').hidden = isAdjoint;
+        document.getElementById(prefix + '_adjoint_options').hidden = !isAdjoint;
+        $('#' + prefix + '_service').val('');
     }
 }
 
@@ -418,6 +437,8 @@ $('#createUserModal').on('hidden.bs.modal', function () {
     if (form) { form.reset(); }
     toggleServiceField('user', 'create');
 });
+
+toggleServiceField('user', 'create');
 
 $('#resetPasswordModal').on('show.bs.modal', function (event) {
     var button = $(event.relatedTarget);
