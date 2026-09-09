@@ -136,13 +136,13 @@ Les Utilisateurs
                         <div class="input-group-prepend">
                             <span class="input-group-text">Nom</span>
                         </div>
-                        <input type="text" class="form-control" name="name" required>
+                        <input type="text" class="form-control" name="name" value="{{ old('name') }}" required>
                     </div>
                     <div class="input-group mb-3">
                         <div class="input-group-prepend">
                             <span class="input-group-text">Email</span>
                         </div>
-                        <input type="email" class="form-control" name="email" required>
+                        <input type="email" class="form-control" name="email" value="{{ old('email') }}" required>
                     </div>
                     <div class="input-group mb-3">
                         <div class="input-group-prepend">
@@ -498,5 +498,9 @@ if (closeBtn) {
         document.getElementById('successOverlay').style.display = 'none';
     });
 }
+
+@if ($errors->any() && old('email') !== null && old('_method') === null)
+$('#createUserModal').modal('show');
+@endif
 </script>
 @endsection
