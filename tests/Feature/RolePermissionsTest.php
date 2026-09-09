@@ -7,6 +7,7 @@ use App\Models\DemandeHistorique;
 use App\Models\Tabdepot;
 use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use PHPUnit\Framework\Attributes\DataProvider;
 use Tests\TestCase;
 
 class RolePermissionsTest extends TestCase
@@ -373,5 +374,24 @@ class RolePermissionsTest extends TestCase
         $serviceResponse = $this->actingAs($serviceUser)->get('/');
         $serviceResponse->assertSee('Demandes du Circuit');
         $serviceResponse->assertDontSee('Adjoint au Maire');
+    }
+
+    public static function otherSpecialLabelsProvider(): array
+    {
+        return [
+            'Division' => [User::DIVISION_LABEL],
+            'Conseiller' => [User::CONSEILLER_LABEL],
+        ];
+    }
+
+    #[DataProvider('otherSpecialLabelsProvider')]
+    public function test_sidebar_shows_the_other_special_role_labels(string $label): void
+    {
+        $user = User::factory()->create(['role' => UserRole::User, 'service' => $label]);
+
+        $response = $this->actingAs($user)->get('/');
+
+        $response->assertSee($label);
+        $response->assertDontSee('Demandes du Circuit');
     }
 }

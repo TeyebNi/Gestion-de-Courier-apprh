@@ -44,15 +44,24 @@ class Tabdepot extends Model
         }
     }
 
+    /**
+     * Phrase complète (avec article) pour chaque destination à file commune —
+     * la grammaire du français diffère par genre, donc pas de règle générique.
+     */
+    private const DESTINATION_PHRASES = [
+        'maire_adjoint' => "Chez l'Adjoint au Maire",
+        'division' => 'Chez la Division',
+        'conseiller' => 'Chez le Conseiller',
+    ];
+
     public function statutLabel(): string
     {
         return match ($this->statut_circuit) {
             'accueil' => 'À l\'accueil',
             'fatou' => 'Chez le Cabinet de Maire',
             'maire' => 'Chez le Maire',
-            'service' => $this->destination_type === 'maire_adjoint'
-                ? "Chez l'Adjoint au Maire"
-                : 'Chez le service : ' . ($this->service_assigne ?? '—'),
+            'service' => self::DESTINATION_PHRASES[$this->destination_type]
+                ?? 'Chez le service : ' . ($this->service_assigne ?? '—'),
             'cloture' => 'Clôturée (' . ($this->resolutionLabel() ?: 'traitée par le service') . ')',
             default => $this->statut_circuit ?? 'À l\'accueil',
         };

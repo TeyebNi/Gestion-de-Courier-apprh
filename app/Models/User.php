@@ -15,11 +15,14 @@ class User extends Authenticatable
     use HasFactory, Notifiable;
 
     /**
-     * Valeur fixe de "service" pour un Adjoint au Maire : tous les comptes
-     * Adjoint au Maire partagent une seule file commune (comme le Cabinet de
-     * Maire), pas une file par personne.
+     * Valeurs fixes de "service" pour les rôles à file commune : tous les
+     * comptes partageant un même rôle spécial (Adjoint au Maire, Division,
+     * Conseiller) voient la même file, comme le Cabinet de Maire — jamais une
+     * file par personne.
      */
     public const MAIRE_ADJOINT_LABEL = 'Adjoint au Maire';
+    public const DIVISION_LABEL = 'Division';
+    public const CONSEILLER_LABEL = 'Conseiller';
 
     /**
      * The attributes that are mass assignable.
@@ -132,13 +135,49 @@ class User extends Authenticatable
     }
 
     /**
+     * Kind key => libellé partagé, pour les rôles "service" qui ne
+     * représentent pas un vrai département (Orientation) mais une file
+     * commune à tous les comptes de ce rôle.
+     */
+    public static function specialServiceRoles(): array
+    {
+        return [
+            'maire_adjoint' => self::MAIRE_ADJOINT_LABEL,
+            'division' => self::DIVISION_LABEL,
+            'conseiller' => self::CONSEILLER_LABEL,
+        ];
+    }
+
+    /**
+     * Which special role (if any) this account's "service" matches — null
+     * for a real department or a plain Accueil account (service vide).
+     */
+    public function specialServiceKind(): ?string
+    {
+        $kind = array_search($this->service, self::specialServiceRoles(), true);
+
+        return $kind === false ? null : $kind;
+    }
+
+    /**
+     * Libellé d'affichage du rôle spécial de ce compte (Adjoint au Maire,
+     * Division, Conseiller), ou null si c'est un service réel.
+     */
+    public function specialServiceLabel(): ?string
+    {
+        $kind = $this->specialServiceKind();
+
+        return $kind ? self::specialServiceRoles()[$kind] : null;
+    }
+
+    /**
      * Whether this account is an Adjoint au Maire : a service-like queue
      * shared by everyone with this role (see MAIRE_ADJOINT_LABEL), not a
      * real department.
      */
     public function isMaireAdjoint(): bool
     {
-        return $this->service === self::MAIRE_ADJOINT_LABEL;
+        return $this->specialServiceKind() === 'maire_adjoint';
     }
 
     /**

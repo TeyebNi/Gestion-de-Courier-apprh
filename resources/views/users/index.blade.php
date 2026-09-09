@@ -43,8 +43,8 @@ Les Utilisateurs
                                 <td>{{ $u->name }}</td>
                                 <td>{{ $u->email }}</td>
                                 <td>
-                                    <span class="badge badge-{{ $u->isAdmin() ? 'danger' : ($u->isMaireAdjoint() ? 'warning' : 'info') }}">
-                                        {{ $u->isAdmin() ? 'Admin' : ($u->isMaireAdjoint() ? 'Adjoint au Maire' : 'User') }}
+                                    <span class="badge badge-{{ $u->isAdmin() ? 'danger' : ($u->specialServiceLabel() ? 'warning' : 'info') }}">
+                                        {{ $u->isAdmin() ? 'Admin' : ($u->specialServiceLabel() ?: 'User') }}
                                     </span>
                                 </td>
                                 <td>{{ $u->service ?: '—' }}</td>
@@ -152,6 +152,8 @@ Les Utilisateurs
                         <select class="form-control" name="role" id="create_role">
                             <option value="user" data-kind="user">User</option>
                             <option value="user" data-kind="maire_adjoint">Adjoint au Maire</option>
+                            <option value="user" data-kind="division">Division</option>
+                            <option value="user" data-kind="conseiller">Conseiller</option>
                             <option value="admin" data-kind="admin">Admin</option>
                             <option value="fatou" data-kind="fatou">Cabinet de Maire</option>
                         </select>
@@ -167,9 +169,7 @@ Les Utilisateurs
                             @endforeach
                         </select>
                     </div>
-                    <p class="text-muted mb-0" id="create_adjoint_note" style="display:none; font-size:0.85em;">
-                        Ce compte partagera la file commune "Adjoint au Maire" (comme tout autre Adjoint).
-                    </p>
+                    <p class="text-muted mb-0" id="create_adjoint_note" style="display:none; font-size:0.85em;"></p>
                     <div id="create_admin_permissions_group" style="display:none;">
                         <hr>
                         <p class="text-muted mb-2" style="font-size:0.85em;">Droits admin supplémentaires (décochez pour restreindre ce compte, ex: Accueil) :</p>
@@ -230,6 +230,8 @@ Les Utilisateurs
                         <select class="form-control" name="role" id="edit_role">
                             <option value="user" data-kind="user">User</option>
                             <option value="user" data-kind="maire_adjoint">Adjoint au Maire</option>
+                            <option value="user" data-kind="division">Division</option>
+                            <option value="user" data-kind="conseiller">Conseiller</option>
                             <option value="admin" data-kind="admin">Admin</option>
                             <option value="fatou" data-kind="fatou">Cabinet de Maire</option>
                         </select>
@@ -245,9 +247,7 @@ Les Utilisateurs
                             @endforeach
                         </select>
                     </div>
-                    <p class="text-muted mb-0" id="edit_adjoint_note" style="display:none; font-size:0.85em;">
-                        Ce compte partagera la file commune "Adjoint au Maire" (comme tout autre Adjoint).
-                    </p>
+                    <p class="text-muted mb-0" id="edit_adjoint_note" style="display:none; font-size:0.85em;"></p>
                     <div id="edit_admin_permissions_group" style="display:none;">
                         <hr>
                         <p class="text-muted mb-2" style="font-size:0.85em;">Droits admin supplémentaires (décochez pour restreindre ce compte, ex: Accueil) :</p>
@@ -362,14 +362,21 @@ Les Utilisateurs
 
 @section('scripts')
 <script>
-var MAIRE_ADJOINT_LABEL = @json(\App\Models\User::MAIRE_ADJOINT_LABEL);
+var SPECIAL_SERVICE_ROLES = @json(\App\Models\User::specialServiceRoles());
+
+function specialKindForService(service) {
+    for (var kind in SPECIAL_SERVICE_ROLES) {
+        if (SPECIAL_SERVICE_ROLES[kind] === service) { return kind; }
+    }
+    return null;
+}
 
 $('#editUserModal').on('show.bs.modal', function (event) {
     var button = $(event.relatedTarget);
     var id = button.data('id');
     var role = button.data('role');
     var service = button.data('service');
-    var kind = role === 'user' && service === MAIRE_ADJOINT_LABEL ? 'maire_adjoint' : role;
+    var kind = role === 'user' && specialKindForService(service) ? specialKindForService(service) : role;
 
     $('#editUserForm').attr('action', '{{ url('/utilisateurs') }}/' + id);
     $('#edit_name').val(button.data('name'));
@@ -399,12 +406,19 @@ $('#create_role').on('change', function () {
 });
 
 function toggleServiceField(kind, prefix) {
-    document.getElementById(prefix + '_role_kind').value = kind === 'maire_adjoint' ? 'maire_adjoint' : 'user';
+    var isSpecial = Object.prototype.hasOwnProperty.call(SPECIAL_SERVICE_ROLES, kind);
+    document.getElementById(prefix + '_role_kind').value = isSpecial ? kind : 'user';
 
-    // "Adjoint au Maire" partage une file commune (comme Cabinet) : aucun nom
-    // à choisir, donc pas de champ Service du tout pour ce choix de rôle.
+    // Un rôle à file commune (Adjoint au Maire, Division, Conseiller) ne
+    // demande aucun nom à choisir, donc pas de champ Service du tout.
     $('#' + prefix + '_service_group').toggle(kind === 'user');
-    document.getElementById(prefix + '_adjoint_note').style.display = kind === 'maire_adjoint' ? '' : 'none';
+    var note = document.getElementById(prefix + '_adjoint_note');
+    if (isSpecial) {
+        note.textContent = 'Ce compte partagera la file commune "' + SPECIAL_SERVICE_ROLES[kind] + '" (comme tout autre compte de ce rôle).';
+        note.style.display = '';
+    } else {
+        note.style.display = 'none';
+    }
     if (kind !== 'user') {
         $('#' + prefix + '_service').val('');
     }

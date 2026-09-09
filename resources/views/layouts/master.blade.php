@@ -124,8 +124,8 @@
                     @if(!empty(auth()->user()->service) || auth()->user()->canAccessAllServices())
                     <li class="{{ request()->is('circuit/service*') ? 'active' : '' }}">
                         <a href="{{ route('circuit.service.index') }}">
-                            <i class="now-ui-icons {{ auth()->user()->isMaireAdjoint() ? 'users_single-02' : 'business_briefcase-24' }}"></i>
-                            <p>{{ auth()->user()->isMaireAdjoint() ? 'Adjoint au Maire' : 'Demandes du Circuit' }}</p>
+                            <i class="now-ui-icons {{ auth()->user()->specialServiceLabel() ? 'users_single-02' : 'business_briefcase-24' }}"></i>
+                            <p>{{ auth()->user()->specialServiceLabel() ?: 'Demandes du Circuit' }}</p>
                         </a>
                     </li>
                     @endif

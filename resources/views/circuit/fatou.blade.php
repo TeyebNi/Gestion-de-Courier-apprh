@@ -66,9 +66,17 @@ document.addEventListener('DOMContentLoaded', function () {
                                             @endforeach
                                         </select>
                                     </div>
-                                    <div class="form-check mb-3">
+                                    <div class="form-check mb-2">
                                         <input type="checkbox" class="form-check-input destination-checkbox" name="adjoint_destination" value="1" id="adjoint_{{ $d->id }}">
                                         <label class="form-check-label" for="adjoint_{{ $d->id }}">Envoyer à l'Adjoint au Maire</label>
+                                    </div>
+                                    <div class="form-check mb-2">
+                                        <input type="checkbox" class="form-check-input destination-checkbox" name="division_destination" value="1" id="division_{{ $d->id }}">
+                                        <label class="form-check-label" for="division_{{ $d->id }}">Envoyer à la Division</label>
+                                    </div>
+                                    <div class="form-check mb-3">
+                                        <input type="checkbox" class="form-check-input destination-checkbox" name="conseiller_destination" value="1" id="conseiller_{{ $d->id }}">
+                                        <label class="form-check-label" for="conseiller_{{ $d->id }}">Envoyer au Conseiller</label>
                                     </div>
                                     <button type="submit" class="btn btn-primary btn-block">Enregistrer les annotations</button>
                                 </form>
@@ -154,8 +162,12 @@ document.addEventListener('DOMContentLoaded', function () {
         checkbox.addEventListener('change', function () {
             if (!this.checked) { return; }
             var form = this.closest('form');
+            var self = this;
             form.querySelectorAll('.destination-select').forEach(function (select) {
                 select.value = '';
+            });
+            form.querySelectorAll('.destination-checkbox').forEach(function (other) {
+                if (other !== self) { other.checked = false; }
             });
         });
     });

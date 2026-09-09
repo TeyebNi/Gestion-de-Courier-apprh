@@ -95,21 +95,28 @@ class CircuitController extends Controller
             'remarque_maire' => ['required', 'string', 'max:2000'],
             'service_destination' => ['nullable', 'string', 'max:255'],
             'adjoint_destination' => ['nullable', 'boolean'],
+            'division_destination' => ['nullable', 'boolean'],
+            'conseiller_destination' => ['nullable', 'boolean'],
         ], [
             'remarque_maire.required' => "Les annotations du Maire sont obligatoires.",
         ]);
 
         $serviceDestination = $request->service_destination ?: null;
-        // Un seul Adjoint au Maire "logique" : peu importe la valeur envoyée,
-        // seule sa présence compte, jamais un nom saisi par le client.
-        $adjointDestination = $request->boolean('adjoint_destination') ? User::MAIRE_ADJOINT_LABEL : null;
+        // File commune par rôle spécial : peu importe la valeur envoyée par le
+        // client, seule la présence de la case cochée compte, jamais un nom
+        // saisi par lui.
+        $specialDestinations = array_filter([
+            'maire_adjoint' => $request->boolean('adjoint_destination'),
+            'division' => $request->boolean('division_destination'),
+            'conseiller' => $request->boolean('conseiller_destination'),
+        ]);
 
-        if ($serviceDestination && $adjointDestination) {
-            return back()->withErrors(['service_destination' => "Choisissez soit un service, soit l'Adjoint au Maire, pas les deux."])->withInput();
+        if (($serviceDestination ? 1 : 0) + count($specialDestinations) > 1) {
+            return back()->withErrors(['service_destination' => "Choisissez une seule destination : un service, ou l'Adjoint au Maire, ou la Division, ou le Conseiller."])->withInput();
         }
 
-        $destination = $serviceDestination ?: $adjointDestination;
-        $destinationType = $adjointDestination ? 'maire_adjoint' : ($serviceDestination ? 'service' : null);
+        $destinationType = $serviceDestination ? 'service' : (array_key_first($specialDestinations) ?: null);
+        $destination = $serviceDestination ?: ($destinationType ? User::specialServiceRoles()[$destinationType] : null);
 
         $tabdepot->update([
             'remarque_maire' => $request->remarque_maire,
@@ -191,7 +198,12 @@ class CircuitController extends Controller
             'resolution_service' => $request->resolution,
         ]);
 
-        $qui = $tabdepot->destination_type === 'maire_adjoint' ? "l'Adjoint au Maire" : 'le service ' . $tabdepot->service_assigne;
+        $qui = match ($tabdepot->destination_type) {
+            'maire_adjoint' => "l'Adjoint au Maire",
+            'division' => 'la Division',
+            'conseiller' => 'le Conseiller',
+            default => 'le service ' . $tabdepot->service_assigne,
+        };
         $this->logHistorique($tabdepot, 'service', 'cloture', $tabdepot->resolutionLabel() . ' par ' . $qui);
 
         // La demande est traitée : la notification qui l'annonçait n'a plus

@@ -64,7 +64,7 @@ class UserController extends Controller
             'email' => ['required', 'email', 'max:255', Rule::unique('users', 'email')],
             'password' => ['required', 'string', 'min:8', 'confirmed'],
             'role' => ['required', 'in:admin,user,fatou'],
-            'role_kind' => ['nullable', 'in:user,maire_adjoint'],
+            'role_kind' => ['nullable', Rule::in(array_merge(['user'], array_keys(User::specialServiceRoles())))],
             'service' => ['nullable', 'string', 'max:255'],
         ], [
             'name.regex' => 'Le nom ne doit contenir que des lettres.',
@@ -73,7 +73,7 @@ class UserController extends Controller
 
         $service = match (true) {
             in_array($request->role, ['admin', 'fatou']) => null,
-            $request->role_kind === 'maire_adjoint' => User::MAIRE_ADJOINT_LABEL,
+            array_key_exists($request->role_kind, User::specialServiceRoles()) => User::specialServiceRoles()[$request->role_kind],
             default => $request->service,
         };
 
@@ -139,7 +139,7 @@ class UserController extends Controller
         'name' => ['required', 'string', 'max:255', 'regex:/^[\pL\s]+$/u'],
         'email' => ['required', 'email', 'max:255', Rule::unique('users', 'email')->ignore($user->id)],
         'role' => ['required', 'in:admin,user,fatou'],
-        'role_kind' => ['nullable', 'in:user,maire_adjoint'],
+        'role_kind' => ['nullable', Rule::in(array_merge(['user'], array_keys(User::specialServiceRoles())))],
         'service' => ['nullable', 'string', 'max:255'],
         'can_manage_users' => ['nullable', 'boolean'],
         'can_access_cabinet' => ['nullable', 'boolean'],
@@ -165,7 +165,7 @@ class UserController extends Controller
 
     $service = match (true) {
         in_array($request->role, ['admin', 'fatou']) => null,
-        $request->role_kind === 'maire_adjoint' => User::MAIRE_ADJOINT_LABEL,
+        array_key_exists($request->role_kind, User::specialServiceRoles()) => User::specialServiceRoles()[$request->role_kind],
         default => $request->service,
     };
 

@@ -8,6 +8,7 @@ use App\Models\Orientation;
 use App\Models\Tabdepot;
 use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use PHPUnit\Framework\Attributes\DataProvider;
 use Tests\TestCase;
 
 class CircuitWorkflowTest extends TestCase
@@ -373,6 +374,69 @@ class CircuitWorkflowTest extends TestCase
         $response = $this->actingAs($accueil)->get('/circuit/suivi');
 
         $response->assertSee("Chez l&#039;Adjoint au Maire", false);
+    }
+
+    public static function specialDestinationsProvider(): array
+    {
+        return [
+            'Division' => ['division_destination', 'division', User::DIVISION_LABEL, 'Chez la Division'],
+            'Conseiller' => ['conseiller_destination', 'conseiller', User::CONSEILLER_LABEL, 'Chez le Conseiller'],
+        ];
+    }
+
+    #[DataProvider('specialDestinationsProvider')]
+    public function test_cabinet_can_route_a_demande_to_the_other_special_destinations(string $checkboxField, string $expectedType, string $expectedLabel, string $expectedStatutPhrase): void
+    {
+        $fatou = User::factory()->create(['role' => UserRole::Fatou]);
+        $depot = $this->makeDepot();
+        $depot->update(['statut_circuit' => 'fatou']);
+
+        $this->actingAs($fatou)->post("/circuit/{$depot->id}/decider", [
+            'remarque_maire' => 'RAS',
+            $checkboxField => '1',
+        ])->assertRedirect();
+
+        $depot->refresh();
+        $this->assertSame('service', $depot->statut_circuit);
+        $this->assertSame($expectedLabel, $depot->service_assigne);
+        $this->assertSame($expectedType, $depot->destination_type);
+        $this->assertSame($expectedStatutPhrase, $depot->statutLabel());
+    }
+
+    #[DataProvider('specialDestinationsProvider')]
+    public function test_all_accounts_of_a_special_role_share_the_same_queue(string $checkboxField, string $expectedType, string $expectedLabel): void
+    {
+        $fatou = User::factory()->create(['role' => UserRole::Fatou]);
+        $account1 = User::factory()->create(['role' => UserRole::User, 'service' => $expectedLabel]);
+        $account2 = User::factory()->create(['role' => UserRole::User, 'service' => $expectedLabel]);
+        $depot = $this->makeDepot();
+        $depot->update(['statut_circuit' => 'fatou']);
+
+        $this->actingAs($fatou)->post("/circuit/{$depot->id}/decider", [
+            'remarque_maire' => 'RAS',
+            $checkboxField => '1',
+        ]);
+
+        foreach ([$account1, $account2] as $user) {
+            $response = $this->actingAs($user)->get('/circuit/service');
+            $response->assertOk();
+            $response->assertViewHas('demandes', fn ($demandes) => $demandes->contains('id', $depot->id));
+        }
+    }
+
+    public function test_cannot_route_a_demande_to_more_than_one_special_destination_at_once(): void
+    {
+        $fatou = User::factory()->create(['role' => UserRole::Fatou]);
+        $depot = $this->makeDepot();
+        $depot->update(['statut_circuit' => 'fatou']);
+
+        $this->actingAs($fatou)->post("/circuit/{$depot->id}/decider", [
+            'remarque_maire' => 'RAS',
+            'adjoint_destination' => '1',
+            'division_destination' => '1',
+        ])->assertSessionHasErrors();
+
+        $this->assertSame('fatou', $depot->fresh()->statut_circuit);
     }
 
     public function test_service_close_buttons_directly_set_the_resolution(): void

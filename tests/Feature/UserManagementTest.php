@@ -5,6 +5,7 @@ namespace Tests\Feature;
 use App\Enums\UserRole;
 use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use PHPUnit\Framework\Attributes\DataProvider;
 use Tests\TestCase;
 
 class UserManagementTest extends TestCase
@@ -82,6 +83,46 @@ class UserManagementTest extends TestCase
 
         $response->assertOk();
         $response->assertSee('Adjoint au Maire');
+    }
+
+    public static function otherSpecialRolesProvider(): array
+    {
+        return [
+            'Division' => ['division', User::DIVISION_LABEL],
+            'Conseiller' => ['conseiller', User::CONSEILLER_LABEL],
+        ];
+    }
+
+    #[DataProvider('otherSpecialRolesProvider')]
+    public function test_admin_can_create_an_account_for_the_other_special_roles(string $roleKind, string $expectedLabel): void
+    {
+        $admin = User::factory()->create(['role' => UserRole::Admin]);
+
+        $response = $this->actingAs($admin)->post('/utilisateurs', [
+            'name' => 'Compte Test',
+            'email' => strtolower($roleKind) . '@commune.mr',
+            'password' => 'motdepasse123',
+            'password_confirmation' => 'motdepasse123',
+            'role' => 'user',
+            'role_kind' => $roleKind,
+        ]);
+
+        $response->assertRedirect(route('users.index'));
+
+        $newUser = User::where('email', strtolower($roleKind) . '@commune.mr')->firstOrFail();
+        $this->assertSame($expectedLabel, $newUser->service);
+        $this->assertSame($roleKind, $newUser->specialServiceKind());
+    }
+
+    public function test_users_index_offers_the_division_and_conseiller_roles_in_the_form(): void
+    {
+        $admin = User::factory()->create(['role' => UserRole::Admin]);
+
+        $response = $this->actingAs($admin)->get('/utilisateurs');
+
+        $response->assertOk();
+        $response->assertSee('Division');
+        $response->assertSee('Conseiller');
     }
 
     public function test_admin_can_create_a_restricted_admin_account(): void
