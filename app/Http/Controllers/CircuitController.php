@@ -67,6 +67,18 @@ class CircuitController extends Controller
             ->paginate(5, ['*'], 'a_envoyer_page');
         $orientations = Orientation::orderBy('name')->get();
 
+        // Adjoint au Maire / Conseiller routent vers une personne précise,
+        // toutes catégories confondues : la liste vient directement des
+        // comptes utilisateurs de ce role_kind, pas d'un roster séparé.
+        $peopleByKind = collect(['maire_adjoint', 'conseiller'])
+            ->mapWithKeys(fn ($kind) => [$kind => User::where('role_kind', $kind)->orderBy('name')->pluck('name')]);
+
+        // Division dépend d'un service précis (ex: les divisions d'Etat
+        // Civil) : regroupées par nom de service pour le menu en cascade.
+        $divisionsByService = $orientations->mapWithKeys(
+            fn ($o) => [$o->name => User::where('role_kind', 'division')->where('division_of', $o->name)->orderBy('name')->pluck('name')]
+        );
+
         // Le Cabinet n'a pas accès à Suivi (vue globale tous services) : ce
         // second tableau lui donne uniquement la trace de son propre travail
         // d'annotation, une fois la demande sortie de la file d'attente.
@@ -74,7 +86,7 @@ class CircuitController extends Controller
             ->orderByDesc('updated_at')
             ->paginate(5, ['*'], 'annotees_page');
 
-        return view('circuit.fatou', compact('aEnvoyer', 'orientations', 'dejaAnnotees'));
+        return view('circuit.fatou', compact('aEnvoyer', 'orientations', 'peopleByKind', 'divisionsByService', 'dejaAnnotees'));
     }
 
     /**
@@ -95,23 +107,27 @@ class CircuitController extends Controller
         $request->validate([
             'remarque_maire' => ['required', 'string', 'max:2000'],
             'destination_category' => ['nullable', Rule::in(array_merge(['service'], array_keys(User::specialServiceRoles())))],
-            'service_destination' => ['nullable', 'string', 'max:255'],
+            'destination_value' => ['nullable', 'string', 'max:255'],
         ], [
             'remarque_maire.required' => "Les annotations du Maire sont obligatoires.",
         ]);
 
         $category = $request->destination_category ?: null;
+        $value = $request->destination_value ?: null;
 
-        if ($category === 'service' && ! $request->service_destination) {
-            return back()->withErrors(['service_destination' => "Veuillez choisir un service."])->withInput();
+        if ($category !== null) {
+            $validValues = $category === 'service'
+                ? Orientation::pluck('name')
+                : User::where('role_kind', $category)->pluck('name');
+
+            if (! $value || ! $validValues->contains($value)) {
+                $label = $category === 'service' ? 'un service' : 'une personne';
+                return back()->withErrors(['destination_value' => "Veuillez choisir {$label} valide."])->withInput();
+            }
         }
 
         $destinationType = $category;
-        $destination = match (true) {
-            $category === 'service' => $request->service_destination,
-            $category !== null => User::specialServiceRoles()[$category],
-            default => null,
-        };
+        $destination = $category !== null ? $value : null;
 
         $tabdepot->update([
             'remarque_maire' => $request->remarque_maire,
@@ -193,12 +209,13 @@ class CircuitController extends Controller
             'resolution_service' => $request->resolution,
         ]);
 
-        $qui = match ($tabdepot->destination_type) {
+        $quiPrefix = match ($tabdepot->destination_type) {
             'maire_adjoint' => "l'Adjoint au Maire",
             'division' => 'la Division',
             'conseiller' => 'le Conseiller',
-            default => 'le service ' . $tabdepot->service_assigne,
+            default => 'le service',
         };
+        $qui = $quiPrefix . ' ' . $tabdepot->service_assigne;
         $this->logHistorique($tabdepot, 'service', 'cloture', $tabdepot->resolutionLabel() . ' par ' . $qui);
 
         // La demande est traitée : la notification qui l'annonçait n'a plus

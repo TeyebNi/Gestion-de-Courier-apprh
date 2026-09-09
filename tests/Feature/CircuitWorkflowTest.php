@@ -8,7 +8,6 @@ use App\Models\Orientation;
 use App\Models\Tabdepot;
 use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
-use PHPUnit\Framework\Attributes\DataProvider;
 use Tests\TestCase;
 
 class CircuitWorkflowTest extends TestCase
@@ -153,9 +152,12 @@ class CircuitWorkflowTest extends TestCase
 
         $response = $this->actingAs($fatou)->get('/circuit/fatou');
 
+        // Le sous-menu "Quel service ?" est peuplé côté client (JS) à partir
+        // de la liste des services : seul l'attribut qui pilote cette
+        // pré-sélection est vérifiable côté serveur.
         $response->assertOk();
-        $response->assertSee('<option value="Informatique" selected>Informatique</option>', false);
-        $response->assertSee('<option value="Etat Civil" >Etat Civil</option>', false);
+        $response->assertSee('data-preselected="Informatique"', false);
+        $response->assertSee('<option value="service" selected>Service</option>', false);
     }
 
     public function test_historique_transferts_are_paginated_by_five(): void
@@ -183,6 +185,7 @@ class CircuitWorkflowTest extends TestCase
     {
         $accueil = User::factory()->create(['role' => UserRole::User]);
         $fatou = User::factory()->create(['role' => UserRole::Fatou]);
+        Orientation::create(['name' => 'Etat Civil']);
 
         $depot = $this->makeDepot();
 
@@ -198,7 +201,7 @@ class CircuitWorkflowTest extends TestCase
             ->post("/circuit/{$depot->id}/decider", [
                 'remarque_maire' => 'Vu par le Maire, à traiter en urgence.',
                 'destination_category' => 'service',
-                'service_destination' => 'Etat Civil',
+                'destination_value' => 'Etat Civil',
             ])
             ->assertRedirect();
 
@@ -224,13 +227,14 @@ class CircuitWorkflowTest extends TestCase
     public function test_decide_notifies_the_assigned_service(): void
     {
         $fatou = User::factory()->create(['role' => UserRole::Fatou]);
+        Orientation::create(['name' => 'Etat Civil']);
         $depot = $this->makeDepot();
         $depot->update(['statut_circuit' => 'fatou']);
 
         $this->actingAs($fatou)->post("/circuit/{$depot->id}/decider", [
             'remarque_maire' => 'RAS',
             'destination_category' => 'service',
-            'service_destination' => 'Etat Civil',
+            'destination_value' => 'Etat Civil',
         ]);
 
         $this->assertDatabaseHas('service_notifications', [
@@ -287,20 +291,22 @@ class CircuitWorkflowTest extends TestCase
         $suiviResponse->assertSee('Clôturée (Convoquée)');
     }
 
-    public function test_cabinet_can_route_a_demande_to_the_maire_adjoint(): void
+    public function test_cabinet_can_route_a_demande_to_a_specific_maire_adjoint(): void
     {
         $fatou = User::factory()->create(['role' => UserRole::Fatou]);
+        User::factory()->create(['role' => UserRole::User, 'role_kind' => 'maire_adjoint', 'name' => 'Ould Mohamed Lagdhaf', 'service' => 'Ould Mohamed Lagdhaf']);
         $depot = $this->makeDepot();
         $depot->update(['statut_circuit' => 'fatou']);
 
         $this->actingAs($fatou)->post("/circuit/{$depot->id}/decider", [
             'remarque_maire' => 'RAS',
             'destination_category' => 'maire_adjoint',
+            'destination_value' => 'Ould Mohamed Lagdhaf',
         ])->assertRedirect();
 
         $depot->refresh();
         $this->assertSame('service', $depot->statut_circuit);
-        $this->assertSame(User::MAIRE_ADJOINT_LABEL, $depot->service_assigne);
+        $this->assertSame('Ould Mohamed Lagdhaf', $depot->service_assigne);
         $this->assertSame('maire_adjoint', $depot->destination_type);
     }
 
@@ -313,8 +319,23 @@ class CircuitWorkflowTest extends TestCase
         $this->actingAs($fatou)->post("/circuit/{$depot->id}/decider", [
             'remarque_maire' => 'RAS',
             'destination_category' => 'service',
-            'service_destination' => '',
-        ])->assertSessionHasErrors('service_destination');
+            'destination_value' => '',
+        ])->assertSessionHasErrors('destination_value');
+
+        $this->assertSame('fatou', $depot->fresh()->statut_circuit);
+    }
+
+    public function test_choosing_maire_adjoint_requires_picking_a_real_account(): void
+    {
+        $fatou = User::factory()->create(['role' => UserRole::Fatou]);
+        $depot = $this->makeDepot();
+        $depot->update(['statut_circuit' => 'fatou']);
+
+        $this->actingAs($fatou)->post("/circuit/{$depot->id}/decider", [
+            'remarque_maire' => 'RAS',
+            'destination_category' => 'maire_adjoint',
+            'destination_value' => 'Personne Inventée',
+        ])->assertSessionHasErrors('destination_value');
 
         $this->assertSame('fatou', $depot->fresh()->statut_circuit);
     }
@@ -322,13 +343,14 @@ class CircuitWorkflowTest extends TestCase
     public function test_a_maire_adjoint_account_sees_and_closes_its_own_demandes_like_a_service(): void
     {
         $fatou = User::factory()->create(['role' => UserRole::Fatou]);
-        $adjointUser = User::factory()->create(['role' => UserRole::User, 'service' => User::MAIRE_ADJOINT_LABEL]);
+        $adjointUser = User::factory()->create(['role' => UserRole::User, 'role_kind' => 'maire_adjoint', 'name' => 'Ould Mohamed Lagdhaf', 'service' => 'Ould Mohamed Lagdhaf']);
         $depot = $this->makeDepot();
         $depot->update(['statut_circuit' => 'fatou']);
 
         $this->actingAs($fatou)->post("/circuit/{$depot->id}/decider", [
             'remarque_maire' => 'RAS',
             'destination_category' => 'maire_adjoint',
+            'destination_value' => 'Ould Mohamed Lagdhaf',
         ]);
 
         $response = $this->actingAs($adjointUser)->get('/circuit/service');
@@ -341,25 +363,27 @@ class CircuitWorkflowTest extends TestCase
         $this->assertSame('cloture', $depot->fresh()->statut_circuit);
     }
 
-    public function test_all_maire_adjoint_accounts_share_the_same_queue(): void
+    public function test_a_demande_routed_to_one_maire_adjoint_is_not_visible_to_another(): void
     {
-        // Comme le Cabinet de Maire : une seule file commune, pas une par personne.
+        // Chaque Adjoint au Maire a sa propre file individuelle, comme un
+        // service — contrairement à Cabinet, qui lui reste une file commune.
         $fatou = User::factory()->create(['role' => UserRole::Fatou]);
-        $adjoint1 = User::factory()->create(['role' => UserRole::User, 'service' => User::MAIRE_ADJOINT_LABEL]);
-        $adjoint2 = User::factory()->create(['role' => UserRole::User, 'service' => User::MAIRE_ADJOINT_LABEL]);
+        $adjoint1 = User::factory()->create(['role' => UserRole::User, 'role_kind' => 'maire_adjoint', 'name' => 'Ould Mohamed Lagdhaf', 'service' => 'Ould Mohamed Lagdhaf']);
+        $adjoint2 = User::factory()->create(['role' => UserRole::User, 'role_kind' => 'maire_adjoint', 'name' => 'Saleh', 'service' => 'Saleh']);
         $depot = $this->makeDepot();
         $depot->update(['statut_circuit' => 'fatou']);
 
         $this->actingAs($fatou)->post("/circuit/{$depot->id}/decider", [
             'remarque_maire' => 'RAS',
             'destination_category' => 'maire_adjoint',
+            'destination_value' => 'Ould Mohamed Lagdhaf',
         ]);
 
-        foreach ([$adjoint1, $adjoint2] as $user) {
-            $response = $this->actingAs($user)->get('/circuit/service');
-            $response->assertOk();
-            $response->assertViewHas('demandes', fn ($demandes) => $demandes->contains('id', $depot->id));
-        }
+        $this->actingAs($adjoint1)->get('/circuit/service')
+            ->assertViewHas('demandes', fn ($demandes) => $demandes->contains('id', $depot->id));
+
+        $this->actingAs($adjoint2)->get('/circuit/service')
+            ->assertViewHas('demandes', fn ($demandes) => ! $demandes->contains('id', $depot->id));
     }
 
     public function test_maire_adjoint_label_appears_wherever_the_status_is_shown(): void
@@ -368,61 +392,82 @@ class CircuitWorkflowTest extends TestCase
         $depot = $this->makeDepot();
         $depot->update([
             'statut_circuit' => 'service',
-            'service_assigne' => User::MAIRE_ADJOINT_LABEL,
+            'service_assigne' => 'Ould Mohamed Lagdhaf',
             'destination_type' => 'maire_adjoint',
         ]);
 
         $response = $this->actingAs($accueil)->get('/circuit/suivi');
 
-        $response->assertSee("Chez l&#039;Adjoint au Maire", false);
+        $response->assertSee("Chez l&#039;Adjoint au Maire : Ould Mohamed Lagdhaf", false);
     }
 
-    public static function specialDestinationsProvider(): array
-    {
-        return [
-            'Division' => ['division', User::DIVISION_LABEL, 'Chez la Division'],
-            'Conseiller' => ['conseiller', User::CONSEILLER_LABEL, 'Chez le Conseiller'],
-        ];
-    }
-
-    #[DataProvider('specialDestinationsProvider')]
-    public function test_cabinet_can_route_a_demande_to_the_other_special_destinations(string $category, string $expectedLabel, string $expectedStatutPhrase): void
+    public function test_cabinet_can_route_a_demande_to_a_specific_conseiller(): void
     {
         $fatou = User::factory()->create(['role' => UserRole::Fatou]);
+        User::factory()->create(['role' => UserRole::User, 'role_kind' => 'conseiller', 'name' => 'Zeroug', 'service' => 'Zeroug']);
         $depot = $this->makeDepot();
         $depot->update(['statut_circuit' => 'fatou']);
 
         $this->actingAs($fatou)->post("/circuit/{$depot->id}/decider", [
             'remarque_maire' => 'RAS',
-            'destination_category' => $category,
+            'destination_category' => 'conseiller',
+            'destination_value' => 'Zeroug',
         ])->assertRedirect();
 
         $depot->refresh();
         $this->assertSame('service', $depot->statut_circuit);
-        $this->assertSame($expectedLabel, $depot->service_assigne);
-        $this->assertSame($category, $depot->destination_type);
-        $this->assertSame($expectedStatutPhrase, $depot->statutLabel());
+        $this->assertSame('Zeroug', $depot->service_assigne);
+        $this->assertSame('conseiller', $depot->destination_type);
+        $this->assertSame('Chez le Conseiller : Zeroug', $depot->statutLabel());
     }
 
-    #[DataProvider('specialDestinationsProvider')]
-    public function test_all_accounts_of_a_special_role_share_the_same_queue(string $category, string $expectedLabel): void
+    public function test_cabinet_can_route_a_demande_to_a_specific_division_of_a_service(): void
     {
         $fatou = User::factory()->create(['role' => UserRole::Fatou]);
-        $account1 = User::factory()->create(['role' => UserRole::User, 'service' => $expectedLabel]);
-        $account2 = User::factory()->create(['role' => UserRole::User, 'service' => $expectedLabel]);
+        Orientation::create(['name' => 'Etat Civil']);
+        User::factory()->create([
+            'role' => UserRole::User,
+            'role_kind' => 'division',
+            'division_of' => 'Etat Civil',
+            'name' => 'Chef Division Etat Civil',
+            'service' => 'Chef Division Etat Civil',
+        ]);
         $depot = $this->makeDepot();
         $depot->update(['statut_circuit' => 'fatou']);
 
         $this->actingAs($fatou)->post("/circuit/{$depot->id}/decider", [
             'remarque_maire' => 'RAS',
-            'destination_category' => $category,
+            'destination_category' => 'division',
+            'destination_value' => 'Chef Division Etat Civil',
+        ])->assertRedirect();
+
+        $depot->refresh();
+        $this->assertSame('service', $depot->statut_circuit);
+        $this->assertSame('Chef Division Etat Civil', $depot->service_assigne);
+        $this->assertSame('division', $depot->destination_type);
+        $this->assertSame('Chez la Division : Chef Division Etat Civil', $depot->statutLabel());
+    }
+
+    public function test_a_demande_routed_to_one_division_is_not_visible_to_another(): void
+    {
+        $fatou = User::factory()->create(['role' => UserRole::Fatou]);
+        Orientation::create(['name' => 'Etat Civil']);
+        $division1 = User::factory()->create(['role' => UserRole::User, 'role_kind' => 'division', 'division_of' => 'Etat Civil', 'name' => 'Division A', 'service' => 'Division A']);
+        $division2 = User::factory()->create(['role' => UserRole::User, 'role_kind' => 'division', 'division_of' => 'Etat Civil', 'name' => 'Division B', 'service' => 'Division B']);
+        $depot = $this->makeDepot();
+        $depot->update(['statut_circuit' => 'fatou']);
+
+        $this->actingAs($fatou)->post("/circuit/{$depot->id}/decider", [
+            'remarque_maire' => 'RAS',
+            'destination_category' => 'division',
+            'destination_value' => 'Division A',
         ]);
 
-        foreach ([$account1, $account2] as $user) {
-            $response = $this->actingAs($user)->get('/circuit/service');
-            $response->assertOk();
-            $response->assertViewHas('demandes', fn ($demandes) => $demandes->contains('id', $depot->id));
-        }
+        $this->actingAs($division1)->get('/circuit/service')
+            ->assertViewHas('demandes', fn ($demandes) => $demandes->contains('id', $depot->id));
+
+        $this->actingAs($division2)->get('/circuit/service')
+            ->assertViewHas('demandes', fn ($demandes) => ! $demandes->contains('id', $depot->id));
     }
 
     public function test_an_unknown_destination_category_is_rejected(): void
@@ -473,13 +518,14 @@ class CircuitWorkflowTest extends TestCase
     public function test_fatou_index_shows_already_annotated_demandes(): void
     {
         $fatou = User::factory()->create(['role' => UserRole::Fatou]);
+        Orientation::create(['name' => 'Etat Civil']);
         $depot = $this->makeDepot();
         $depot->update(['statut_circuit' => 'fatou']);
 
         $this->actingAs($fatou)->post("/circuit/{$depot->id}/decider", [
             'remarque_maire' => 'Dossier vu, à traiter en priorité.',
             'destination_category' => 'service',
-            'service_destination' => 'Etat Civil',
+            'destination_value' => 'Etat Civil',
         ]);
 
         $response = $this->actingAs($fatou)->get('/circuit/fatou');
@@ -617,7 +663,7 @@ class CircuitWorkflowTest extends TestCase
             ->post("/circuit/{$depot->id}/decider", [
                 'remarque_maire' => 'RAS',
                 'destination_category' => 'service',
-                'service_destination' => 'Etat Civil',
+                'destination_value' => 'Etat Civil',
             ])
             ->assertForbidden();
 
@@ -641,13 +687,15 @@ class CircuitWorkflowTest extends TestCase
     {
         $fatou = User::factory()->create(['role' => UserRole::Fatou]);
         $serviceUser = User::factory()->create(['role' => UserRole::User, 'service' => 'Etat Civil']);
+        Orientation::create(['name' => 'Etat Civil']);
+        Orientation::create(['name' => 'Urbanisme']);
 
         $depotForMe = $this->makeDepot();
         $depotForMe->update(['statut_circuit' => 'fatou', 'reference' => 'MI/2026/001']);
         $this->actingAs($fatou)->post("/circuit/{$depotForMe->id}/decider", [
             'remarque_maire' => 'RAS',
             'destination_category' => 'service',
-            'service_destination' => 'Etat Civil',
+            'destination_value' => 'Etat Civil',
         ]);
 
         $depotForOther = $this->makeDepot();
@@ -655,7 +703,7 @@ class CircuitWorkflowTest extends TestCase
         $this->actingAs($fatou)->post("/circuit/{$depotForOther->id}/decider", [
             'remarque_maire' => 'RAS',
             'destination_category' => 'service',
-            'service_destination' => 'Urbanisme',
+            'destination_value' => 'Urbanisme',
         ]);
 
         $response = $this->actingAs($serviceUser)->get('/circuit/service');

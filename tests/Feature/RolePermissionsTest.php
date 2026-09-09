@@ -351,9 +351,9 @@ class RolePermissionsTest extends TestCase
         $response->assertDontSee('2026-08-30');
     }
 
-    public function test_is_maire_adjoint_matches_the_shared_label(): void
+    public function test_is_maire_adjoint_matches_the_role_kind(): void
     {
-        $adjointUser = User::factory()->create(['role' => UserRole::User, 'service' => User::MAIRE_ADJOINT_LABEL]);
+        $adjointUser = User::factory()->create(['role' => UserRole::User, 'role_kind' => 'maire_adjoint', 'service' => 'Ould Mohamed Lagdhaf']);
         $serviceUser = User::factory()->create(['role' => UserRole::User, 'service' => 'Etat Civil']);
         $accueil = User::factory()->create(['role' => UserRole::User]);
 
@@ -364,7 +364,7 @@ class RolePermissionsTest extends TestCase
 
     public function test_sidebar_shows_maire_adjoint_label_instead_of_demandes_du_circuit(): void
     {
-        $adjointUser = User::factory()->create(['role' => UserRole::User, 'service' => User::MAIRE_ADJOINT_LABEL]);
+        $adjointUser = User::factory()->create(['role' => UserRole::User, 'role_kind' => 'maire_adjoint', 'service' => 'Ould Mohamed Lagdhaf']);
         $serviceUser = User::factory()->create(['role' => UserRole::User, 'service' => 'Etat Civil']);
 
         $adjointResponse = $this->actingAs($adjointUser)->get('/');
@@ -379,15 +379,15 @@ class RolePermissionsTest extends TestCase
     public static function otherSpecialLabelsProvider(): array
     {
         return [
-            'Division' => [User::DIVISION_LABEL],
-            'Conseiller' => [User::CONSEILLER_LABEL],
+            'Division' => ['division', User::DIVISION_LABEL],
+            'Conseiller' => ['conseiller', User::CONSEILLER_LABEL],
         ];
     }
 
     #[DataProvider('otherSpecialLabelsProvider')]
-    public function test_sidebar_shows_the_other_special_role_labels(string $label): void
+    public function test_sidebar_shows_the_other_special_role_labels(string $kind, string $label): void
     {
-        $user = User::factory()->create(['role' => UserRole::User, 'service' => $label]);
+        $user = User::factory()->create(['role' => UserRole::User, 'role_kind' => $kind, 'service' => 'Compte Test']);
 
         $response = $this->actingAs($user)->get('/');
 

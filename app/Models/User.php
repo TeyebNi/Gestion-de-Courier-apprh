@@ -15,10 +15,11 @@ class User extends Authenticatable
     use HasFactory, Notifiable;
 
     /**
-     * Valeurs fixes de "service" pour les rôles à file commune : tous les
-     * comptes partageant un même rôle spécial (Adjoint au Maire, Division,
-     * Conseiller) voient la même file, comme le Cabinet de Maire — jamais une
-     * file par personne.
+     * Libellés de catégorie pour les rôles "à la carte" (Adjoint au Maire,
+     * Division, Conseiller) : chaque compte de ce type a sa propre file
+     * individuelle (comme un service), identifiée par son propre nom dans
+     * "service" — ces constantes ne servent qu'à l'affichage de la catégorie
+     * (rôle affiché, préfixe de statut), jamais de valeur de "service".
      */
     public const MAIRE_ADJOINT_LABEL = 'Adjoint au Maire';
     public const DIVISION_LABEL = 'Division';
@@ -34,6 +35,8 @@ class User extends Authenticatable
         'email',
         'password',
         'role',
+        'role_kind',
+        'division_of',
         'service',
         'can_manage_users',
         'can_access_cabinet',
@@ -135,9 +138,9 @@ class User extends Authenticatable
     }
 
     /**
-     * Kind key => libellé partagé, pour les rôles "service" qui ne
-     * représentent pas un vrai département (Orientation) mais une file
-     * commune à tous les comptes de ce rôle.
+     * Kind key => libellé de catégorie, pour les rôles "à la carte" qui ne
+     * représentent pas un vrai département (Orientation) mais une personne
+     * précise (comme un service, mais individuel plutôt que par département).
      */
     public static function specialServiceRoles(): array
     {
@@ -149,25 +152,24 @@ class User extends Authenticatable
     }
 
     /**
-     * Which special role (if any) this account's "service" matches — null
-     * for a real department or a plain Accueil account (service vide).
+     * Catégorie de rôle "à la carte" de ce compte (stockée, pas dérivée de
+     * "service" qui contient ici son propre nom) — null pour un service réel
+     * ou un compte Accueil.
      */
     public function specialServiceKind(): ?string
     {
-        $kind = array_search($this->service, self::specialServiceRoles(), true);
-
-        return $kind === false ? null : $kind;
+        return $this->role_kind;
     }
 
     /**
-     * Libellé d'affichage du rôle spécial de ce compte (Adjoint au Maire,
+     * Libellé d'affichage de la catégorie de ce compte (Adjoint au Maire,
      * Division, Conseiller), ou null si c'est un service réel.
      */
     public function specialServiceLabel(): ?string
     {
         $kind = $this->specialServiceKind();
 
-        return $kind ? self::specialServiceRoles()[$kind] : null;
+        return $kind ? (self::specialServiceRoles()[$kind] ?? null) : null;
     }
 
     /**

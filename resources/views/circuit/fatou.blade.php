@@ -62,23 +62,27 @@ document.addEventListener('DOMContentLoaded', function () {
                                     @endphp
                                     <div class="form-group">
                                         <label>Destination (optionnel)</label>
-                                        <select name="destination_category" class="form-control destination-category" data-target="#service_wrap_{{ $d->id }}">
+                                        <select class="form-control top-category" data-card="{{ $d->id }}" data-preselected="{{ $preselected?->name }}">
                                             <option value="">Aucun (classer directement)</option>
                                             <option value="service" {{ $preselected ? 'selected' : '' }}>Service</option>
                                             <option value="maire_adjoint">Adjoint au Maire</option>
-                                            <option value="division">Division</option>
                                             <option value="conseiller">Conseiller</option>
                                         </select>
                                     </div>
-                                    <div class="form-group" id="service_wrap_{{ $d->id }}" style="{{ $preselected ? '' : 'display:none;' }}">
+                                    <div class="form-group" id="service_pick_wrap_{{ $d->id }}" style="display:none;">
                                         <label>Quel service ?</label>
-                                        <select name="service_destination" class="form-control">
-                                            <option value="">Sélectionner un service</option>
-                                            @foreach($orientations as $o)
-                                                <option value="{{ $o->name }}" {{ $preselected && $preselected->name === $o->name ? 'selected' : '' }}>{{ $o->name }}</option>
-                                            @endforeach
-                                        </select>
+                                        <select class="form-control service-pick" data-card="{{ $d->id }}"></select>
                                     </div>
+                                    <div class="form-group" id="division_pick_wrap_{{ $d->id }}" style="display:none;">
+                                        <label>Quelle Division (optionnel) ?</label>
+                                        <select class="form-control division-pick" data-card="{{ $d->id }}"></select>
+                                    </div>
+                                    <div class="form-group" id="person_pick_wrap_{{ $d->id }}" style="display:none;">
+                                        <label id="person_pick_label_{{ $d->id }}"></label>
+                                        <select class="form-control person-pick" data-card="{{ $d->id }}"></select>
+                                    </div>
+                                    <input type="hidden" name="destination_category" id="final_category_{{ $d->id }}" value="">
+                                    <input type="hidden" name="destination_value" id="final_value_{{ $d->id }}" value="">
                                     <button type="submit" class="btn btn-primary btn-block">Enregistrer les annotations</button>
                                 </form>
                             </div>
@@ -146,13 +150,113 @@ document.addEventListener('DOMContentLoaded', function () {
 @section('scripts')
 <script>
 document.addEventListener('DOMContentLoaded', function () {
-    document.querySelectorAll('.destination-category').forEach(function (select) {
-        var wrap = document.querySelector(select.dataset.target);
+    var ORIENTATIONS = @json($orientations->pluck('name'));
+    var DIVISIONS_BY_SERVICE = @json($divisionsByService);
+    var PEOPLE_BY_KIND = {
+        maire_adjoint: @json($peopleByKind['maire_adjoint']),
+        conseiller: @json($peopleByKind['conseiller']),
+    };
+    var PERSON_LABELS = {
+        maire_adjoint: 'Quel Adjoint au Maire ?',
+        conseiller: 'Quel Conseiller ?',
+    };
+
+    function populateSelect(select, options, placeholder) {
+        select.innerHTML = '';
+        var placeholderOpt = document.createElement('option');
+        placeholderOpt.value = '';
+        placeholderOpt.textContent = placeholder;
+        select.appendChild(placeholderOpt);
+        options.forEach(function (name) {
+            var opt = document.createElement('option');
+            opt.value = name;
+            opt.textContent = name;
+            select.appendChild(opt);
+        });
+    }
+
+    function setFinal(cardId, category, value) {
+        document.getElementById('final_category_' + cardId).value = category || '';
+        document.getElementById('final_value_' + cardId).value = value || '';
+    }
+
+    function onTopCategoryChange(select, preselectedService) {
+        var cardId = select.dataset.card;
+        var category = select.value;
+        var serviceWrap = document.getElementById('service_pick_wrap_' + cardId);
+        var divisionWrap = document.getElementById('division_pick_wrap_' + cardId);
+        var personWrap = document.getElementById('person_pick_wrap_' + cardId);
+
+        serviceWrap.style.display = 'none';
+        divisionWrap.style.display = 'none';
+        personWrap.style.display = 'none';
+        setFinal(cardId, null, null);
+
+        if (category === 'service') {
+            var servicePick = serviceWrap.querySelector('select');
+            populateSelect(servicePick, ORIENTATIONS, 'Sélectionner un service');
+            if (preselectedService) { servicePick.value = preselectedService; }
+            serviceWrap.style.display = '';
+            onServicePickChange(servicePick);
+        } else if (category === 'maire_adjoint' || category === 'conseiller') {
+            var personPick = personWrap.querySelector('select');
+            document.getElementById('person_pick_label_' + cardId).textContent = PERSON_LABELS[category];
+            populateSelect(personPick, PEOPLE_BY_KIND[category] || [], 'Sélectionner...');
+            personWrap.style.display = '';
+            setFinal(cardId, category, personPick.value);
+        }
+    }
+
+    function onServicePickChange(select) {
+        var cardId = select.dataset.card;
+        var divisionWrap = document.getElementById('division_pick_wrap_' + cardId);
+        var divisions = DIVISIONS_BY_SERVICE[select.value] || [];
+
+        setFinal(cardId, 'service', select.value);
+
+        if (select.value && divisions.length > 0) {
+            var divisionPick = divisionWrap.querySelector('select');
+            populateSelect(divisionPick, divisions, 'Aucune (service directement)');
+            divisionWrap.style.display = '';
+        } else {
+            divisionWrap.style.display = 'none';
+        }
+    }
+
+    function onDivisionPickChange(select) {
+        var cardId = select.dataset.card;
+        var servicePick = document.getElementById('service_pick_wrap_' + cardId).querySelector('select');
+
+        if (select.value) {
+            setFinal(cardId, 'division', select.value);
+        } else {
+            setFinal(cardId, 'service', servicePick.value);
+        }
+    }
+
+    document.querySelectorAll('.top-category').forEach(function (select) {
+        select.addEventListener('change', function () { onTopCategoryChange(this, null); });
+
+        // Une demande interne dont le service correspond déjà à une Orientation
+        // pré-sélectionne "Service" : révéler tout de suite le bon service choisi.
+        if (select.value === 'service' && select.dataset.preselected) {
+            onTopCategoryChange(select, select.dataset.preselected);
+        }
+    });
+
+    document.querySelectorAll('.service-pick').forEach(function (select) {
+        select.addEventListener('change', function () { onServicePickChange(this); });
+    });
+
+    document.querySelectorAll('.division-pick').forEach(function (select) {
+        select.addEventListener('change', function () { onDivisionPickChange(this); });
+    });
+
+    document.querySelectorAll('.person-pick').forEach(function (select) {
         select.addEventListener('change', function () {
-            wrap.style.display = this.value === 'service' ? '' : 'none';
-            if (this.value !== 'service') {
-                wrap.querySelector('select').value = '';
-            }
+            var cardId = this.dataset.card;
+            var category = document.querySelector('.top-category[data-card="' + cardId + '"]').value;
+            setFinal(cardId, category, this.value);
         });
     });
 });

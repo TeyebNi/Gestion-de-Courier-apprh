@@ -47,13 +47,15 @@ Les Utilisateurs
                                         {{ $u->isAdmin() ? 'Admin' : ($u->specialServiceLabel() ?: 'User') }}
                                     </span>
                                 </td>
-                                <td>{{ $u->service ?: '—' }}</td>
+                                <td>{{ $u->specialServiceKind() === 'division' ? $u->division_of : ($u->service ?: '—') }}</td>
                                 <td>{{ $u->created_at?->format('d/m/Y') }}</td>
                                 <td class="text-right">
                                     <a data-id="{{ $u->id }}"
                                        data-name="{{ $u->name }}"
                                        data-email="{{ $u->email }}"
                                        data-role="{{ $u->role->value }}"
+                                       data-role-kind="{{ $u->role_kind }}"
+                                       data-division-of="{{ $u->division_of }}"
                                        data-service="{{ $u->service }}"
                                        data-can-manage-users="{{ $u->can_manage_users !== false ? '1' : '0' }}"
                                        data-can-access-cabinet="{{ $u->can_access_cabinet !== false ? '1' : '0' }}"
@@ -170,6 +172,17 @@ Les Utilisateurs
                         </select>
                     </div>
                     <p class="text-muted mb-0" id="create_adjoint_note" style="display:none; font-size:0.85em;"></p>
+                    <div class="input-group mt-2" id="create_division_of_group" style="display:none;">
+                        <div class="input-group-prepend">
+                            <span class="input-group-text">Division de</span>
+                        </div>
+                        <select class="form-control" name="division_of" id="create_division_of">
+                            <option value="">Sélectionner un service</option>
+                            @foreach($services as $s)
+                                <option value="{{ $s }}">{{ $s }}</option>
+                            @endforeach
+                        </select>
+                    </div>
                     <div id="create_admin_permissions_group" style="display:none;">
                         <hr>
                         <p class="text-muted mb-2" style="font-size:0.85em;">Droits admin supplémentaires (décochez pour restreindre ce compte, ex: Accueil) :</p>
@@ -248,6 +261,17 @@ Les Utilisateurs
                         </select>
                     </div>
                     <p class="text-muted mb-0" id="edit_adjoint_note" style="display:none; font-size:0.85em;"></p>
+                    <div class="input-group mt-2" id="edit_division_of_group" style="display:none;">
+                        <div class="input-group-prepend">
+                            <span class="input-group-text">Division de</span>
+                        </div>
+                        <select class="form-control" name="division_of" id="edit_division_of">
+                            <option value="">Sélectionner un service</option>
+                            @foreach($services as $s)
+                                <option value="{{ $s }}">{{ $s }}</option>
+                            @endforeach
+                        </select>
+                    </div>
                     <div id="edit_admin_permissions_group" style="display:none;">
                         <hr>
                         <p class="text-muted mb-2" style="font-size:0.85em;">Droits admin supplémentaires (décochez pour restreindre ce compte, ex: Accueil) :</p>
@@ -364,19 +388,13 @@ Les Utilisateurs
 <script>
 var SPECIAL_SERVICE_ROLES = @json(\App\Models\User::specialServiceRoles());
 
-function specialKindForService(service) {
-    for (var kind in SPECIAL_SERVICE_ROLES) {
-        if (SPECIAL_SERVICE_ROLES[kind] === service) { return kind; }
-    }
-    return null;
-}
-
 $('#editUserModal').on('show.bs.modal', function (event) {
     var button = $(event.relatedTarget);
     var id = button.data('id');
     var role = button.data('role');
     var service = button.data('service');
-    var kind = role === 'user' && specialKindForService(service) ? specialKindForService(service) : role;
+    var roleKind = button.data('role-kind');
+    var kind = role === 'user' && roleKind ? roleKind : role;
 
     $('#editUserForm').attr('action', '{{ url('/utilisateurs') }}/' + id);
     $('#edit_name').val(button.data('name'));
@@ -392,6 +410,9 @@ $('#editUserModal').on('show.bs.modal', function (event) {
     toggleServiceField(kind, 'edit');
     if (kind === 'user') {
         $('#edit_service').val(service);
+    }
+    if (kind === 'division') {
+        $('#edit_division_of').val(button.data('division-of'));
     }
 });
 
@@ -409,18 +430,26 @@ function toggleServiceField(kind, prefix) {
     var isSpecial = Object.prototype.hasOwnProperty.call(SPECIAL_SERVICE_ROLES, kind);
     document.getElementById(prefix + '_role_kind').value = isSpecial ? kind : 'user';
 
-    // Un rôle à file commune (Adjoint au Maire, Division, Conseiller) ne
-    // demande aucun nom à choisir, donc pas de champ Service du tout.
+    // Un rôle "à la carte" (Adjoint au Maire, Division, Conseiller) a sa
+    // propre file individuelle : pas de choix manuel de "Service" (basé sur
+    // son propre nom automatiquement).
     $('#' + prefix + '_service_group').toggle(kind === 'user');
     var note = document.getElementById(prefix + '_adjoint_note');
     if (isSpecial) {
-        note.textContent = 'Ce compte partagera la file commune "' + SPECIAL_SERVICE_ROLES[kind] + '" (comme tout autre compte de ce rôle).';
+        note.textContent = kind === 'division'
+            ? 'Ce compte aura sa propre file, au sein du service choisi ci-dessous.'
+            : 'Ce compte aura sa propre file individuelle, comme un service.';
         note.style.display = '';
     } else {
         note.style.display = 'none';
     }
     if (kind !== 'user') {
         $('#' + prefix + '_service').val('');
+    }
+
+    $('#' + prefix + '_division_of_group').toggle(kind === 'division');
+    if (kind !== 'division') {
+        $('#' + prefix + '_division_of').val('');
     }
 
     $('#' + prefix + '_admin_permissions_group').toggle(kind === 'admin');

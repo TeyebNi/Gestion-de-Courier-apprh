@@ -5,7 +5,6 @@ namespace Tests\Feature;
 use App\Enums\UserRole;
 use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
-use PHPUnit\Framework\Attributes\DataProvider;
 use Tests\TestCase;
 
 class UserManagementTest extends TestCase
@@ -48,15 +47,16 @@ class UserManagementTest extends TestCase
         $response->assertRedirect(route('users.index'));
 
         $newUser = User::where('email', 'lagdhaf@commune.mr')->firstOrFail();
-        $this->assertSame(User::MAIRE_ADJOINT_LABEL, $newUser->service);
+        $this->assertSame('Ould Mohamed Lagdhaf', $newUser->service);
         $this->assertTrue($newUser->isMaireAdjoint());
     }
 
     public function test_maire_adjoint_account_ignores_any_service_value_sent_by_the_client(): void
     {
-        // La file est unique et partagee (comme Cabinet) : le client ne choisit
-        // aucun nom, donc le serveur ne doit jamais faire confiance a un champ
-        // "service" arbitraire envoye avec role_kind=maire_adjoint.
+        // Chaque Adjoint au Maire a sa propre file (son propre nom comme
+        // "service") : le client ne choisit aucun nom de service, donc le
+        // serveur ne doit jamais faire confiance à un champ "service"
+        // arbitraire envoyé avec role_kind=maire_adjoint.
         $admin = User::factory()->create(['role' => UserRole::Admin]);
 
         $response = $this->actingAs($admin)->post('/utilisateurs', [
@@ -72,7 +72,7 @@ class UserManagementTest extends TestCase
         $response->assertRedirect(route('users.index'));
 
         $newUser = User::where('email', 'suspect@commune.mr')->firstOrFail();
-        $this->assertSame(User::MAIRE_ADJOINT_LABEL, $newUser->service);
+        $this->assertSame('Compte Suspect', $newUser->service);
     }
 
     public function test_users_index_offers_the_maire_adjoint_role_in_the_form(): void
@@ -85,33 +85,64 @@ class UserManagementTest extends TestCase
         $response->assertSee('Adjoint au Maire');
     }
 
-    public static function otherSpecialRolesProvider(): array
-    {
-        return [
-            'Division' => ['division', User::DIVISION_LABEL],
-            'Conseiller' => ['conseiller', User::CONSEILLER_LABEL],
-        ];
-    }
-
-    #[DataProvider('otherSpecialRolesProvider')]
-    public function test_admin_can_create_an_account_for_the_other_special_roles(string $roleKind, string $expectedLabel): void
+    public function test_admin_can_create_a_conseiller_account(): void
     {
         $admin = User::factory()->create(['role' => UserRole::Admin]);
 
         $response = $this->actingAs($admin)->post('/utilisateurs', [
             'name' => 'Compte Test',
-            'email' => strtolower($roleKind) . '@commune.mr',
+            'email' => 'conseiller@commune.mr',
             'password' => 'motdepasse123',
             'password_confirmation' => 'motdepasse123',
             'role' => 'user',
-            'role_kind' => $roleKind,
+            'role_kind' => 'conseiller',
         ]);
 
         $response->assertRedirect(route('users.index'));
 
-        $newUser = User::where('email', strtolower($roleKind) . '@commune.mr')->firstOrFail();
-        $this->assertSame($expectedLabel, $newUser->service);
-        $this->assertSame($roleKind, $newUser->specialServiceKind());
+        $newUser = User::where('email', 'conseiller@commune.mr')->firstOrFail();
+        $this->assertSame('Compte Test', $newUser->service);
+        $this->assertSame('conseiller', $newUser->specialServiceKind());
+    }
+
+    public function test_admin_can_create_a_division_account_under_a_service(): void
+    {
+        $admin = User::factory()->create(['role' => UserRole::Admin]);
+        \App\Models\Orientation::create(['name' => 'Etat Civil']);
+
+        $response = $this->actingAs($admin)->post('/utilisateurs', [
+            'name' => 'Chef Division',
+            'email' => 'division@commune.mr',
+            'password' => 'motdepasse123',
+            'password_confirmation' => 'motdepasse123',
+            'role' => 'user',
+            'role_kind' => 'division',
+            'division_of' => 'Etat Civil',
+        ]);
+
+        $response->assertRedirect(route('users.index'));
+
+        $newUser = User::where('email', 'division@commune.mr')->firstOrFail();
+        $this->assertSame('Chef Division', $newUser->service);
+        $this->assertSame('division', $newUser->specialServiceKind());
+        $this->assertSame('Etat Civil', $newUser->division_of);
+    }
+
+    public function test_cannot_create_a_division_account_without_choosing_its_parent_service(): void
+    {
+        $admin = User::factory()->create(['role' => UserRole::Admin]);
+
+        $response = $this->actingAs($admin)->post('/utilisateurs', [
+            'name' => 'Chef Division',
+            'email' => 'division@commune.mr',
+            'password' => 'motdepasse123',
+            'password_confirmation' => 'motdepasse123',
+            'role' => 'user',
+            'role_kind' => 'division',
+        ]);
+
+        $response->assertSessionHasErrors('division_of');
+        $this->assertDatabaseMissing('users', ['email' => 'division@commune.mr']);
     }
 
     public function test_users_index_offers_the_division_and_conseiller_roles_in_the_form(): void

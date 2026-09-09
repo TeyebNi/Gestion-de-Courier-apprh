@@ -65,15 +65,24 @@ class UserController extends Controller
             'password' => ['required', 'string', 'min:8', 'confirmed'],
             'role' => ['required', 'in:admin,user,fatou'],
             'role_kind' => ['nullable', Rule::in(array_merge(['user'], array_keys(User::specialServiceRoles())))],
+            'division_of' => [Rule::requiredIf($request->role_kind === 'division'), 'nullable', Rule::in(Orientation::pluck('name'))],
             'service' => ['nullable', 'string', 'max:255'],
         ], [
             'name.regex' => 'Le nom ne doit contenir que des lettres.',
             'email.unique' => 'Cet email est déjà utilisé par un autre utilisateur.',
+            'division_of.required' => 'Veuillez choisir de quel service dépend cette division.',
+            'division_of.in' => 'Veuillez choisir un service valide.',
         ]);
 
+        $isAdminOrFatou = in_array($request->role, ['admin', 'fatou']);
+        $specialKind = ! $isAdminOrFatou && array_key_exists($request->role_kind, User::specialServiceRoles()) ? $request->role_kind : null;
+
+        // Un compte "à la carte" (Adjoint au Maire/Division/Conseiller) a sa
+        // propre file individuelle : "service" devient son propre nom, pas un
+        // choix manuel, pour isoler sa file de celle des autres du même rôle.
         $service = match (true) {
-            in_array($request->role, ['admin', 'fatou']) => null,
-            array_key_exists($request->role_kind, User::specialServiceRoles()) => User::specialServiceRoles()[$request->role_kind],
+            $isAdminOrFatou => null,
+            $specialKind !== null => $request->name,
             default => $request->service,
         };
 
@@ -82,6 +91,8 @@ class UserController extends Controller
             'email' => $request->email,
             'password' => bcrypt($request->password),
             'role' => UserRole::from($request->role),
+            'role_kind' => $specialKind,
+            'division_of' => $specialKind === 'division' ? $request->division_of : null,
             'service' => $service,
             'can_manage_users' => $request->role === 'admin' ? $request->boolean('can_manage_users') : true,
             'can_access_cabinet' => $request->role === 'admin' ? $request->boolean('can_access_cabinet') : true,
@@ -140,6 +151,7 @@ class UserController extends Controller
         'email' => ['required', 'email', 'max:255', Rule::unique('users', 'email')->ignore($user->id)],
         'role' => ['required', 'in:admin,user,fatou'],
         'role_kind' => ['nullable', Rule::in(array_merge(['user'], array_keys(User::specialServiceRoles())))],
+        'division_of' => [Rule::requiredIf($request->role_kind === 'division'), 'nullable', Rule::in(Orientation::pluck('name'))],
         'service' => ['nullable', 'string', 'max:255'],
         'can_manage_users' => ['nullable', 'boolean'],
         'can_access_cabinet' => ['nullable', 'boolean'],
@@ -147,6 +159,8 @@ class UserController extends Controller
     ], [
         'name.regex' => 'Le nom ne doit contenir que des lettres.',
         'email.unique' => 'Cet email est déjà utilisé par un autre utilisateur.',
+        'division_of.required' => 'Veuillez choisir de quel service dépend cette division.',
+        'division_of.in' => 'Veuillez choisir un service valide.',
     ]);
 
     if ($user->isAdmin() && $request->role === 'user' && User::where('role', 'admin')->count() <= 1) {
@@ -163,9 +177,12 @@ class UserController extends Controller
         return redirect()->route('users.index')->with('error', "Impossible de retirer l'accès à \"Les Utilisateurs\" : aucun autre administrateur ne pourrait plus gérer les comptes.");
     }
 
+    $isAdminOrFatou = in_array($request->role, ['admin', 'fatou']);
+    $specialKind = ! $isAdminOrFatou && array_key_exists($request->role_kind, User::specialServiceRoles()) ? $request->role_kind : null;
+
     $service = match (true) {
-        in_array($request->role, ['admin', 'fatou']) => null,
-        array_key_exists($request->role_kind, User::specialServiceRoles()) => User::specialServiceRoles()[$request->role_kind],
+        $isAdminOrFatou => null,
+        $specialKind !== null => $request->name,
         default => $request->service,
     };
 
@@ -173,6 +190,8 @@ class UserController extends Controller
         'name' => $request->name,
         'email' => $request->email,
         'role' => UserRole::from($request->role),
+        'role_kind' => $specialKind,
+        'division_of' => $specialKind === 'division' ? $request->division_of : null,
         'service' => $service,
         'can_manage_users' => $request->role === 'admin' ? $request->boolean('can_manage_users') : true,
         'can_access_cabinet' => $request->role === 'admin' ? $request->boolean('can_access_cabinet') : true,

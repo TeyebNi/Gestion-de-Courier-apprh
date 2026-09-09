@@ -45,10 +45,11 @@ class Tabdepot extends Model
     }
 
     /**
-     * Phrase complète (avec article) pour chaque destination à file commune —
-     * la grammaire du français diffère par genre, donc pas de règle générique.
+     * Préfixe (avec article) pour chaque catégorie de destination individuelle
+     * — la grammaire du français diffère par genre, donc pas de règle générique.
+     * Complété par ": {nom de la personne}", comme "Chez le service : X".
      */
-    private const DESTINATION_PHRASES = [
+    private const DESTINATION_PREFIXES = [
         'maire_adjoint' => "Chez l'Adjoint au Maire",
         'division' => 'Chez la Division',
         'conseiller' => 'Chez le Conseiller',
@@ -60,8 +61,8 @@ class Tabdepot extends Model
             'accueil' => 'À l\'accueil',
             'fatou' => 'Chez le Cabinet de Maire',
             'maire' => 'Chez le Maire',
-            'service' => self::DESTINATION_PHRASES[$this->destination_type]
-                ?? 'Chez le service : ' . ($this->service_assigne ?? '—'),
+            'service' => (self::DESTINATION_PREFIXES[$this->destination_type] ?? 'Chez le service')
+                . ' : ' . ($this->service_assigne ?? '—'),
             'cloture' => 'Clôturée (' . ($this->resolutionLabel() ?: 'traitée par le service') . ')',
             default => $this->statut_circuit ?? 'À l\'accueil',
         };
