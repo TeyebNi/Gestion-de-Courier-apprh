@@ -31,7 +31,7 @@ Les Utilisateurs
                             <th>N°</th>
                             <th>Nom</th>
                             <th>Email</th>
-                            <th>Rôle</th>
+                            <th>Fonction</th>
                             <th>Service</th>
                             <th>Inscrit le</th>
                             <th class="text-right">Action</th>
@@ -47,7 +47,16 @@ Les Utilisateurs
                                         {{ $u->isAdmin() ? 'Admin' : ($u->specialServiceLabel() ?: 'User') }}
                                     </span>
                                 </td>
-                                <td>{{ $u->specialServiceKind() === 'division' ? $u->division_of : ($u->service ?: '—') }}</td>
+                                <td>
+                                    @if($u->specialServiceKind() === 'division')
+                                        {{ $u->division_of ?: '—' }}
+                                    @elseif($u->specialServiceKind())
+                                        {{-- "service" vaut son propre nom, déjà affiché dans Nom. --}}
+                                        —
+                                    @else
+                                        {{ $u->service ?: '—' }}
+                                    @endif
+                                </td>
                                 <td>{{ $u->created_at?->format('d/m/Y') }}</td>
                                 <td class="text-right">
                                     <a data-id="{{ $u->id }}"
@@ -149,7 +158,7 @@ Les Utilisateurs
                     </div>
                     <div class="input-group mb-3">
                         <div class="input-group-prepend">
-                            <span class="input-group-text">Rôle</span>
+                            <span class="input-group-text">Fonction</span>
                         </div>
                         <select class="form-control" name="role" id="create_role">
                             <option value="user" data-kind="user">User</option>
@@ -238,7 +247,7 @@ Les Utilisateurs
                     </div>
                     <div class="input-group mb-3">
                         <div class="input-group-prepend">
-                            <span class="input-group-text">Rôle</span>
+                            <span class="input-group-text">Fonction</span>
                         </div>
                         <select class="form-control" name="role" id="edit_role">
                             <option value="user" data-kind="user">User</option>
