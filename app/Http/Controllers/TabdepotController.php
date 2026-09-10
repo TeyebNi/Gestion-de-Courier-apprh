@@ -6,6 +6,7 @@ use App\Models\DemandeHistorique;
 use App\Models\Tabdepot;
 use App\Http\Controllers\Controller;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Storage;
 
 use App\Traits\ExportsCsv;
 use Illuminate\Validation\Rule;
@@ -87,10 +88,13 @@ class TabdepotController extends Controller
             'origine' => ['required', 'in:interne,externe'],
             'reference' => ['required', 'string', 'max:100', Rule::unique('tabdepot', 'reference')],
             'objet' => ['nullable', 'string', 'max:255'],
+            'piece_jointe' => ['nullable', 'file', 'mimes:jpg,jpeg,png,pdf', 'max:10240'],
         ], [
             'origine.required' => "L'origine est obligatoire.",
             'reference.required' => 'Le code est obligatoire.',
             'reference.unique' => 'Ce code est déjà utilisé par une autre demande.',
+            'piece_jointe.mimes' => 'La pièce jointe doit être une image (JPG, PNG) ou un PDF.',
+            'piece_jointe.max' => 'La pièce jointe ne doit pas dépasser 10 Mo.',
         ]);
 
         $demande = Tabdepot::create([
@@ -98,6 +102,9 @@ class TabdepotController extends Controller
             'reference' => $request->reference,
             'objet' => $request->objet,
             'daterecp' => now()->format('Y-m-d'),
+            'piece_jointe' => $request->hasFile('piece_jointe')
+                ? $request->file('piece_jointe')->store('pieces-jointes', 'public')
+                : null,
         ]);
 
         DemandeHistorique::create([
@@ -121,16 +128,28 @@ class TabdepotController extends Controller
             'origine' => ['required', 'in:interne,externe'],
             'reference' => ['required', 'string', 'max:100', Rule::unique('tabdepot', 'reference')->ignore($tabdepot->id)],
             'objet' => ['nullable', 'string', 'max:255'],
+            'piece_jointe' => ['nullable', 'file', 'mimes:jpg,jpeg,png,pdf', 'max:10240'],
         ], [
             'origine.required' => "L'origine est obligatoire.",
             'reference.required' => 'Le code est obligatoire.',
             'reference.unique' => 'Ce code est déjà utilisé par une autre demande.',
+            'piece_jointe.mimes' => 'La pièce jointe doit être une image (JPG, PNG) ou un PDF.',
+            'piece_jointe.max' => 'La pièce jointe ne doit pas dépasser 10 Mo.',
         ]);
+
+        $piece_jointe = $tabdepot->piece_jointe;
+        if ($request->hasFile('piece_jointe')) {
+            if ($piece_jointe) {
+                Storage::disk('public')->delete($piece_jointe);
+            }
+            $piece_jointe = $request->file('piece_jointe')->store('pieces-jointes', 'public');
+        }
 
         $tabdepot->update([
             'origine' => $request->origine,
             'reference' => $request->reference,
             'objet' => $request->objet,
+            'piece_jointe' => $piece_jointe,
         ]);
 
         DemandeHistorique::create([
@@ -199,6 +218,9 @@ class TabdepotController extends Controller
 
         $tabdepot = Tabdepot::onlyTrashed()->findOrFail($id);
         $reference = $tabdepot->reference;
+        if ($tabdepot->piece_jointe) {
+            Storage::disk('public')->delete($tabdepot->piece_jointe);
+        }
         $tabdepot->forceDelete();
 
         return redirect()->route('depot.trashed')->with('success', "Demande {$reference} supprimée définitivement.");

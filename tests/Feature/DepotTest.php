@@ -6,6 +6,8 @@ use App\Enums\UserRole;
 use App\Models\Tabdepot;
 use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Http\UploadedFile;
+use Illuminate\Support\Facades\Storage;
 use Tests\TestCase;
 
 class DepotTest extends TestCase
@@ -490,6 +492,119 @@ class DepotTest extends TestCase
             ->assertRedirect(route('depot.trashed'));
 
         $this->assertDatabaseMissing('tabdepot', ['id' => $demande->id]);
+    }
+
+    public function test_store_saves_the_scanned_attachment_as_a_path_not_the_file_itself(): void
+    {
+        Storage::fake('public');
+        $user = User::factory()->create(['role' => UserRole::User]);
+        $file = UploadedFile::fake()->image('scan.jpg');
+
+        $this->actingAs($user)->post('/depot', [
+            'origine' => 'externe',
+            'reference' => 'MI/2026/245',
+            'piece_jointe' => $file,
+        ])->assertRedirect(route('depot.index'));
+
+        $demande = Tabdepot::firstOrFail();
+        $this->assertIsString($demande->piece_jointe);
+        Storage::disk('public')->assertExists($demande->piece_jointe);
+    }
+
+    public function test_store_rejects_an_attachment_of_an_unsupported_type(): void
+    {
+        Storage::fake('public');
+        $user = User::factory()->create(['role' => UserRole::User]);
+        $file = UploadedFile::fake()->create('malware.exe', 10);
+
+        $response = $this->actingAs($user)->post('/depot', [
+            'origine' => 'externe',
+            'reference' => 'MI/2026/245',
+            'piece_jointe' => $file,
+        ]);
+
+        $response->assertSessionHasErrors('piece_jointe');
+        $this->assertDatabaseCount('tabdepot', 0);
+    }
+
+    public function test_store_without_an_attachment_leaves_piece_jointe_null(): void
+    {
+        $user = User::factory()->create(['role' => UserRole::User]);
+
+        $this->actingAs($user)->post('/depot', [
+            'origine' => 'externe',
+            'reference' => 'MI/2026/245',
+        ]);
+
+        $this->assertNull(Tabdepot::firstOrFail()->piece_jointe);
+    }
+
+    public function test_update_can_attach_a_scan_that_was_missing_at_intake(): void
+    {
+        Storage::fake('public');
+        $user = User::factory()->create(['role' => UserRole::User]);
+        $demande = $this->makeDepot();
+        $file = UploadedFile::fake()->image('scan.png');
+
+        $this->actingAs($user)->put("/depot/{$demande->id}", [
+            'origine' => 'externe',
+            'reference' => $demande->reference,
+            'piece_jointe' => $file,
+        ]);
+
+        $demande->refresh();
+        $this->assertIsString($demande->piece_jointe);
+        Storage::disk('public')->assertExists($demande->piece_jointe);
+    }
+
+    public function test_update_replacing_the_attachment_deletes_the_old_file(): void
+    {
+        Storage::fake('public');
+        $user = User::factory()->create(['role' => UserRole::User]);
+        $oldPath = UploadedFile::fake()->image('old.jpg')->store('pieces-jointes', 'public');
+        $demande = $this->makeDepot(['piece_jointe' => $oldPath]);
+        $newFile = UploadedFile::fake()->image('new.jpg');
+
+        $this->actingAs($user)->put("/depot/{$demande->id}", [
+            'origine' => 'externe',
+            'reference' => $demande->reference,
+            'piece_jointe' => $newFile,
+        ]);
+
+        $demande->refresh();
+        $this->assertNotSame($oldPath, $demande->piece_jointe);
+        Storage::disk('public')->assertMissing($oldPath);
+        Storage::disk('public')->assertExists($demande->piece_jointe);
+    }
+
+    public function test_update_without_a_new_file_keeps_the_existing_attachment(): void
+    {
+        Storage::fake('public');
+        $user = User::factory()->create(['role' => UserRole::User]);
+        $existingPath = UploadedFile::fake()->image('scan.jpg')->store('pieces-jointes', 'public');
+        $demande = $this->makeDepot(['piece_jointe' => $existingPath]);
+
+        $this->actingAs($user)->put("/depot/{$demande->id}", [
+            'origine' => 'externe',
+            'reference' => $demande->reference,
+            'objet' => 'Objet mis à jour',
+        ]);
+
+        $this->assertSame($existingPath, $demande->fresh()->piece_jointe);
+        Storage::disk('public')->assertExists($existingPath);
+    }
+
+    public function test_force_deleting_a_demande_removes_its_attachment_from_disk(): void
+    {
+        Storage::fake('public');
+        $admin = User::factory()->create(['role' => UserRole::Admin]);
+        $path = UploadedFile::fake()->image('scan.jpg')->store('pieces-jointes', 'public');
+        $demande = $this->makeDepot(['piece_jointe' => $path]);
+        $demande->delete();
+
+        $this->actingAs($admin)->delete("/depot-corbeille/{$demande->id}");
+
+        Storage::disk('public')->assertMissing($path);
     }
 
     public function test_store_shows_a_clean_success_message(): void

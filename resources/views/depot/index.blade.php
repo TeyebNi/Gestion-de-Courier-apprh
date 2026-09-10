@@ -56,7 +56,7 @@ Dashboard Courier
                                         <i class="fas fa-route"></i>
                                     </a>
                                     @endif
-                                    <a data-id="{{$item->id}}" data-objet="{{$item->objet}}" data-reference="{{$item->reference}}" data-origine="{{$item->origine}}" data-toggle="modal" data-target="#exampleModal-edit" type="button" class="btn btn-info btn-sm" title="Modifier"><svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"></path><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"></path></svg></a>
+                                    <a data-id="{{$item->id}}" data-objet="{{$item->objet}}" data-reference="{{$item->reference}}" data-origine="{{$item->origine}}" data-piece-jointe-url="{{ $item->piece_jointe ? asset('storage/' . $item->piece_jointe) : '' }}" data-toggle="modal" data-target="#exampleModal-edit" type="button" class="btn btn-info btn-sm" title="Modifier"><svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"></path><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"></path></svg></a>
                                     @if(($item->statut_circuit ?? 'accueil') === 'accueil')
                                     <a data-id="{{$item->id}}" data-reference="{{ $item->reference ?: 'cette demande' }}" data-toggle="modal" data-target="#exampleModal-delete" type="button" class="btn btn-danger btn-sm" title="Supprimer"><svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"></polyline><path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"></path><path d="M10 11v6"></path><path d="M14 11v6"></path><path d="M9 6V4a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v2"></path></svg></a>
                                     @endif
@@ -100,7 +100,7 @@ Dashboard Courier
     </button>
       </div>
       <div class="modal-body">
-         <form action="{{route('depot.store')}}" method="post">
+         <form action="{{route('depot.store')}}" method="post" enctype="multipart/form-data">
         @csrf
         <input type="hidden" name="form_source" value="create">
       <div class="input-group">
@@ -130,6 +130,14 @@ Dashboard Courier
       </div>
       <input type="text" class="form-control" name="objet" value="{{ old('objet') }}" placeholder="Résumé de la demande (optionnel)" maxlength="255">
     </div>
+      <br>
+      <div class="form-group">
+        <label for="create_piece_jointe">Pièce jointe (scanner/joindre le document original, optionnel)</label>
+        <input type="file" class="form-control-file @error('piece_jointe') is-invalid @enderror" id="create_piece_jointe" name="piece_jointe" accept=".jpg,.jpeg,.png,.pdf">
+        @error('piece_jointe')
+          <div class="text-danger small mt-1">{{ $message }}</div>
+        @enderror
+      </div>
       </div>
       <div class="modal-footer">
         <button type="button" class="btn btn-warning" data-dismiss="modal" title="Fermer"><svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg></button>
@@ -150,7 +158,7 @@ Dashboard Courier
           <span aria-hidden="true">&times;</span>
         </button>
       </div>
-      <form id="editDepotForm" action="" method="post">
+      <form id="editDepotForm" action="" method="post" enctype="multipart/form-data">
        @csrf
         @method('PUT')
         <input type="hidden" name="form_source" value="edit">
@@ -183,6 +191,15 @@ Dashboard Courier
       </div>
       <input id="edit_objet" type="text" class="form-control" name="objet" value="{{ old('objet') }}" placeholder="Résumé de la demande (optionnel)" maxlength="255">
     </div>
+      <br>
+      <div class="form-group">
+        <label for="edit_piece_jointe">Pièce jointe (scanner/joindre le document original, optionnel)</label>
+        <input type="file" class="form-control-file @error('piece_jointe') is-invalid @enderror" id="edit_piece_jointe" name="piece_jointe" accept=".jpg,.jpeg,.png,.pdf">
+        <small id="edit_piece_jointe_current" class="form-text text-muted"></small>
+        @error('piece_jointe')
+          <div class="text-danger small mt-1">{{ $message }}</div>
+        @enderror
+      </div>
         </div>
         <div class="modal-footer">
           <button type="button" class="btn btn-warning" data-dismiss="modal" title="Fermer"><svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg></button>
@@ -239,6 +256,13 @@ $('#exampleModal-edit').on('show.bs.modal', function (event) {
     $('#edit_objet').val(button.data('objet'));
     $('#edit_reference').val(button.data('reference'));
     $('#edit_origine').val(button.data('origine'));
+    var pieceJointeUrl = button.data('piece-jointe-url');
+    var currentPieceJointe = $('#edit_piece_jointe_current');
+    if (pieceJointeUrl) {
+        currentPieceJointe.html('Pièce jointe actuelle : <a href="' + pieceJointeUrl + '" target="_blank">voir le document</a> (choisir un fichier ci-dessus la remplacera).');
+    } else {
+        currentPieceJointe.text('Aucune pièce jointe pour le moment.');
+    }
 });
 
 $('#exampleModal-delete').on('show.bs.modal', function (event) {
