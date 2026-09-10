@@ -334,20 +334,25 @@ class RolePermissionsTest extends TestCase
             'can_access_cabinet' => false,
             'can_access_all_services' => false,
         ]);
-        Tabdepot::create([
+        $demande = Tabdepot::create([
             'origine' => 'externe',
             'type_expediteur' => 'institution',
             'origine_detail' => "Ministère de l'Intérieur",
             'objet' => 'Demande de raccordement eau',
-            'daterecp' => '2026-08-30',
+            'daterecp' => '2026-08-01',
         ]);
+        $demande->timestamps = false;
+        $demande->created_at = '2026-08-30 16:45:00';
+        $demande->save();
 
         $response = $this->actingAs($accueilLikeAdmin)->get('/');
 
+        // La colonne affiche désormais quand la demande a été enregistrée
+        // (created_at, avec l'heure), pas seulement la date de réception.
         $response->assertOk();
         $response->assertSee("Ministère de l&#039;Intérieur", false);
         $response->assertSee('Demande de raccordement eau');
-        $response->assertSee('30/08/2026');
+        $response->assertSee('30/08/2026 16:45');
         $response->assertDontSee('2026-08-30');
     }
 

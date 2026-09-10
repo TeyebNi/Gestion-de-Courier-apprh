@@ -28,7 +28,7 @@ Dashboard Courier
                             <th>Objet</th>
                             <th>Origine</th>
                             <th>Statut</th>
-                            <th class="text-right">Date</th>
+                            <th class="text-right">Enregistrée le</th>
                             <th class="text-right">Action</th>
                         </thead>
                         <tbody>
@@ -41,7 +41,7 @@ Dashboard Courier
                                 <td class="text-truncate" style="max-width:280px;" title="{{ $item->objet }}">{{ $item->objet ?: '—' }}</td>
                                 <td>@include('partials.origine-badge', ['demande' => $item])</td>
                                   <td><span class="badge {{ $depotBadgeClass }}">{{ $item->statutLabel() }}</span></td>
-                                  <td class="text-right">{{ $item->daterecpFormatted() }}</td>
+                                  <td class="text-right">{{ $item->created_at->format('d/m/Y H:i') }}</td>
                                 <td class="text-right">
                                     <a href="{{ route('depot.print_reçu', $item->id) }}" target="_blank" class="btn btn-success btn-sm" title="Imprimer"><svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 6 2 18 2 18 9"></polyline><path d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2"></path><rect x="6" y="14" width="12" height="8"></rect></svg></a>
                                     @if($item->piece_jointe)

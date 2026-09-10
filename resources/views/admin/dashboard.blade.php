@@ -271,7 +271,7 @@ Tableau de bord
                             <th>Code</th>
                             <th>Origine</th>
                             <th>Objet</th>
-                            <th>Date</th>
+                            <th>Enregistrée le</th>
                         </thead>
                         <tbody>
                             @forelse($recentDemandesUser as $d)
@@ -279,7 +279,7 @@ Tableau de bord
                                 <td>{{ $d->reference ?: '—' }}</td>
                                 <td>@include('partials.origine-badge', ['demande' => $d])</td>
                                 <td class="text-truncate" style="max-width:220px;" title="{{ $d->objet }}">{{ $d->objet ?: '—' }}</td>
-                                <td>{{ $d->daterecpFormatted() }}</td>
+                                <td>{{ $d->created_at->format('d/m/Y H:i') }}</td>
                             </tr>
                             @empty
                             <tr>
@@ -375,7 +375,7 @@ Tableau de bord
                             <th>Code</th>
                             <th>Origine</th>
                             <th>Objet</th>
-                            <th>Date</th>
+                            <th>Enregistrée le</th>
                         </thead>
                         <tbody>
                             @forelse($recentQueue as $d)
@@ -383,7 +383,7 @@ Tableau de bord
                                 <td>{{ $d->reference ?: '—' }}</td>
                                 <td>@include('partials.origine-badge', ['demande' => $d])</td>
                                 <td class="text-truncate" style="max-width:220px;" title="{{ $d->objet }}">{{ $d->objet ?: '—' }}</td>
-                                <td>{{ $d->daterecpFormatted() }}</td>
+                                <td>{{ $d->created_at->format('d/m/Y H:i') }}</td>
                             </tr>
                             @empty
                             <tr>
@@ -522,14 +522,14 @@ Tableau de bord
                         <thead class="text-primary">
                             <th>Code</th>
                             <th>Origine</th>
-                            <th>Date</th>
+                            <th>Enregistrée le</th>
                         </thead>
                         <tbody>
                             @forelse($recentDemandes as $d)
                             <tr>
                                 <td>{{ $d->reference ?: '—' }}</td>
                                 <td>@include('partials.origine-badge', ['demande' => $d])</td>
-                                <td>{{ $d->daterecpFormatted() }}</td>
+                                <td>{{ $d->created_at->format('d/m/Y H:i') }}</td>
                             </tr>
                             @empty
                             <tr>
