@@ -55,6 +55,16 @@ class Tabdepot extends Model
         'conseiller' => 'Chez le Conseiller',
     ];
 
+    /**
+     * Variante "par ..." des mêmes préfixes, utilisée une fois la demande
+     * clôturée pour préciser qui l'a traitée (au lieu de "chez qui" elle se trouve).
+     */
+    private const CLOTURE_PAR_PREFIXES = [
+        'maire_adjoint' => "par l'Adjoint au Maire",
+        'division' => 'par la Division',
+        'conseiller' => 'par le Conseiller',
+    ];
+
     public function statutLabel(): string
     {
         return match ($this->statut_circuit) {
@@ -63,7 +73,10 @@ class Tabdepot extends Model
             'maire' => 'Chez le Maire',
             'service' => (self::DESTINATION_PREFIXES[$this->destination_type] ?? 'Chez le service')
                 . ' : ' . ($this->service_assigne ?? '—'),
-            'cloture' => 'Clôturée (' . ($this->resolutionLabel() ?: 'traitée par le service') . ')',
+            'cloture' => 'Clôturée (' . ($this->resolutionLabel() ?: 'traitée par le service') . ')'
+                . ($this->service_assigne
+                    ? ' — ' . (self::CLOTURE_PAR_PREFIXES[$this->destination_type] ?? 'par le service') . ' : ' . $this->service_assigne
+                    : ''),
             default => $this->statut_circuit ?? 'À l\'accueil',
         };
     }
