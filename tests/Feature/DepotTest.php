@@ -494,6 +494,17 @@ class DepotTest extends TestCase
         $this->assertDatabaseMissing('tabdepot', ['id' => $demande->id]);
     }
 
+    public function test_index_page_shows_the_attachment_field_in_the_create_and_edit_modals(): void
+    {
+        $user = User::factory()->create(['role' => UserRole::User]);
+
+        $response = $this->actingAs($user)->get('/depot');
+
+        $response->assertOk();
+        $response->assertSee('name="piece_jointe"', false);
+        $response->assertSee('enctype="multipart/form-data"', false);
+    }
+
     public function test_store_saves_the_scanned_attachment_as_a_path_not_the_file_itself(): void
     {
         Storage::fake('public');
