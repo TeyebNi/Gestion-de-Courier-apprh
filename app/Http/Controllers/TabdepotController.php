@@ -122,6 +122,10 @@ class TabdepotController extends Controller
             abort(403, "Cette page est réservée à l'accueil et aux administrateurs.");
         }
 
+        if (($tabdepot->statut_circuit ?? 'accueil') !== 'accueil') {
+            abort(403, "Cette demande a déjà été envoyée dans le circuit et ne peut plus être modifiée depuis l'accueil.");
+        }
+
         $request->merge(['reference' => trim((string) $request->input('reference'))]);
 
         $request->validate([

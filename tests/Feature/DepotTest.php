@@ -391,6 +391,32 @@ class DepotTest extends TestCase
         $this->assertDatabaseHas('tabdepot', ['id' => $demande->id, 'deleted_at' => null]);
     }
 
+    public function test_cannot_edit_a_demande_once_it_left_accueil(): void
+    {
+        $user = User::factory()->create(['role' => UserRole::User]);
+        $demande = $this->makeDepot(['statut_circuit' => 'fatou']);
+
+        $this->actingAs($user)->put("/depot/{$demande->id}", [
+            'origine' => 'externe',
+            'reference' => 'MI/2026/999',
+        ])->assertForbidden();
+
+        $this->assertSame($demande->reference, $demande->fresh()->reference);
+    }
+
+    public function test_the_modifier_button_only_shows_for_demandes_still_at_accueil(): void
+    {
+        $user = User::factory()->create(['role' => UserRole::User]);
+        $this->makeDepot(['reference' => 'A-ACCUEIL']);
+        $this->makeDepot(['reference' => 'B-PARTIE', 'statut_circuit' => 'fatou']);
+
+        $response = $this->actingAs($user)->get('/depot');
+
+        $response->assertOk();
+        // Une seule des deux demandes est encore à l'accueil : un seul bouton Modifier attendu.
+        $this->assertSame(1, substr_count($response->getContent(), 'data-target="#exampleModal-edit"'));
+    }
+
     public function test_can_still_delete_a_demande_still_at_accueil(): void
     {
         $user = User::factory()->create(['role' => UserRole::User]);
