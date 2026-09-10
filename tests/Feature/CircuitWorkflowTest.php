@@ -85,7 +85,7 @@ class CircuitWorkflowTest extends TestCase
         $response->assertDontSee('2026-08-30');
     }
 
-    public function test_service_index_shows_institution_name_objet_and_a_localized_date(): void
+    public function test_service_index_shows_institution_name_objet_and_a_localized_date_and_time(): void
     {
         $serviceUser = User::factory()->create(['role' => UserRole::User, 'service' => 'Etat Civil']);
         $pending = Tabdepot::create([
@@ -93,29 +93,38 @@ class CircuitWorkflowTest extends TestCase
             'type_expediteur' => 'institution',
             'origine_detail' => "Ministère de l'Intérieur",
             'objet' => 'Demande de raccordement eau',
-            'daterecp' => '2026-08-30',
+            'daterecp' => '2026-08-01',
             'statut_circuit' => 'service',
             'service_assigne' => 'Etat Civil',
         ]);
+        $pending->timestamps = false;
+        $pending->updated_at = '2026-08-30 14:05:00';
+        $pending->save();
+
         $treated = Tabdepot::create([
             'origine' => 'externe',
             'type_expediteur' => 'institution',
             'origine_detail' => 'Ministère des Finances',
             'objet' => 'Demande de subvention',
-            'daterecp' => '2026-08-15',
+            'daterecp' => '2026-08-01',
             'statut_circuit' => 'cloture',
             'service_assigne' => 'Etat Civil',
         ]);
+        $treated->timestamps = false;
+        $treated->updated_at = '2026-08-15 09:30:00';
+        $treated->save();
 
         $response = $this->actingAs($serviceUser)->get('/circuit/service');
 
+        // La colonne Date affiche désormais quand l'action a eu lieu (affectation/
+        // clôture, avec l'heure), pas la date de réception d'origine.
         $response->assertOk();
         $response->assertSee("Ministère de l&#039;Intérieur", false);
         $response->assertSee('Demande de raccordement eau');
-        $response->assertSee('30/08/2026');
+        $response->assertSee('30/08/2026 14:05');
         $response->assertSee('Ministère des Finances');
         $response->assertSee('Demande de subvention');
-        $response->assertSee('15/08/2026');
+        $response->assertSee('15/08/2026 09:30');
         $response->assertDontSee('2026-08-30');
         $response->assertDontSee('2026-08-15');
     }

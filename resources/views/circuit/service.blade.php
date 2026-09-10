@@ -44,7 +44,7 @@ document.addEventListener('DOMContentLoaded', function () {
                             <th>Origine</th>
                             <th>Objet</th>
                             <th>Annotations du Maire</th>
-                            <th>Date</th>
+                            <th>Reçue le</th>
                             <th>Action</th>
                         </thead>
                         <tbody>
@@ -54,7 +54,7 @@ document.addEventListener('DOMContentLoaded', function () {
                                 <td>@include('partials.origine-badge', ['demande' => $d])</td>
                                 <td class="text-truncate" style="max-width:220px;" title="{{ $d->objet }}">{{ $d->objet ?: '—' }}</td>
                                 <td class="text-truncate" style="max-width:220px;" title="{{ $d->remarque_maire }}">{{ $d->remarque_maire ?: '—' }}</td>
-                                <td>{{ $d->daterecpFormatted() }}</td>
+                                <td>{{ $d->updated_at->format('d/m/Y H:i') }}</td>
                                 <td>
                                     <form action="{{ route('circuit.cloturer', $d) }}" method="post" style="display:inline;" onsubmit="return confirm('Marquer cette demande comme traitée ?');">
                                         @csrf
@@ -105,7 +105,7 @@ document.addEventListener('DOMContentLoaded', function () {
                             <th>Origine</th>
                             <th>Objet</th>
                             <th>Résolution</th>
-                            <th>Date</th>
+                            <th>Traitée le</th>
                             <th>Action</th>
                         </thead>
                         <tbody>
@@ -125,7 +125,7 @@ document.addEventListener('DOMContentLoaded', function () {
                                         <span class="text-muted">—</span>
                                     @endif
                                 </td>
-                                <td>{{ $d->daterecpFormatted() }}</td>
+                                <td>{{ $d->updated_at->format('d/m/Y H:i') }}</td>
                                 <td>
                                     <a href="{{ route('circuit.historique', $d) }}" class="btn btn-info btn-sm" title="Voir l'historique complet">
                                         <i class="fas fa-history"></i> Historique
