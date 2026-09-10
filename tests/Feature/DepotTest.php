@@ -505,6 +505,21 @@ class DepotTest extends TestCase
         $response->assertSee('enctype="multipart/form-data"', false);
     }
 
+    public function test_index_list_shows_a_link_to_the_attachment_when_one_exists(): void
+    {
+        Storage::fake('public');
+        $user = User::factory()->create(['role' => UserRole::User]);
+        $path = UploadedFile::fake()->image('scan.jpg')->store('pieces-jointes', 'public');
+        $this->makeDepot(['reference' => 'AVEC-SCAN', 'piece_jointe' => $path]);
+        $this->makeDepot(['reference' => 'SANS-SCAN']);
+
+        $response = $this->actingAs($user)->get('/depot');
+
+        $response->assertOk();
+        $response->assertSee('title="Voir la pièce jointe"', false);
+        $response->assertSee(asset('storage/' . $path), false);
+    }
+
     public function test_store_saves_the_scanned_attachment_as_a_path_not_the_file_itself(): void
     {
         Storage::fake('public');

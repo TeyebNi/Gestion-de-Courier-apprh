@@ -44,6 +44,9 @@ Dashboard Courier
                                   <td class="text-right">{{ $item->daterecpFormatted() }}</td>
                                 <td class="text-right">
                                     <a href="{{ route('depot.print_reçu', $item->id) }}" target="_blank" class="btn btn-success btn-sm" title="Imprimer"><svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 6 2 18 2 18 9"></polyline><path d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2"></path><rect x="6" y="14" width="12" height="8"></rect></svg></a>
+                                    @if($item->piece_jointe)
+                                    <a href="{{ asset('storage/' . $item->piece_jointe) }}" target="_blank" class="btn btn-secondary btn-sm" title="Voir la pièce jointe"><i class="fas fa-paperclip"></i></a>
+                                    @endif
                                     @if(($item->statut_circuit ?? 'accueil') === 'accueil')
                                     <form action="{{ route('circuit.envoyer-fatou', $item) }}" method="post" style="display:inline;">
                                         @csrf
@@ -133,7 +136,10 @@ Dashboard Courier
       <br>
       <div class="form-group">
         <label for="create_piece_jointe">Pièce jointe (scanner/joindre le document original, optionnel)</label>
-        <input type="file" class="form-control-file @error('piece_jointe') is-invalid @enderror" id="create_piece_jointe" name="piece_jointe" accept=".jpg,.jpeg,.png,.pdf">
+        <div class="custom-file">
+          <input type="file" class="custom-file-input piece-jointe-input @error('piece_jointe') is-invalid @enderror" id="create_piece_jointe" name="piece_jointe" accept=".jpg,.jpeg,.png,.pdf">
+          <label class="custom-file-label" for="create_piece_jointe" data-browse="Parcourir">Choisir un fichier (JPG, PNG ou PDF)...</label>
+        </div>
         @error('piece_jointe')
           <div class="text-danger small mt-1">{{ $message }}</div>
         @enderror
@@ -194,7 +200,10 @@ Dashboard Courier
       <br>
       <div class="form-group">
         <label for="edit_piece_jointe">Pièce jointe (scanner/joindre le document original, optionnel)</label>
-        <input type="file" class="form-control-file @error('piece_jointe') is-invalid @enderror" id="edit_piece_jointe" name="piece_jointe" accept=".jpg,.jpeg,.png,.pdf">
+        <div class="custom-file">
+          <input type="file" class="custom-file-input piece-jointe-input @error('piece_jointe') is-invalid @enderror" id="edit_piece_jointe" name="piece_jointe" accept=".jpg,.jpeg,.png,.pdf">
+          <label class="custom-file-label" for="edit_piece_jointe" data-browse="Parcourir">Choisir un fichier (JPG, PNG ou PDF)...</label>
+        </div>
         <small id="edit_piece_jointe_current" class="form-text text-muted"></small>
         @error('piece_jointe')
           <div class="text-danger small mt-1">{{ $message }}</div>
@@ -263,6 +272,8 @@ $('#exampleModal-edit').on('show.bs.modal', function (event) {
     } else {
         currentPieceJointe.text('Aucune pièce jointe pour le moment.');
     }
+    $('#edit_piece_jointe').val('');
+    $('#edit_piece_jointe').next('.custom-file-label').text('Choisir un fichier (JPG, PNG ou PDF)...');
 });
 
 $('#exampleModal-delete').on('show.bs.modal', function (event) {
@@ -283,6 +294,15 @@ $('#exampleModal').on('hidden.bs.modal', function () {
     var form = this.querySelector('form');
     if (!form) { return; }
     form.reset();
+    $(this).find('.custom-file-label').text('Choisir un fichier (JPG, PNG ou PDF)...');
+});
+
+// Le thème n'inclut pas le plugin bs-custom-file-input : on affiche
+// nous-mêmes le nom du fichier choisi dans le label, pour confirmer
+// visuellement la sélection avant l'envoi.
+$(document).on('change', '.piece-jointe-input', function () {
+    var fileName = this.files.length ? this.files[0].name : 'Choisir un fichier (JPG, PNG ou PDF)...';
+    $(this).next('.custom-file-label').text(fileName);
 });
 
 @if ($errors->any())
