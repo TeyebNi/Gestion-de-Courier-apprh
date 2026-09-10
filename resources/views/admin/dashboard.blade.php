@@ -302,6 +302,8 @@ Tableau de bord
     </div>
 </div>
 
+@include('partials.dashboard-workload-charts')
+
 @elseif($isCabinet)
 
 <!-- Dashboard minimal Cabinet de Maire -->
@@ -397,6 +399,8 @@ Tableau de bord
         </div>
     </div>
 </div>
+
+@include('partials.dashboard-workload-charts')
 
 @else
 <div class="row">
@@ -574,57 +578,8 @@ Tableau de bord
     </div>
 </div>
 
-@if($isAdmin && $serviceLabels->isNotEmpty())
-<div class="row">
-    <div class="col-md-12">
-        <div class="card card-chart">
-            <div class="card-header">
-                <h5 class="card-category">Charge de travail</h5>
-                <h4 class="card-title">Demandes par Service</h4>
-            </div>
-            <div class="card-body">
-                <div class="chart-area">
-                    <canvas id="serviceChart"></canvas>
-                </div>
-            </div>
-        </div>
-    </div>
-</div>
-@endif
-
-@if($isAdmin && ($maireAdjointLabels->isNotEmpty() || $conseillerLabels->isNotEmpty()))
-<div class="row">
-    @if($maireAdjointLabels->isNotEmpty())
-    <div class="col-md-6">
-        <div class="card card-chart">
-            <div class="card-header">
-                <h5 class="card-category">Charge de travail</h5>
-                <h4 class="card-title">Demandes par Adjoint au Maire</h4>
-            </div>
-            <div class="card-body">
-                <div class="chart-area">
-                    <canvas id="maireAdjointChart"></canvas>
-                </div>
-            </div>
-        </div>
-    </div>
-    @endif
-    @if($conseillerLabels->isNotEmpty())
-    <div class="col-md-6">
-        <div class="card card-chart">
-            <div class="card-header">
-                <h5 class="card-category">Charge de travail</h5>
-                <h4 class="card-title">Demandes par Conseiller</h4>
-            </div>
-            <div class="card-body">
-                <div class="chart-area">
-                    <canvas id="conseillerChart"></canvas>
-                </div>
-            </div>
-        </div>
-    </div>
-    @endif
-</div>
+@if($isAdmin)
+    @include('partials.dashboard-workload-charts')
 @endif
 
 @endif
@@ -640,12 +595,6 @@ Tableau de bord
 document.addEventListener('DOMContentLoaded', function () {
     var months = @json($months);
     var monthCounts = @json($monthCounts);
-    var serviceLabels = @json($serviceLabels);
-    var serviceCounts = @json($serviceCounts);
-    var maireAdjointLabels = @json($maireAdjointLabels);
-    var maireAdjointCounts = @json($maireAdjointCounts);
-    var conseillerLabels = @json($conseillerLabels);
-    var conseillerCounts = @json($conseillerCounts);
 
     new Chart(document.getElementById('evolutionChart'), {
         type: 'line',
@@ -670,33 +619,7 @@ document.addEventListener('DOMContentLoaded', function () {
     });
 
     @if($isAdmin)
-    function renderWorkloadChart(canvasId, labels, data) {
-        var el = document.getElementById(canvasId);
-        if (!el) { return; }
-        new Chart(el, {
-            type: 'bar',
-            data: {
-                labels: labels,
-                datasets: [{
-                    label: 'Demandes',
-                    data: data,
-                    backgroundColor: '#2CA8FF',
-                    borderRadius: 6,
-                }]
-            },
-            options: {
-                indexAxis: 'y',
-                responsive: true,
-                maintainAspectRatio: false,
-                scales: { x: { beginAtZero: true, ticks: { precision: 0 } } },
-                plugins: { legend: { display: false } }
-            }
-        });
-    }
-
-    renderWorkloadChart('serviceChart', serviceLabels, serviceCounts);
-    renderWorkloadChart('maireAdjointChart', maireAdjointLabels, maireAdjointCounts);
-    renderWorkloadChart('conseillerChart', conseillerLabels, conseillerCounts);
+        @include('partials.dashboard-workload-charts-script')
     @endif
 });
 </script>
@@ -728,6 +651,15 @@ document.addEventListener('DOMContentLoaded', function () {
             plugins: { legend: { display: false } }
         }
     });
+
+    @include('partials.dashboard-workload-charts-script')
+});
+</script>
+@elseif($isCabinet)
+<script src="{{ asset('assets/js/plugins/chartjs.min.js') }}"></script>
+<script>
+document.addEventListener('DOMContentLoaded', function () {
+    @include('partials.dashboard-workload-charts-script')
 });
 </script>
 @endif

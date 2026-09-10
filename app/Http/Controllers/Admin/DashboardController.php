@@ -11,6 +11,54 @@ use Illuminate\Support\Carbon;
 
 class DashboardController extends Controller
 {
+    /**
+     * Répartition des demandes assignées, pour le graphique "Demandes par
+     * Service" : service_assigne contient soit le nom d'un service, soit le
+     * nom propre d'une personne (Adjoint au Maire/Division/Conseiller). Les
+     * regrouper telles quelles donnerait une barre par personne, noyée parmi
+     * les services. On regroupe donc chaque Division dans le service dont
+     * elle dépend, et l'Adjoint au Maire/le Conseiller dans une catégorie
+     * unique par rôle — avec, en complément, un détail personne par personne
+     * pour ces deux rôles.
+     */
+    private function workloadChartData($assignedQuery): array
+    {
+        $divisionParents = User::where('role_kind', 'division')->pluck('division_of', 'name');
+
+        $serviceCountsMap = [];
+        $maireAdjointCountsMap = [];
+        $conseillerCountsMap = [];
+        foreach ($assignedQuery->get(['service_assigne', 'destination_type']) as $d) {
+            $label = match ($d->destination_type) {
+                'maire_adjoint' => User::MAIRE_ADJOINT_LABEL,
+                'conseiller' => User::CONSEILLER_LABEL,
+                'division' => $divisionParents[$d->service_assigne] ?? $d->service_assigne,
+                default => $d->service_assigne,
+            };
+            $serviceCountsMap[$label] = ($serviceCountsMap[$label] ?? 0) + 1;
+
+            if ($d->destination_type === 'maire_adjoint') {
+                $maireAdjointCountsMap[$d->service_assigne] = ($maireAdjointCountsMap[$d->service_assigne] ?? 0) + 1;
+            } elseif ($d->destination_type === 'conseiller') {
+                $conseillerCountsMap[$d->service_assigne] = ($conseillerCountsMap[$d->service_assigne] ?? 0) + 1;
+            }
+        }
+        arsort($serviceCountsMap);
+        $serviceCountsMap = array_slice($serviceCountsMap, 0, 8, true);
+
+        arsort($maireAdjointCountsMap);
+        arsort($conseillerCountsMap);
+
+        return [
+            'serviceLabels' => collect(array_keys($serviceCountsMap)),
+            'serviceCounts' => collect(array_values($serviceCountsMap)),
+            'maireAdjointLabels' => collect(array_keys($maireAdjointCountsMap)),
+            'maireAdjointCounts' => collect(array_values($maireAdjointCountsMap)),
+            'conseillerLabels' => collect(array_keys($conseillerCountsMap)),
+            'conseillerCounts' => collect(array_values($conseillerCountsMap)),
+        ];
+    }
+
     public function index(Request $request)
     {
         $user = auth()->user();
@@ -41,6 +89,11 @@ class DashboardController extends Controller
                 ->whereIn('vers_statut', ['service', 'cloture'])
                 ->count();
 
+            // Le Cabinet décide de la destination de chaque demande : lui
+            // montrer la répartition globale l'aide à voir où son travail
+            // atterrit, comme pour l'admin.
+            $workload = $this->workloadChartData(Tabdepot::whereNotNull('service_assigne'));
+
             return view('admin.dashboard', compact(
                 'isAdmin',
                 'isPlainUser',
@@ -50,7 +103,7 @@ class DashboardController extends Controller
                 'queueRoute',
                 'queueLabel',
                 'totalAnnotees'
-            ));
+            ) + $workload);
         }
 
         // ----- Utilisateur simple (pas de service) : dashboard minimal -----
@@ -75,6 +128,9 @@ class DashboardController extends Controller
                     ->count();
             }
 
+            // L'accueil n'est rattaché à aucun service : vue globale, comme l'admin.
+            $workload = $this->workloadChartData(Tabdepot::whereNotNull('service_assigne'));
+
             return view('admin.dashboard', compact(
                 'isAdmin',
                 'isPlainUser',
@@ -87,7 +143,7 @@ class DashboardController extends Controller
                 'recentDemandesUser',
                 'months',
                 'monthCounts'
-            ));
+            ) + $workload);
         }
 
         // ----- KPI cards -----
@@ -140,48 +196,7 @@ class DashboardController extends Controller
                 ->get();
         }
 
-        // ----- Répartition des demandes assignées par service -----
-        // service_assigne contient soit le nom d'un service, soit le nom
-        // propre d'une personne (Adjoint au Maire/Division/Conseiller) : les
-        // regrouper telles quelles donnerait une barre par personne, noyée
-        // parmi les services. On regroupe donc chaque Division dans le
-        // service dont elle dépend, et l'Adjoint au Maire/le Conseiller dans
-        // une catégorie unique par rôle plutôt qu'une barre par personne.
-        $divisionParents = User::where('role_kind', 'division')->pluck('division_of', 'name');
-
-        $serviceCountsMap = [];
-        // Détail par personne, pour les deux rôles regroupés ci-dessus dans
-        // une seule catégorie côté "Demandes par Service" : utile pour voir
-        // la charge de chaque Adjoint au Maire / Conseiller individuellement.
-        $maireAdjointCountsMap = [];
-        $conseillerCountsMap = [];
-        foreach ((clone $assignedQuery)->get(['service_assigne', 'destination_type']) as $d) {
-            $label = match ($d->destination_type) {
-                'maire_adjoint' => User::MAIRE_ADJOINT_LABEL,
-                'conseiller' => User::CONSEILLER_LABEL,
-                'division' => $divisionParents[$d->service_assigne] ?? $d->service_assigne,
-                default => $d->service_assigne,
-            };
-            $serviceCountsMap[$label] = ($serviceCountsMap[$label] ?? 0) + 1;
-
-            if ($d->destination_type === 'maire_adjoint') {
-                $maireAdjointCountsMap[$d->service_assigne] = ($maireAdjointCountsMap[$d->service_assigne] ?? 0) + 1;
-            } elseif ($d->destination_type === 'conseiller') {
-                $conseillerCountsMap[$d->service_assigne] = ($conseillerCountsMap[$d->service_assigne] ?? 0) + 1;
-            }
-        }
-        arsort($serviceCountsMap);
-        $serviceCountsMap = array_slice($serviceCountsMap, 0, 8, true);
-        $serviceLabels = collect(array_keys($serviceCountsMap));
-        $serviceCounts = collect(array_values($serviceCountsMap));
-
-        arsort($maireAdjointCountsMap);
-        $maireAdjointLabels = collect(array_keys($maireAdjointCountsMap));
-        $maireAdjointCounts = collect(array_values($maireAdjointCountsMap));
-
-        arsort($conseillerCountsMap);
-        $conseillerLabels = collect(array_keys($conseillerCountsMap));
-        $conseillerCounts = collect(array_values($conseillerCountsMap));
+        $workload = $this->workloadChartData(clone $assignedQuery);
 
         return view('admin.dashboard', compact(
             'isAdmin',
@@ -192,14 +207,8 @@ class DashboardController extends Controller
             'totalEnCours',
             'months',
             'monthCounts',
-            'serviceLabels',
-            'serviceCounts',
-            'maireAdjointLabels',
-            'maireAdjointCounts',
-            'conseillerLabels',
-            'conseillerCounts',
             'recentDemandes',
             'recentServiceDemandes'
-        ));
+        ) + $workload);
     }
 }

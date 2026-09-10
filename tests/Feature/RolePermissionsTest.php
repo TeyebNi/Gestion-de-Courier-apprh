@@ -195,6 +195,23 @@ class RolePermissionsTest extends TestCase
         $response->assertDontSee('Mes décisions');
     }
 
+    public function test_cabinet_mini_dashboard_shows_the_workload_charts(): void
+    {
+        $cabinet = User::factory()->create(['role' => UserRole::Fatou]);
+
+        Tabdepot::create(['daterecp' => now()->format('Y-m-d'), 'statut_circuit' => 'service', 'destination_type' => 'service', 'service_assigne' => 'Informatique']);
+        Tabdepot::create(['daterecp' => now()->format('Y-m-d'), 'statut_circuit' => 'service', 'destination_type' => 'maire_adjoint', 'service_assigne' => 'Zeroug']);
+
+        $response = $this->actingAs($cabinet)->get('/');
+
+        $response->assertOk();
+        $response->assertSee('Demandes par Service');
+        $response->assertSee('Demandes par Adjoint au Maire');
+        $response->assertViewHas('serviceLabels', function ($labels) {
+            return $labels->contains('Informatique') && $labels->contains('Adjoint au Maire');
+        });
+    }
+
     public function test_service_dashboard_hides_the_type_and_acceptance_charts(): void
     {
         $serviceUser = User::factory()->create(['role' => UserRole::User, 'service' => 'Etat Civil']);
@@ -361,6 +378,23 @@ class RolePermissionsTest extends TestCase
         $response->assertSee('Évolution des Demandes');
         $response->assertDontSee('Acceptées / Refusées');
         $response->assertDontSee("Taux d'Acceptation", false);
+    }
+
+    public function test_accueil_mini_dashboard_shows_the_workload_charts(): void
+    {
+        $accueil = User::factory()->create(['role' => UserRole::User]);
+
+        Tabdepot::create(['daterecp' => now()->format('Y-m-d'), 'statut_circuit' => 'service', 'destination_type' => 'service', 'service_assigne' => 'Informatique']);
+        Tabdepot::create(['daterecp' => now()->format('Y-m-d'), 'statut_circuit' => 'service', 'destination_type' => 'conseiller', 'service_assigne' => 'Vall']);
+
+        $response = $this->actingAs($accueil)->get('/');
+
+        $response->assertOk();
+        $response->assertSee('Demandes par Service');
+        $response->assertSee('Demandes par Conseiller');
+        $response->assertViewHas('serviceLabels', function ($labels) {
+            return $labels->contains('Informatique') && $labels->contains('Conseiller');
+        });
     }
 
     public function test_accueil_mini_dashboard_shows_origine_badge(): void
