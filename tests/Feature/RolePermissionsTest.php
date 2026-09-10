@@ -246,19 +246,39 @@ class RolePermissionsTest extends TestCase
 
         // Deux Adjoints au Maire différents : leurs demandes doivent se
         // regrouper dans une seule catégorie "Adjoint au Maire", pas une
-        // barre par personne.
+        // barre par personne, dans le graphique global "Demandes par Service".
+        $makeDepot(['statut_circuit' => 'service', 'destination_type' => 'maire_adjoint', 'service_assigne' => 'Zeroug']);
         $makeDepot(['statut_circuit' => 'service', 'destination_type' => 'maire_adjoint', 'service_assigne' => 'Zeroug']);
         $makeDepot(['statut_circuit' => 'service', 'destination_type' => 'maire_adjoint', 'service_assigne' => 'Guiya']);
+
+        $makeDepot(['statut_circuit' => 'service', 'destination_type' => 'conseiller', 'service_assigne' => 'Vall']);
 
         $response = $this->actingAs($admin)->get('/');
 
         $response->assertOk();
         $response->assertViewHas('serviceLabels', function ($labels) {
-            return $labels->toArray() === ['Informatique', 'Adjoint au Maire'];
+            return $labels->toArray() === ['Informatique', 'Adjoint au Maire', 'Conseiller'];
         });
         $response->assertViewHas('serviceCounts', function ($counts) {
-            return $counts->toArray() === [3, 2];
+            return $counts->toArray() === [3, 3, 1];
         });
+
+        // Détail individuel : un graphique séparé par Adjoint au Maire et par
+        // Conseiller, pour voir la charge de chaque personne.
+        $response->assertViewHas('maireAdjointLabels', function ($labels) {
+            return $labels->toArray() === ['Zeroug', 'Guiya'];
+        });
+        $response->assertViewHas('maireAdjointCounts', function ($counts) {
+            return $counts->toArray() === [2, 1];
+        });
+        $response->assertViewHas('conseillerLabels', function ($labels) {
+            return $labels->toArray() === ['Vall'];
+        });
+        $response->assertViewHas('conseillerCounts', function ($counts) {
+            return $counts->toArray() === [1];
+        });
+        $response->assertSee('Demandes par Adjoint au Maire');
+        $response->assertSee('Demandes par Conseiller');
     }
 
     public function test_service_dashboard_recent_demandes_are_ordered_and_labeled_by_last_update(): void

@@ -592,6 +592,41 @@ Tableau de bord
 </div>
 @endif
 
+@if($isAdmin && ($maireAdjointLabels->isNotEmpty() || $conseillerLabels->isNotEmpty()))
+<div class="row">
+    @if($maireAdjointLabels->isNotEmpty())
+    <div class="col-md-6">
+        <div class="card card-chart">
+            <div class="card-header">
+                <h5 class="card-category">Charge de travail</h5>
+                <h4 class="card-title">Demandes par Adjoint au Maire</h4>
+            </div>
+            <div class="card-body">
+                <div class="chart-area">
+                    <canvas id="maireAdjointChart"></canvas>
+                </div>
+            </div>
+        </div>
+    </div>
+    @endif
+    @if($conseillerLabels->isNotEmpty())
+    <div class="col-md-6">
+        <div class="card card-chart">
+            <div class="card-header">
+                <h5 class="card-category">Charge de travail</h5>
+                <h4 class="card-title">Demandes par Conseiller</h4>
+            </div>
+            <div class="card-body">
+                <div class="chart-area">
+                    <canvas id="conseillerChart"></canvas>
+                </div>
+            </div>
+        </div>
+    </div>
+    @endif
+</div>
+@endif
+
 @endif
 
 </div>
@@ -607,6 +642,10 @@ document.addEventListener('DOMContentLoaded', function () {
     var monthCounts = @json($monthCounts);
     var serviceLabels = @json($serviceLabels);
     var serviceCounts = @json($serviceCounts);
+    var maireAdjointLabels = @json($maireAdjointLabels);
+    var maireAdjointCounts = @json($maireAdjointCounts);
+    var conseillerLabels = @json($conseillerLabels);
+    var conseillerCounts = @json($conseillerCounts);
 
     new Chart(document.getElementById('evolutionChart'), {
         type: 'line',
@@ -631,15 +670,16 @@ document.addEventListener('DOMContentLoaded', function () {
     });
 
     @if($isAdmin)
-    var serviceChartEl = document.getElementById('serviceChart');
-    if (serviceChartEl) {
-        new Chart(serviceChartEl, {
+    function renderWorkloadChart(canvasId, labels, data) {
+        var el = document.getElementById(canvasId);
+        if (!el) { return; }
+        new Chart(el, {
             type: 'bar',
             data: {
-                labels: serviceLabels,
+                labels: labels,
                 datasets: [{
                     label: 'Demandes',
-                    data: serviceCounts,
+                    data: data,
                     backgroundColor: '#2CA8FF',
                     borderRadius: 6,
                 }]
@@ -653,6 +693,10 @@ document.addEventListener('DOMContentLoaded', function () {
             }
         });
     }
+
+    renderWorkloadChart('serviceChart', serviceLabels, serviceCounts);
+    renderWorkloadChart('maireAdjointChart', maireAdjointLabels, maireAdjointCounts);
+    renderWorkloadChart('conseillerChart', conseillerLabels, conseillerCounts);
     @endif
 });
 </script>

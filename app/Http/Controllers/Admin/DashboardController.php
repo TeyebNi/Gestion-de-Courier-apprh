@@ -150,6 +150,11 @@ class DashboardController extends Controller
         $divisionParents = User::where('role_kind', 'division')->pluck('division_of', 'name');
 
         $serviceCountsMap = [];
+        // Détail par personne, pour les deux rôles regroupés ci-dessus dans
+        // une seule catégorie côté "Demandes par Service" : utile pour voir
+        // la charge de chaque Adjoint au Maire / Conseiller individuellement.
+        $maireAdjointCountsMap = [];
+        $conseillerCountsMap = [];
         foreach ((clone $assignedQuery)->get(['service_assigne', 'destination_type']) as $d) {
             $label = match ($d->destination_type) {
                 'maire_adjoint' => User::MAIRE_ADJOINT_LABEL,
@@ -158,11 +163,25 @@ class DashboardController extends Controller
                 default => $d->service_assigne,
             };
             $serviceCountsMap[$label] = ($serviceCountsMap[$label] ?? 0) + 1;
+
+            if ($d->destination_type === 'maire_adjoint') {
+                $maireAdjointCountsMap[$d->service_assigne] = ($maireAdjointCountsMap[$d->service_assigne] ?? 0) + 1;
+            } elseif ($d->destination_type === 'conseiller') {
+                $conseillerCountsMap[$d->service_assigne] = ($conseillerCountsMap[$d->service_assigne] ?? 0) + 1;
+            }
         }
         arsort($serviceCountsMap);
         $serviceCountsMap = array_slice($serviceCountsMap, 0, 8, true);
         $serviceLabels = collect(array_keys($serviceCountsMap));
         $serviceCounts = collect(array_values($serviceCountsMap));
+
+        arsort($maireAdjointCountsMap);
+        $maireAdjointLabels = collect(array_keys($maireAdjointCountsMap));
+        $maireAdjointCounts = collect(array_values($maireAdjointCountsMap));
+
+        arsort($conseillerCountsMap);
+        $conseillerLabels = collect(array_keys($conseillerCountsMap));
+        $conseillerCounts = collect(array_values($conseillerCountsMap));
 
         return view('admin.dashboard', compact(
             'isAdmin',
@@ -175,6 +194,10 @@ class DashboardController extends Controller
             'monthCounts',
             'serviceLabels',
             'serviceCounts',
+            'maireAdjointLabels',
+            'maireAdjointCounts',
+            'conseillerLabels',
+            'conseillerCounts',
             'recentDemandes',
             'recentServiceDemandes'
         ));
