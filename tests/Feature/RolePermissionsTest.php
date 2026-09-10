@@ -221,6 +221,46 @@ class RolePermissionsTest extends TestCase
         $response->assertSee('Évolution des Demandes');
     }
 
+    public function test_admin_dashboard_workload_chart_groups_divisions_under_their_service_and_pools_special_roles(): void
+    {
+        $admin = User::factory()->create(['role' => UserRole::Admin]);
+
+        $makeDepot = fn (array $overrides) => Tabdepot::create(array_merge([
+            'daterecp' => now()->format('Y-m-d'),
+        ], $overrides));
+
+        // Deux demandes directement affectées au service Informatique.
+        $makeDepot(['statut_circuit' => 'service', 'destination_type' => 'service', 'service_assigne' => 'Informatique']);
+        $makeDepot(['statut_circuit' => 'service', 'destination_type' => 'service', 'service_assigne' => 'Informatique']);
+
+        // Une demande affectée à une Division qui dépend d'Informatique :
+        // doit être comptée avec le service, pas comme une barre à part.
+        User::factory()->create([
+            'role' => UserRole::User,
+            'role_kind' => 'division',
+            'division_of' => 'Informatique',
+            'name' => 'Agent de developpement local',
+            'service' => 'Agent de developpement local',
+        ]);
+        $makeDepot(['statut_circuit' => 'service', 'destination_type' => 'division', 'service_assigne' => 'Agent de developpement local']);
+
+        // Deux Adjoints au Maire différents : leurs demandes doivent se
+        // regrouper dans une seule catégorie "Adjoint au Maire", pas une
+        // barre par personne.
+        $makeDepot(['statut_circuit' => 'service', 'destination_type' => 'maire_adjoint', 'service_assigne' => 'Zeroug']);
+        $makeDepot(['statut_circuit' => 'service', 'destination_type' => 'maire_adjoint', 'service_assigne' => 'Guiya']);
+
+        $response = $this->actingAs($admin)->get('/');
+
+        $response->assertOk();
+        $response->assertViewHas('serviceLabels', function ($labels) {
+            return $labels->toArray() === ['Informatique', 'Adjoint au Maire'];
+        });
+        $response->assertViewHas('serviceCounts', function ($counts) {
+            return $counts->toArray() === [3, 2];
+        });
+    }
+
     public function test_service_dashboard_recent_demandes_are_ordered_and_labeled_by_last_update(): void
     {
         $serviceUser = User::factory()->create(['role' => UserRole::User, 'service' => 'Etat Civil']);

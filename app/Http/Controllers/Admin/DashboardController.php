@@ -5,6 +5,7 @@ namespace App\Http\Controllers\Admin;
 use App\Http\Controllers\Controller;
 use App\Models\DemandeHistorique;
 use App\Models\Tabdepot;
+use App\Models\User;
 use Illuminate\Http\Request;
 use Illuminate\Support\Carbon;
 
@@ -140,15 +141,28 @@ class DashboardController extends Controller
         }
 
         // ----- Répartition des demandes assignées par service -----
-        $serviceStats = (clone $assignedQuery)
-            ->select('service_assigne')
-            ->selectRaw('count(*) as total')
-            ->groupBy('service_assigne')
-            ->orderByDesc('total')
-            ->limit(8)
-            ->get();
-        $serviceLabels = $serviceStats->pluck('service_assigne');
-        $serviceCounts = $serviceStats->pluck('total');
+        // service_assigne contient soit le nom d'un service, soit le nom
+        // propre d'une personne (Adjoint au Maire/Division/Conseiller) : les
+        // regrouper telles quelles donnerait une barre par personne, noyée
+        // parmi les services. On regroupe donc chaque Division dans le
+        // service dont elle dépend, et l'Adjoint au Maire/le Conseiller dans
+        // une catégorie unique par rôle plutôt qu'une barre par personne.
+        $divisionParents = User::where('role_kind', 'division')->pluck('division_of', 'name');
+
+        $serviceCountsMap = [];
+        foreach ((clone $assignedQuery)->get(['service_assigne', 'destination_type']) as $d) {
+            $label = match ($d->destination_type) {
+                'maire_adjoint' => User::MAIRE_ADJOINT_LABEL,
+                'conseiller' => User::CONSEILLER_LABEL,
+                'division' => $divisionParents[$d->service_assigne] ?? $d->service_assigne,
+                default => $d->service_assigne,
+            };
+            $serviceCountsMap[$label] = ($serviceCountsMap[$label] ?? 0) + 1;
+        }
+        arsort($serviceCountsMap);
+        $serviceCountsMap = array_slice($serviceCountsMap, 0, 8, true);
+        $serviceLabels = collect(array_keys($serviceCountsMap));
+        $serviceCounts = collect(array_values($serviceCountsMap));
 
         return view('admin.dashboard', compact(
             'isAdmin',
