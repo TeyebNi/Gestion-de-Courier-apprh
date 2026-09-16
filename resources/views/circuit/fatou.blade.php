@@ -161,8 +161,12 @@ document.addEventListener('DOMContentLoaded', function () {
         maire_adjoint: 'Quel Adjoint au Maire ?',
         conseiller: 'Quel Conseiller ?',
     };
+    var PERSON_CATEGORY_LABELS = {
+        maire_adjoint: 'Adjoint au Maire',
+        conseiller: 'Conseiller',
+    };
 
-    function populateSelect(select, options, placeholder) {
+    function populateSelect(select, options, placeholder, labelPrefix) {
         select.innerHTML = '';
         var placeholderOpt = document.createElement('option');
         placeholderOpt.value = '';
@@ -171,7 +175,7 @@ document.addEventListener('DOMContentLoaded', function () {
         options.forEach(function (name) {
             var opt = document.createElement('option');
             opt.value = name;
-            opt.textContent = name;
+            opt.textContent = labelPrefix ? (labelPrefix + ' — ' + name) : name;
             select.appendChild(opt);
         });
     }
@@ -202,7 +206,7 @@ document.addEventListener('DOMContentLoaded', function () {
         } else if (category === 'maire_adjoint' || category === 'conseiller') {
             var personPick = personWrap.querySelector('select');
             document.getElementById('person_pick_label_' + cardId).textContent = PERSON_LABELS[category];
-            populateSelect(personPick, PEOPLE_BY_KIND[category] || [], 'Sélectionner...');
+            populateSelect(personPick, PEOPLE_BY_KIND[category] || [], 'Sélectionner...', PERSON_CATEGORY_LABELS[category]);
             personWrap.style.display = '';
             setFinal(cardId, category, personPick.value);
         }
