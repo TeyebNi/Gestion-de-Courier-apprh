@@ -230,11 +230,11 @@ document.addEventListener('DOMContentLoaded', function () {
         serviceOpt.dataset.category = 'service';
         serviceOpt.textContent = 'Service ' + select.value;
         divisionPick.appendChild(serviceOpt);
-        (DIVISIONS_BY_SERVICE[select.value] || []).forEach(function (name) {
+        (DIVISIONS_BY_SERVICE[select.value] || []).forEach(function (division) {
             var opt = document.createElement('option');
-            opt.value = name;
+            opt.value = division.title;
             opt.dataset.category = 'division';
-            opt.textContent = 'Division ' + name;
+            opt.textContent = 'Division ' + division.title + ' — ' + division.name;
             divisionPick.appendChild(opt);
         });
         (CHEF_SERVICE_BY_SERVICE[select.value] || []).forEach(function (name) {

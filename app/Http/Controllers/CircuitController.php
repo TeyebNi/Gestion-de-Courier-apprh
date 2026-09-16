@@ -76,10 +76,16 @@ class CircuitController extends Controller
         // Division et Chef de Service dépendent tous deux d'un service précis
         // (ex: les divisions d'Etat Civil, le Chef de Service Informatique) :
         // regroupés par nom de service pour le menu en cascade. Une Division
-        // est identifiée par son propre nom ("service", ex: "Guichet Unique"),
-        // pas par celui de la personne qui l'occupe.
+        // est identifiée (et routée) par son propre nom ("service", ex:
+        // "Guichet Unique"), pas par celui de la personne qui l'occupe — mais
+        // le nom du titulaire actuel est quand même transmis pour affichage,
+        // par cohérence avec Chef de Service qui montre déjà un nom.
         $divisionsByService = $orientations->mapWithKeys(
-            fn ($o) => [$o->name => User::where('role_kind', 'division')->where('division_of', $o->name)->orderBy('service')->pluck('service')]
+            fn ($o) => [$o->name => User::where('role_kind', 'division')->where('division_of', $o->name)
+                ->orderBy('service')
+                ->get(['service', 'name'])
+                ->map(fn ($u) => ['title' => $u->service, 'name' => $u->name])
+                ->values()]
         );
         $chefServiceByService = $orientations->mapWithKeys(
             fn ($o) => [$o->name => User::where('role_kind', 'chef_service')->where('division_of', $o->name)->orderBy('name')->pluck('name')]

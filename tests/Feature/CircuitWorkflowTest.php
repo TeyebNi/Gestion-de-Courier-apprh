@@ -548,6 +548,31 @@ class CircuitWorkflowTest extends TestCase
         $this->assertSame('Chez le Chef de Service : Chef Informatique', $depot->statutLabel());
     }
 
+    public function test_fatou_index_shows_the_current_officeholders_name_alongside_each_divisions_title(): void
+    {
+        $fatou = User::factory()->create(['role' => UserRole::Fatou]);
+        Orientation::create(['name' => 'Etat Civil']);
+        User::factory()->create([
+            'role' => UserRole::User,
+            'role_kind' => 'division',
+            'division_of' => 'Etat Civil',
+            'name' => 'Dah Med Salem Hamza',
+            'division_title' => 'Guichet Unique',
+            'service' => 'Guichet Unique',
+        ]);
+
+        $response = $this->actingAs($fatou)->get('/circuit/fatou');
+
+        $response->assertOk();
+        $response->assertViewHas('divisionsByService', function ($map) {
+            $entry = $map['Etat Civil']->first();
+
+            return $entry['title'] === 'Guichet Unique' && $entry['name'] === 'Dah Med Salem Hamza';
+        });
+        $response->assertSee('Guichet Unique');
+        $response->assertSee('Dah Med Salem Hamza');
+    }
+
     public function test_fatou_index_lists_the_chef_de_service_of_each_service_for_the_cascading_picker(): void
     {
         $fatou = User::factory()->create(['role' => UserRole::Fatou]);
