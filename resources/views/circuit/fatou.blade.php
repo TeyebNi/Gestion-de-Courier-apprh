@@ -241,7 +241,7 @@ document.addEventListener('DOMContentLoaded', function () {
             var opt = document.createElement('option');
             opt.value = name;
             opt.dataset.category = 'chef_service';
-            opt.textContent = 'Chef de Service ' + name;
+            opt.textContent = 'Chef de Service — ' + name;
             divisionPick.appendChild(opt);
         });
         divisionWrap.style.display = '';
