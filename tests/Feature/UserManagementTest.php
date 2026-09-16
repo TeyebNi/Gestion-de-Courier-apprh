@@ -118,14 +118,38 @@ class UserManagementTest extends TestCase
             'role' => 'user',
             'role_kind' => 'division',
             'division_of' => 'Etat Civil',
+            'division_title' => 'Guichet Unique',
         ]);
 
         $response->assertRedirect(route('users.index'));
 
         $newUser = User::where('email', 'division@commune.mr')->firstOrFail();
-        $this->assertSame('Chef Division', $newUser->service);
+        // "service" (l'identifiant de file) est le nom de la Division elle-même,
+        // pas celui de la personne qui l'occupe : un changement de titulaire
+        // ne doit rien changer au routage.
+        $this->assertSame('Guichet Unique', $newUser->service);
+        $this->assertSame('Guichet Unique', $newUser->division_title);
         $this->assertSame('division', $newUser->specialServiceKind());
         $this->assertSame('Etat Civil', $newUser->division_of);
+    }
+
+    public function test_cannot_create_a_division_account_without_naming_the_division(): void
+    {
+        $admin = User::factory()->create(['role' => UserRole::Admin]);
+        \App\Models\Orientation::create(['name' => 'Etat Civil']);
+
+        $response = $this->actingAs($admin)->post('/utilisateurs', [
+            'name' => 'Chef Division',
+            'email' => 'division@commune.mr',
+            'password' => 'motdepasse123',
+            'password_confirmation' => 'motdepasse123',
+            'role' => 'user',
+            'role_kind' => 'division',
+            'division_of' => 'Etat Civil',
+        ]);
+
+        $response->assertSessionHasErrors('division_title');
+        $this->assertDatabaseMissing('users', ['email' => 'division@commune.mr']);
     }
 
     public function test_cannot_create_a_division_account_without_choosing_its_parent_service(): void

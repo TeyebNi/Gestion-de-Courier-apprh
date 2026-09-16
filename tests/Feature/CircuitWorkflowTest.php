@@ -434,12 +434,16 @@ class CircuitWorkflowTest extends TestCase
     {
         $fatou = User::factory()->create(['role' => UserRole::Fatou]);
         Orientation::create(['name' => 'Etat Civil']);
+        // Le nom de la personne et le nom de la Division sont volontairement
+        // différents : le routage doit se faire sur le nom de la Division
+        // ("service"/"division_title"), pas sur celui du titulaire ("name").
         User::factory()->create([
             'role' => UserRole::User,
             'role_kind' => 'division',
             'division_of' => 'Etat Civil',
-            'name' => 'Chef Division Etat Civil',
-            'service' => 'Chef Division Etat Civil',
+            'name' => 'Zeineb Mint Sidi',
+            'division_title' => 'Guichet Unique',
+            'service' => 'Guichet Unique',
         ]);
         $depot = $this->makeDepot();
         $depot->update(['statut_circuit' => 'fatou']);
@@ -447,22 +451,22 @@ class CircuitWorkflowTest extends TestCase
         $this->actingAs($fatou)->post("/circuit/{$depot->id}/decider", [
             'remarque_maire' => 'RAS',
             'destination_category' => 'division',
-            'destination_value' => 'Chef Division Etat Civil',
+            'destination_value' => 'Guichet Unique',
         ])->assertRedirect();
 
         $depot->refresh();
         $this->assertSame('service', $depot->statut_circuit);
-        $this->assertSame('Chef Division Etat Civil', $depot->service_assigne);
+        $this->assertSame('Guichet Unique', $depot->service_assigne);
         $this->assertSame('division', $depot->destination_type);
-        $this->assertSame('Chez la Division : Chef Division Etat Civil', $depot->statutLabel());
+        $this->assertSame('Chez la Division : Guichet Unique', $depot->statutLabel());
     }
 
     public function test_a_demande_routed_to_one_division_is_not_visible_to_another(): void
     {
         $fatou = User::factory()->create(['role' => UserRole::Fatou]);
         Orientation::create(['name' => 'Etat Civil']);
-        $division1 = User::factory()->create(['role' => UserRole::User, 'role_kind' => 'division', 'division_of' => 'Etat Civil', 'name' => 'Division A', 'service' => 'Division A']);
-        $division2 = User::factory()->create(['role' => UserRole::User, 'role_kind' => 'division', 'division_of' => 'Etat Civil', 'name' => 'Division B', 'service' => 'Division B']);
+        $division1 = User::factory()->create(['role' => UserRole::User, 'role_kind' => 'division', 'division_of' => 'Etat Civil', 'name' => 'Personne A', 'division_title' => 'Division A', 'service' => 'Division A']);
+        $division2 = User::factory()->create(['role' => UserRole::User, 'role_kind' => 'division', 'division_of' => 'Etat Civil', 'name' => 'Personne B', 'division_title' => 'Division B', 'service' => 'Division B']);
         $depot = $this->makeDepot();
         $depot->update(['statut_circuit' => 'fatou']);
 
@@ -477,6 +481,44 @@ class CircuitWorkflowTest extends TestCase
 
         $this->actingAs($division2)->get('/circuit/service')
             ->assertViewHas('demandes', fn ($demandes) => ! $demandes->contains('id', $depot->id));
+    }
+
+    public function test_replacing_a_divisions_officeholder_does_not_change_its_routing(): void
+    {
+        $fatou = User::factory()->create(['role' => UserRole::Fatou]);
+        Orientation::create(['name' => 'Etat Civil']);
+        $division = User::factory()->create([
+            'role' => UserRole::User,
+            'role_kind' => 'division',
+            'division_of' => 'Etat Civil',
+            'name' => 'Ancien Titulaire',
+            'division_title' => 'Guichet Unique',
+            'service' => 'Guichet Unique',
+        ]);
+        $depot = $this->makeDepot();
+        $depot->update(['statut_circuit' => 'fatou']);
+        $this->actingAs($fatou)->post("/circuit/{$depot->id}/decider", [
+            'remarque_maire' => 'RAS',
+            'destination_category' => 'division',
+            'destination_value' => 'Guichet Unique',
+        ]);
+
+        // Changement de titulaire : seul "name" change, "division_title" et
+        // "service" restent identiques.
+        $admin = User::factory()->create(['role' => UserRole::Admin]);
+        $this->actingAs($admin)->put("/utilisateurs/{$division->id}", [
+            'name' => 'Nouveau Titulaire',
+            'email' => $division->email,
+            'role' => 'user',
+            'role_kind' => 'division',
+            'division_of' => 'Etat Civil',
+            'division_title' => 'Guichet Unique',
+        ]);
+
+        $this->assertSame('Guichet Unique', $division->fresh()->service);
+        $this->assertTrue($depot->fresh()->service_assigne === 'Guichet Unique');
+        $this->actingAs($division->fresh())->get('/circuit/service')
+            ->assertViewHas('demandes', fn ($demandes) => $demandes->contains('id', $depot->id));
     }
 
     public function test_cabinet_can_route_a_demande_to_the_chef_de_service_of_a_service(): void

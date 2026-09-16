@@ -46,6 +46,9 @@ Les Utilisateurs
                                     <span class="badge badge-{{ $u->isAdmin() ? 'danger' : ($u->specialServiceLabel() ? 'warning' : 'info') }}">
                                         {{ $u->isAdmin() ? 'Admin' : ($u->specialServiceLabel() ?: 'User') }}
                                     </span>
+                                    @if($u->specialServiceKind() === 'division' && $u->division_title)
+                                        <br><small class="text-muted">{{ $u->division_title }}</small>
+                                    @endif
                                 </td>
                                 <td>
                                     @if(in_array($u->specialServiceKind(), \App\Models\User::serviceNestedRoleKinds()))
@@ -65,6 +68,7 @@ Les Utilisateurs
                                        data-role="{{ $u->role->value }}"
                                        data-role-kind="{{ $u->role_kind }}"
                                        data-division-of="{{ $u->division_of }}"
+                                       data-division-title="{{ $u->division_title }}"
                                        data-service="{{ $u->service }}"
                                        data-can-manage-users="{{ $u->can_manage_users !== false ? '1' : '0' }}"
                                        data-can-access-cabinet="{{ $u->can_access_cabinet !== false ? '1' : '0' }}"
@@ -182,6 +186,12 @@ Les Utilisateurs
                         </select>
                     </div>
                     <p class="text-muted mb-0" id="create_adjoint_note" style="display:none; font-size:0.85em;"></p>
+                    <div class="input-group mt-2" id="create_division_title_group" style="display:none;">
+                        <div class="input-group-prepend">
+                            <span class="input-group-text">Nom de la Division</span>
+                        </div>
+                        <input type="text" class="form-control" name="division_title" id="create_division_title" placeholder="Ex: Guichet Unique">
+                    </div>
                     <div class="input-group mt-2" id="create_division_of_group" style="display:none;">
                         <div class="input-group-prepend">
                             <span class="input-group-text" id="create_division_of_label">Division de</span>
@@ -272,6 +282,12 @@ Les Utilisateurs
                         </select>
                     </div>
                     <p class="text-muted mb-0" id="edit_adjoint_note" style="display:none; font-size:0.85em;"></p>
+                    <div class="input-group mt-2" id="edit_division_title_group" style="display:none;">
+                        <div class="input-group-prepend">
+                            <span class="input-group-text">Nom de la Division</span>
+                        </div>
+                        <input type="text" class="form-control" name="division_title" id="edit_division_title" placeholder="Ex: Guichet Unique">
+                    </div>
                     <div class="input-group mt-2" id="edit_division_of_group" style="display:none;">
                         <div class="input-group-prepend">
                             <span class="input-group-text" id="edit_division_of_label">Division de</span>
@@ -427,6 +443,9 @@ $('#editUserModal').on('show.bs.modal', function (event) {
     if (SERVICE_NESTED_KINDS.indexOf(kind) !== -1) {
         $('#edit_division_of').val(button.data('division-of'));
     }
+    if (kind === 'division') {
+        $('#edit_division_title').val(button.data('division-title'));
+    }
 });
 
 $('#edit_role').on('change', function () {
@@ -465,6 +484,14 @@ function toggleServiceField(kind, prefix) {
     document.getElementById(prefix + '_division_of_label').textContent = DIVISION_OF_LABELS[kind] || 'Division de';
     if (!isNested) {
         $('#' + prefix + '_division_of').val('');
+    }
+
+    // Le nom de la Division (ex: "Guichet Unique") est distinct du nom de la
+    // personne qui l'occupe : seule la Division a ce champ, pas Chef de
+    // Service (dont le "titre" est déjà le nom du service lui-même).
+    $('#' + prefix + '_division_title_group').toggle(kind === 'division');
+    if (kind !== 'division') {
+        $('#' + prefix + '_division_title').val('');
     }
 
     $('#' + prefix + '_admin_permissions_group').toggle(kind === 'admin');

@@ -66,23 +66,28 @@ class UserController extends Controller
             'role' => ['required', 'in:admin,user,fatou'],
             'role_kind' => ['nullable', Rule::in(array_merge(['user'], array_keys(User::specialServiceRoles())))],
             'division_of' => [Rule::requiredIf(in_array($request->role_kind, User::serviceNestedRoleKinds())), 'nullable', Rule::in(Orientation::pluck('name'))],
+            'division_title' => [Rule::requiredIf($request->role_kind === 'division'), 'nullable', 'string', 'max:255'],
             'service' => ['nullable', 'string', 'max:255'],
         ], [
             'name.regex' => "Le nom ne doit contenir que des lettres, espaces, apostrophes et tirets.",
             'email.unique' => 'Cet email est déjà utilisé par un autre utilisateur.',
             'division_of.required' => 'Veuillez choisir de quel service dépend ce compte.',
             'division_of.in' => 'Veuillez choisir un service valide.',
+            'division_title.required' => 'Veuillez indiquer le nom de la division.',
         ]);
 
         $isAdminOrFatou = in_array($request->role, ['admin', 'fatou']);
         $specialKind = ! $isAdminOrFatou && array_key_exists($request->role_kind, User::specialServiceRoles()) ? $request->role_kind : null;
 
-        // Un compte "à la carte" (Adjoint au Maire/Division/Chef de Service/
-        // Conseiller) a sa propre file individuelle : "service" devient son
-        // propre nom, pas un choix manuel, pour isoler sa file de celle des
-        // autres du même rôle.
+        // Un compte "à la carte" (Adjoint au Maire/Chef de Service/Conseiller)
+        // a sa propre file individuelle identifiée par son propre nom. Une
+        // Division a un nom propre (ex: "Guichet Unique"), indépendant de la
+        // personne qui l'occupe : c'est ce nom, pas celui de la personne, qui
+        // sert d'identifiant de file — pour qu'un changement de titulaire ne
+        // change rien au routage.
         $service = match (true) {
             $isAdminOrFatou => null,
+            $specialKind === 'division' => $request->division_title,
             $specialKind !== null => $request->name,
             default => $request->service,
         };
@@ -94,6 +99,7 @@ class UserController extends Controller
             'role' => UserRole::from($request->role),
             'role_kind' => $specialKind,
             'division_of' => in_array($specialKind, User::serviceNestedRoleKinds()) ? $request->division_of : null,
+            'division_title' => $specialKind === 'division' ? $request->division_title : null,
             'service' => $service,
             'can_manage_users' => $request->role === 'admin' ? $request->boolean('can_manage_users') : true,
             'can_access_cabinet' => $request->role === 'admin' ? $request->boolean('can_access_cabinet') : true,
@@ -153,6 +159,7 @@ class UserController extends Controller
         'role' => ['required', 'in:admin,user,fatou'],
         'role_kind' => ['nullable', Rule::in(array_merge(['user'], array_keys(User::specialServiceRoles())))],
         'division_of' => [Rule::requiredIf(in_array($request->role_kind, User::serviceNestedRoleKinds())), 'nullable', Rule::in(Orientation::pluck('name'))],
+        'division_title' => [Rule::requiredIf($request->role_kind === 'division'), 'nullable', 'string', 'max:255'],
         'service' => ['nullable', 'string', 'max:255'],
         'can_manage_users' => ['nullable', 'boolean'],
         'can_access_cabinet' => ['nullable', 'boolean'],
@@ -162,6 +169,7 @@ class UserController extends Controller
         'email.unique' => 'Cet email est déjà utilisé par un autre utilisateur.',
         'division_of.required' => 'Veuillez choisir de quel service dépend ce compte.',
         'division_of.in' => 'Veuillez choisir un service valide.',
+        'division_title.required' => 'Veuillez indiquer le nom de la division.',
     ]);
 
     if ($user->isAdmin() && $request->role === 'user' && User::where('role', 'admin')->count() <= 1) {
@@ -183,6 +191,7 @@ class UserController extends Controller
 
     $service = match (true) {
         $isAdminOrFatou => null,
+        $specialKind === 'division' => $request->division_title,
         $specialKind !== null => $request->name,
         default => $request->service,
     };
@@ -193,6 +202,7 @@ class UserController extends Controller
         'role' => UserRole::from($request->role),
         'role_kind' => $specialKind,
         'division_of' => in_array($specialKind, User::serviceNestedRoleKinds()) ? $request->division_of : null,
+        'division_title' => $specialKind === 'division' ? $request->division_title : null,
         'service' => $service,
         'can_manage_users' => $request->role === 'admin' ? $request->boolean('can_manage_users') : true,
         'can_access_cabinet' => $request->role === 'admin' ? $request->boolean('can_access_cabinet') : true,

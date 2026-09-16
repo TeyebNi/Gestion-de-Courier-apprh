@@ -38,6 +38,7 @@ class User extends Authenticatable
         'role',
         'role_kind',
         'division_of',
+        'division_title',
         'service',
         'can_manage_users',
         'can_access_cabinet',

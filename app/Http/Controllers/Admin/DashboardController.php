@@ -24,7 +24,10 @@ class DashboardController extends Controller
      */
     private function workloadChartData($assignedQuery): array
     {
-        $nestedParents = User::whereIn('role_kind', User::serviceNestedRoleKinds())->pluck('division_of', 'name');
+        // Clé sur "service" (l'identifiant de file réellement stocké dans
+        // Tabdepot.service_assigne) et non "name", car pour une Division ce
+        // sont deux choses différentes (nom de la division vs. son titulaire).
+        $nestedParents = User::whereIn('role_kind', User::serviceNestedRoleKinds())->pluck('division_of', 'service');
 
         $serviceCountsMap = [];
         $maireAdjointCountsMap = [];

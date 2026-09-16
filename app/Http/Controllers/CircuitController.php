@@ -75,9 +75,11 @@ class CircuitController extends Controller
 
         // Division et Chef de Service dépendent tous deux d'un service précis
         // (ex: les divisions d'Etat Civil, le Chef de Service Informatique) :
-        // regroupés par nom de service pour le menu en cascade.
+        // regroupés par nom de service pour le menu en cascade. Une Division
+        // est identifiée par son propre nom ("service", ex: "Guichet Unique"),
+        // pas par celui de la personne qui l'occupe.
         $divisionsByService = $orientations->mapWithKeys(
-            fn ($o) => [$o->name => User::where('role_kind', 'division')->where('division_of', $o->name)->orderBy('name')->pluck('name')]
+            fn ($o) => [$o->name => User::where('role_kind', 'division')->where('division_of', $o->name)->orderBy('service')->pluck('service')]
         );
         $chefServiceByService = $orientations->mapWithKeys(
             fn ($o) => [$o->name => User::where('role_kind', 'chef_service')->where('division_of', $o->name)->orderBy('name')->pluck('name')]
@@ -120,9 +122,13 @@ class CircuitController extends Controller
         $value = $request->destination_value ?: null;
 
         if ($category !== null) {
+            // "service" (colonne) est l'identifiant de file de chaque compte à
+            // la carte : le propre nom de la personne pour Adjoint au Maire/
+            // Chef de Service/Conseiller, ou le nom de la division elle-même
+            // (pas celui de son titulaire) pour Division.
             $validValues = $category === 'service'
                 ? Orientation::pluck('name')
-                : User::where('role_kind', $category)->pluck('name');
+                : User::where('role_kind', $category)->pluck('service');
 
             if (! $value || ! $validValues->contains($value)) {
                 $label = $category === 'service' ? 'un service' : 'une personne';
