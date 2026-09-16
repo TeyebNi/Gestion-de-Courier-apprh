@@ -156,6 +156,56 @@ class UserManagementTest extends TestCase
         $response->assertSee('Conseiller');
     }
 
+    public function test_admin_can_create_a_chef_de_service_account_under_a_service(): void
+    {
+        $admin = User::factory()->create(['role' => UserRole::Admin]);
+        \App\Models\Orientation::create(['name' => 'Informatique']);
+
+        $response = $this->actingAs($admin)->post('/utilisateurs', [
+            'name' => 'Chef Informatique',
+            'email' => 'chef-informatique@commune.mr',
+            'password' => 'motdepasse123',
+            'password_confirmation' => 'motdepasse123',
+            'role' => 'user',
+            'role_kind' => 'chef_service',
+            'division_of' => 'Informatique',
+        ]);
+
+        $response->assertRedirect(route('users.index'));
+
+        $newUser = User::where('email', 'chef-informatique@commune.mr')->firstOrFail();
+        $this->assertSame('Chef Informatique', $newUser->service);
+        $this->assertSame('chef_service', $newUser->specialServiceKind());
+        $this->assertSame('Informatique', $newUser->division_of);
+    }
+
+    public function test_cannot_create_a_chef_de_service_account_without_choosing_its_service(): void
+    {
+        $admin = User::factory()->create(['role' => UserRole::Admin]);
+
+        $response = $this->actingAs($admin)->post('/utilisateurs', [
+            'name' => 'Chef Informatique',
+            'email' => 'chef-informatique@commune.mr',
+            'password' => 'motdepasse123',
+            'password_confirmation' => 'motdepasse123',
+            'role' => 'user',
+            'role_kind' => 'chef_service',
+        ]);
+
+        $response->assertSessionHasErrors('division_of');
+        $this->assertDatabaseMissing('users', ['email' => 'chef-informatique@commune.mr']);
+    }
+
+    public function test_users_index_offers_the_chef_de_service_role_in_the_form(): void
+    {
+        $admin = User::factory()->create(['role' => UserRole::Admin]);
+
+        $response = $this->actingAs($admin)->get('/utilisateurs');
+
+        $response->assertOk();
+        $response->assertSee('Chef de Service');
+    }
+
     public function test_admin_can_create_a_restricted_admin_account(): void
     {
         $admin = User::factory()->create(['role' => UserRole::Admin]);

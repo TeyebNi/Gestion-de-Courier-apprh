@@ -261,6 +261,17 @@ class RolePermissionsTest extends TestCase
         ]);
         $makeDepot(['statut_circuit' => 'service', 'destination_type' => 'division', 'service_assigne' => 'Agent de developpement local']);
 
+        // Un Chef de Service d'Informatique : doit lui aussi être compté avec
+        // le service, comme une Division.
+        User::factory()->create([
+            'role' => UserRole::User,
+            'role_kind' => 'chef_service',
+            'division_of' => 'Informatique',
+            'name' => 'Chef Informatique',
+            'service' => 'Chef Informatique',
+        ]);
+        $makeDepot(['statut_circuit' => 'service', 'destination_type' => 'chef_service', 'service_assigne' => 'Chef Informatique']);
+
         // Deux Adjoints au Maire différents : leurs demandes doivent se
         // regrouper dans une seule catégorie "Adjoint au Maire", pas une
         // barre par personne, dans le graphique global "Demandes par Service".
@@ -277,7 +288,7 @@ class RolePermissionsTest extends TestCase
             return $labels->toArray() === ['Informatique', 'Adjoint au Maire', 'Conseiller'];
         });
         $response->assertViewHas('serviceCounts', function ($counts) {
-            return $counts->toArray() === [3, 3, 1];
+            return $counts->toArray() === [4, 3, 1];
         });
 
         // Détail individuel : un graphique séparé par Adjoint au Maire et par

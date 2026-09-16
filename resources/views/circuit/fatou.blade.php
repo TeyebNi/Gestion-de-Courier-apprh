@@ -152,6 +152,7 @@ document.addEventListener('DOMContentLoaded', function () {
 document.addEventListener('DOMContentLoaded', function () {
     var ORIENTATIONS = @json($orientations->pluck('name'));
     var DIVISIONS_BY_SERVICE = @json($divisionsByService);
+    var CHEF_SERVICE_BY_SERVICE = @json($chefServiceByService);
     var PEOPLE_BY_KIND = {
         maire_adjoint: @json($peopleByKind['maire_adjoint']),
         conseiller: @json($peopleByKind['conseiller']),
@@ -218,18 +219,29 @@ document.addEventListener('DOMContentLoaded', function () {
         }
 
         // Une seule liste combinée : le service lui-même en premier (choix par
-        // défaut), suivi de ses divisions — pas un champ "division" séparé et
-        // optionnel à côté du service.
+        // défaut), suivi de ses divisions et de son Chef de Service — pas un
+        // champ séparé et optionnel à côté du service. La catégorie de chaque
+        // option est portée par data-category (pas la valeur, pour distinguer
+        // une Division et un Chef de Service qui porteraient le même nom).
         var divisionPick = divisionWrap.querySelector('select');
         divisionPick.innerHTML = '';
         var serviceOpt = document.createElement('option');
         serviceOpt.value = '__service__';
+        serviceOpt.dataset.category = 'service';
         serviceOpt.textContent = 'Service ' + select.value;
         divisionPick.appendChild(serviceOpt);
         (DIVISIONS_BY_SERVICE[select.value] || []).forEach(function (name) {
             var opt = document.createElement('option');
             opt.value = name;
+            opt.dataset.category = 'division';
             opt.textContent = 'Division ' + name;
+            divisionPick.appendChild(opt);
+        });
+        (CHEF_SERVICE_BY_SERVICE[select.value] || []).forEach(function (name) {
+            var opt = document.createElement('option');
+            opt.value = name;
+            opt.dataset.category = 'chef_service';
+            opt.textContent = 'Chef de Service ' + name;
             divisionPick.appendChild(opt);
         });
         divisionWrap.style.display = '';
@@ -239,11 +251,12 @@ document.addEventListener('DOMContentLoaded', function () {
     function onDivisionPickChange(select) {
         var cardId = select.dataset.card;
         var servicePick = document.getElementById('service_pick_wrap_' + cardId).querySelector('select');
+        var category = select.options[select.selectedIndex] ? select.options[select.selectedIndex].dataset.category : 'service';
 
-        if (select.value === '__service__' || !select.value) {
+        if (!category || category === 'service') {
             setFinal(cardId, 'service', servicePick.value);
         } else {
-            setFinal(cardId, 'division', select.value);
+            setFinal(cardId, category, select.value);
         }
     }
 

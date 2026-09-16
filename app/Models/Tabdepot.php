@@ -52,6 +52,7 @@ class Tabdepot extends Model
     private const DESTINATION_PREFIXES = [
         'maire_adjoint' => "Chez l'Adjoint au Maire",
         'division' => 'Chez la Division',
+        'chef_service' => 'Chez le Chef de Service',
         'conseiller' => 'Chez le Conseiller',
     ];
 
@@ -62,6 +63,7 @@ class Tabdepot extends Model
     private const CLOTURE_PAR_PREFIXES = [
         'maire_adjoint' => "par l'Adjoint au Maire",
         'division' => 'par la Division',
+        'chef_service' => 'par le Chef de Service',
         'conseiller' => 'par le Conseiller',
     ];
 

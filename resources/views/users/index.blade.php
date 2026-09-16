@@ -48,7 +48,7 @@ Les Utilisateurs
                                     </span>
                                 </td>
                                 <td>
-                                    @if($u->specialServiceKind() === 'division')
+                                    @if(in_array($u->specialServiceKind(), \App\Models\User::serviceNestedRoleKinds()))
                                         {{ $u->division_of ?: '—' }}
                                     @elseif($u->specialServiceKind())
                                         {{-- "service" vaut son propre nom, déjà affiché dans Nom. --}}
@@ -164,6 +164,7 @@ Les Utilisateurs
                             <option value="user" data-kind="user">User</option>
                             <option value="user" data-kind="maire_adjoint">Adjoint au Maire</option>
                             <option value="user" data-kind="division">Division</option>
+                            <option value="user" data-kind="chef_service">Chef de Service</option>
                             <option value="user" data-kind="conseiller">Conseiller</option>
                             <option value="admin" data-kind="admin">Admin</option>
                             <option value="fatou" data-kind="fatou">Cabinet de Maire</option>
@@ -183,7 +184,7 @@ Les Utilisateurs
                     <p class="text-muted mb-0" id="create_adjoint_note" style="display:none; font-size:0.85em;"></p>
                     <div class="input-group mt-2" id="create_division_of_group" style="display:none;">
                         <div class="input-group-prepend">
-                            <span class="input-group-text">Division de</span>
+                            <span class="input-group-text" id="create_division_of_label">Division de</span>
                         </div>
                         <select class="form-control" name="division_of" id="create_division_of">
                             <option value="">Sélectionner un service</option>
@@ -253,6 +254,7 @@ Les Utilisateurs
                             <option value="user" data-kind="user">User</option>
                             <option value="user" data-kind="maire_adjoint">Adjoint au Maire</option>
                             <option value="user" data-kind="division">Division</option>
+                            <option value="user" data-kind="chef_service">Chef de Service</option>
                             <option value="user" data-kind="conseiller">Conseiller</option>
                             <option value="admin" data-kind="admin">Admin</option>
                             <option value="fatou" data-kind="fatou">Cabinet de Maire</option>
@@ -272,7 +274,7 @@ Les Utilisateurs
                     <p class="text-muted mb-0" id="edit_adjoint_note" style="display:none; font-size:0.85em;"></p>
                     <div class="input-group mt-2" id="edit_division_of_group" style="display:none;">
                         <div class="input-group-prepend">
-                            <span class="input-group-text">Division de</span>
+                            <span class="input-group-text" id="edit_division_of_label">Division de</span>
                         </div>
                         <select class="form-control" name="division_of" id="edit_division_of">
                             <option value="">Sélectionner un service</option>
@@ -396,6 +398,8 @@ Les Utilisateurs
 @section('scripts')
 <script>
 var SPECIAL_SERVICE_ROLES = @json(\App\Models\User::specialServiceRoles());
+var SERVICE_NESTED_KINDS = @json(\App\Models\User::serviceNestedRoleKinds());
+var DIVISION_OF_LABELS = { division: 'Division de', chef_service: 'Chef du service' };
 
 $('#editUserModal').on('show.bs.modal', function (event) {
     var button = $(event.relatedTarget);
@@ -420,7 +424,7 @@ $('#editUserModal').on('show.bs.modal', function (event) {
     if (kind === 'user') {
         $('#edit_service').val(service);
     }
-    if (kind === 'division') {
+    if (SERVICE_NESTED_KINDS.indexOf(kind) !== -1) {
         $('#edit_division_of').val(button.data('division-of'));
     }
 });
@@ -439,13 +443,14 @@ function toggleServiceField(kind, prefix) {
     var isSpecial = Object.prototype.hasOwnProperty.call(SPECIAL_SERVICE_ROLES, kind);
     document.getElementById(prefix + '_role_kind').value = isSpecial ? kind : 'user';
 
-    // Un rôle "à la carte" (Adjoint au Maire, Division, Conseiller) a sa
-    // propre file individuelle : pas de choix manuel de "Service" (basé sur
-    // son propre nom automatiquement).
+    // Un rôle "à la carte" (Adjoint au Maire, Division, Chef de Service,
+    // Conseiller) a sa propre file individuelle : pas de choix manuel de
+    // "Service" (basé sur son propre nom automatiquement).
     $('#' + prefix + '_service_group').toggle(kind === 'user');
+    var isNested = SERVICE_NESTED_KINDS.indexOf(kind) !== -1;
     var note = document.getElementById(prefix + '_adjoint_note');
     if (isSpecial) {
-        note.textContent = kind === 'division'
+        note.textContent = isNested
             ? 'Ce compte aura sa propre file, au sein du service choisi ci-dessous.'
             : 'Ce compte aura sa propre file individuelle, comme un service.';
         note.style.display = '';
@@ -456,8 +461,9 @@ function toggleServiceField(kind, prefix) {
         $('#' + prefix + '_service').val('');
     }
 
-    $('#' + prefix + '_division_of_group').toggle(kind === 'division');
-    if (kind !== 'division') {
+    $('#' + prefix + '_division_of_group').toggle(isNested);
+    document.getElementById(prefix + '_division_of_label').textContent = DIVISION_OF_LABELS[kind] || 'Division de';
+    if (!isNested) {
         $('#' + prefix + '_division_of').val('');
     }
 

@@ -65,21 +65,22 @@ class UserController extends Controller
             'password' => ['required', 'string', 'min:8', 'confirmed'],
             'role' => ['required', 'in:admin,user,fatou'],
             'role_kind' => ['nullable', Rule::in(array_merge(['user'], array_keys(User::specialServiceRoles())))],
-            'division_of' => [Rule::requiredIf($request->role_kind === 'division'), 'nullable', Rule::in(Orientation::pluck('name'))],
+            'division_of' => [Rule::requiredIf(in_array($request->role_kind, User::serviceNestedRoleKinds())), 'nullable', Rule::in(Orientation::pluck('name'))],
             'service' => ['nullable', 'string', 'max:255'],
         ], [
             'name.regex' => "Le nom ne doit contenir que des lettres, espaces, apostrophes et tirets.",
             'email.unique' => 'Cet email est déjà utilisé par un autre utilisateur.',
-            'division_of.required' => 'Veuillez choisir de quel service dépend cette division.',
+            'division_of.required' => 'Veuillez choisir de quel service dépend ce compte.',
             'division_of.in' => 'Veuillez choisir un service valide.',
         ]);
 
         $isAdminOrFatou = in_array($request->role, ['admin', 'fatou']);
         $specialKind = ! $isAdminOrFatou && array_key_exists($request->role_kind, User::specialServiceRoles()) ? $request->role_kind : null;
 
-        // Un compte "à la carte" (Adjoint au Maire/Division/Conseiller) a sa
-        // propre file individuelle : "service" devient son propre nom, pas un
-        // choix manuel, pour isoler sa file de celle des autres du même rôle.
+        // Un compte "à la carte" (Adjoint au Maire/Division/Chef de Service/
+        // Conseiller) a sa propre file individuelle : "service" devient son
+        // propre nom, pas un choix manuel, pour isoler sa file de celle des
+        // autres du même rôle.
         $service = match (true) {
             $isAdminOrFatou => null,
             $specialKind !== null => $request->name,
@@ -92,7 +93,7 @@ class UserController extends Controller
             'password' => bcrypt($request->password),
             'role' => UserRole::from($request->role),
             'role_kind' => $specialKind,
-            'division_of' => $specialKind === 'division' ? $request->division_of : null,
+            'division_of' => in_array($specialKind, User::serviceNestedRoleKinds()) ? $request->division_of : null,
             'service' => $service,
             'can_manage_users' => $request->role === 'admin' ? $request->boolean('can_manage_users') : true,
             'can_access_cabinet' => $request->role === 'admin' ? $request->boolean('can_access_cabinet') : true,
@@ -151,7 +152,7 @@ class UserController extends Controller
         'email' => ['required', 'email', 'max:255', Rule::unique('users', 'email')->ignore($user->id)],
         'role' => ['required', 'in:admin,user,fatou'],
         'role_kind' => ['nullable', Rule::in(array_merge(['user'], array_keys(User::specialServiceRoles())))],
-        'division_of' => [Rule::requiredIf($request->role_kind === 'division'), 'nullable', Rule::in(Orientation::pluck('name'))],
+        'division_of' => [Rule::requiredIf(in_array($request->role_kind, User::serviceNestedRoleKinds())), 'nullable', Rule::in(Orientation::pluck('name'))],
         'service' => ['nullable', 'string', 'max:255'],
         'can_manage_users' => ['nullable', 'boolean'],
         'can_access_cabinet' => ['nullable', 'boolean'],
@@ -159,7 +160,7 @@ class UserController extends Controller
     ], [
         'name.regex' => "Le nom ne doit contenir que des lettres, espaces, apostrophes et tirets.",
         'email.unique' => 'Cet email est déjà utilisé par un autre utilisateur.',
-        'division_of.required' => 'Veuillez choisir de quel service dépend cette division.',
+        'division_of.required' => 'Veuillez choisir de quel service dépend ce compte.',
         'division_of.in' => 'Veuillez choisir un service valide.',
     ]);
 
@@ -191,7 +192,7 @@ class UserController extends Controller
         'email' => $request->email,
         'role' => UserRole::from($request->role),
         'role_kind' => $specialKind,
-        'division_of' => $specialKind === 'division' ? $request->division_of : null,
+        'division_of' => in_array($specialKind, User::serviceNestedRoleKinds()) ? $request->division_of : null,
         'service' => $service,
         'can_manage_users' => $request->role === 'admin' ? $request->boolean('can_manage_users') : true,
         'can_access_cabinet' => $request->role === 'admin' ? $request->boolean('can_access_cabinet') : true,

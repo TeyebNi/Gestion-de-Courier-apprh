@@ -479,6 +479,53 @@ class CircuitWorkflowTest extends TestCase
             ->assertViewHas('demandes', fn ($demandes) => ! $demandes->contains('id', $depot->id));
     }
 
+    public function test_cabinet_can_route_a_demande_to_the_chef_de_service_of_a_service(): void
+    {
+        $fatou = User::factory()->create(['role' => UserRole::Fatou]);
+        Orientation::create(['name' => 'Informatique']);
+        User::factory()->create([
+            'role' => UserRole::User,
+            'role_kind' => 'chef_service',
+            'division_of' => 'Informatique',
+            'name' => 'Chef Informatique',
+            'service' => 'Chef Informatique',
+        ]);
+        $depot = $this->makeDepot();
+        $depot->update(['statut_circuit' => 'fatou']);
+
+        $this->actingAs($fatou)->post("/circuit/{$depot->id}/decider", [
+            'remarque_maire' => 'RAS',
+            'destination_category' => 'chef_service',
+            'destination_value' => 'Chef Informatique',
+        ])->assertRedirect();
+
+        $depot->refresh();
+        $this->assertSame('service', $depot->statut_circuit);
+        $this->assertSame('Chef Informatique', $depot->service_assigne);
+        $this->assertSame('chef_service', $depot->destination_type);
+        $this->assertSame('Chez le Chef de Service : Chef Informatique', $depot->statutLabel());
+    }
+
+    public function test_fatou_index_lists_the_chef_de_service_of_each_service_for_the_cascading_picker(): void
+    {
+        $fatou = User::factory()->create(['role' => UserRole::Fatou]);
+        Orientation::create(['name' => 'Informatique']);
+        User::factory()->create([
+            'role' => UserRole::User,
+            'role_kind' => 'chef_service',
+            'division_of' => 'Informatique',
+            'name' => 'Chef Informatique',
+            'service' => 'Chef Informatique',
+        ]);
+
+        $response = $this->actingAs($fatou)->get('/circuit/fatou');
+
+        $response->assertOk();
+        $response->assertViewHas('chefServiceByService', function ($map) {
+            return $map['Informatique']->contains('Chef Informatique');
+        });
+    }
+
     public function test_an_unknown_destination_category_is_rejected(): void
     {
         $fatou = User::factory()->create(['role' => UserRole::Fatou]);

@@ -73,10 +73,14 @@ class CircuitController extends Controller
         $peopleByKind = collect(['maire_adjoint', 'conseiller'])
             ->mapWithKeys(fn ($kind) => [$kind => User::where('role_kind', $kind)->orderBy('name')->pluck('name')]);
 
-        // Division dépend d'un service précis (ex: les divisions d'Etat
-        // Civil) : regroupées par nom de service pour le menu en cascade.
+        // Division et Chef de Service dépendent tous deux d'un service précis
+        // (ex: les divisions d'Etat Civil, le Chef de Service Informatique) :
+        // regroupés par nom de service pour le menu en cascade.
         $divisionsByService = $orientations->mapWithKeys(
             fn ($o) => [$o->name => User::where('role_kind', 'division')->where('division_of', $o->name)->orderBy('name')->pluck('name')]
+        );
+        $chefServiceByService = $orientations->mapWithKeys(
+            fn ($o) => [$o->name => User::where('role_kind', 'chef_service')->where('division_of', $o->name)->orderBy('name')->pluck('name')]
         );
 
         // Le Cabinet n'a pas accès à Suivi (vue globale tous services) : ce
@@ -86,7 +90,7 @@ class CircuitController extends Controller
             ->orderByDesc('updated_at')
             ->paginate(5, ['*'], 'annotees_page');
 
-        return view('circuit.fatou', compact('aEnvoyer', 'orientations', 'peopleByKind', 'divisionsByService', 'dejaAnnotees'));
+        return view('circuit.fatou', compact('aEnvoyer', 'orientations', 'peopleByKind', 'divisionsByService', 'chefServiceByService', 'dejaAnnotees'));
     }
 
     /**
@@ -212,6 +216,7 @@ class CircuitController extends Controller
         $quiPrefix = match ($tabdepot->destination_type) {
             'maire_adjoint' => "l'Adjoint au Maire",
             'division' => 'la Division',
+            'chef_service' => 'le Chef de Service',
             'conseiller' => 'le Conseiller',
             default => 'le service',
         };

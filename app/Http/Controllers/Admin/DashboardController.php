@@ -14,16 +14,17 @@ class DashboardController extends Controller
     /**
      * Répartition des demandes assignées, pour le graphique "Demandes par
      * Service" : service_assigne contient soit le nom d'un service, soit le
-     * nom propre d'une personne (Adjoint au Maire/Division/Conseiller). Les
-     * regrouper telles quelles donnerait une barre par personne, noyée parmi
-     * les services. On regroupe donc chaque Division dans le service dont
-     * elle dépend, et l'Adjoint au Maire/le Conseiller dans une catégorie
-     * unique par rôle — avec, en complément, un détail personne par personne
-     * pour ces deux rôles.
+     * nom propre d'une personne (Adjoint au Maire/Division/Chef de Service/
+     * Conseiller). Les regrouper telles quelles donnerait une barre par
+     * personne, noyée parmi les services. On regroupe donc chaque Division
+     * et chaque Chef de Service dans le service dont ils dépendent, et
+     * l'Adjoint au Maire/le Conseiller dans une catégorie unique par rôle —
+     * avec, en complément, un détail personne par personne pour ces deux
+     * derniers rôles.
      */
     private function workloadChartData($assignedQuery): array
     {
-        $divisionParents = User::where('role_kind', 'division')->pluck('division_of', 'name');
+        $nestedParents = User::whereIn('role_kind', User::serviceNestedRoleKinds())->pluck('division_of', 'name');
 
         $serviceCountsMap = [];
         $maireAdjointCountsMap = [];
@@ -32,7 +33,7 @@ class DashboardController extends Controller
             $label = match ($d->destination_type) {
                 'maire_adjoint' => User::MAIRE_ADJOINT_LABEL,
                 'conseiller' => User::CONSEILLER_LABEL,
-                'division' => $divisionParents[$d->service_assigne] ?? $d->service_assigne,
+                'division', 'chef_service' => $nestedParents[$d->service_assigne] ?? $d->service_assigne,
                 default => $d->service_assigne,
             };
             $serviceCountsMap[$label] = ($serviceCountsMap[$label] ?? 0) + 1;

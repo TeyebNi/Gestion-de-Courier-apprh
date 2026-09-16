@@ -23,6 +23,7 @@ class User extends Authenticatable
      */
     public const MAIRE_ADJOINT_LABEL = 'Adjoint au Maire';
     public const DIVISION_LABEL = 'Division';
+    public const CHEF_SERVICE_LABEL = 'Chef de Service';
     public const CONSEILLER_LABEL = 'Conseiller';
 
     /**
@@ -147,8 +148,19 @@ class User extends Authenticatable
         return [
             'maire_adjoint' => self::MAIRE_ADJOINT_LABEL,
             'division' => self::DIVISION_LABEL,
+            'chef_service' => self::CHEF_SERVICE_LABEL,
             'conseiller' => self::CONSEILLER_LABEL,
         ];
+    }
+
+    /**
+     * Parmi les rôles "à la carte", ceux qui dépendent d'un service précis
+     * (via "division_of") plutôt que d'être une catégorie transversale comme
+     * Adjoint au Maire/Conseiller.
+     */
+    public static function serviceNestedRoleKinds(): array
+    {
+        return ['division', 'chef_service'];
     }
 
     /**
