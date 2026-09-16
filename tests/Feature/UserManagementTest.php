@@ -96,13 +96,34 @@ class UserManagementTest extends TestCase
             'password_confirmation' => 'motdepasse123',
             'role' => 'user',
             'role_kind' => 'conseiller',
+            'role_title' => "Conseiller chargé de l'informatique",
         ]);
 
         $response->assertRedirect(route('users.index'));
 
         $newUser = User::where('email', 'conseiller@commune.mr')->firstOrFail();
-        $this->assertSame('Compte Test', $newUser->service);
+        // Comme pour Division, "service" (l'identifiant de routage) est le
+        // titre du poste, pas le nom de la personne qui l'occupe.
+        $this->assertSame("Conseiller chargé de l'informatique", $newUser->service);
+        $this->assertSame("Conseiller chargé de l'informatique", $newUser->role_title);
         $this->assertSame('conseiller', $newUser->specialServiceKind());
+    }
+
+    public function test_cannot_create_a_conseiller_account_without_a_title(): void
+    {
+        $admin = User::factory()->create(['role' => UserRole::Admin]);
+
+        $response = $this->actingAs($admin)->post('/utilisateurs', [
+            'name' => 'Compte Test',
+            'email' => 'conseiller@commune.mr',
+            'password' => 'motdepasse123',
+            'password_confirmation' => 'motdepasse123',
+            'role' => 'user',
+            'role_kind' => 'conseiller',
+        ]);
+
+        $response->assertSessionHasErrors('role_title');
+        $this->assertDatabaseMissing('users', ['email' => 'conseiller@commune.mr']);
     }
 
     public function test_admin_can_create_a_division_account_under_a_service(): void
@@ -118,7 +139,7 @@ class UserManagementTest extends TestCase
             'role' => 'user',
             'role_kind' => 'division',
             'division_of' => 'Etat Civil',
-            'division_title' => 'Guichet Unique',
+            'role_title' => 'Guichet Unique',
         ]);
 
         $response->assertRedirect(route('users.index'));
@@ -128,7 +149,7 @@ class UserManagementTest extends TestCase
         // pas celui de la personne qui l'occupe : un changement de titulaire
         // ne doit rien changer au routage.
         $this->assertSame('Guichet Unique', $newUser->service);
-        $this->assertSame('Guichet Unique', $newUser->division_title);
+        $this->assertSame('Guichet Unique', $newUser->role_title);
         $this->assertSame('division', $newUser->specialServiceKind());
         $this->assertSame('Etat Civil', $newUser->division_of);
     }
@@ -148,7 +169,7 @@ class UserManagementTest extends TestCase
             'division_of' => 'Etat Civil',
         ]);
 
-        $response->assertSessionHasErrors('division_title');
+        $response->assertSessionHasErrors('role_title');
         $this->assertDatabaseMissing('users', ['email' => 'division@commune.mr']);
     }
 

@@ -413,21 +413,30 @@ class CircuitWorkflowTest extends TestCase
     public function test_cabinet_can_route_a_demande_to_a_specific_conseiller(): void
     {
         $fatou = User::factory()->create(['role' => UserRole::Fatou]);
-        User::factory()->create(['role' => UserRole::User, 'role_kind' => 'conseiller', 'name' => 'Zeroug', 'service' => 'Zeroug']);
+        // Le nom de la personne et le titre du poste sont volontairement
+        // différents : le routage doit se faire sur le titre ("service"/
+        // "role_title"), pas sur le nom de la personne.
+        User::factory()->create([
+            'role' => UserRole::User,
+            'role_kind' => 'conseiller',
+            'name' => 'Ahmednah O/ Amoine',
+            'role_title' => "Conseiller chargé de l'informatique",
+            'service' => "Conseiller chargé de l'informatique",
+        ]);
         $depot = $this->makeDepot();
         $depot->update(['statut_circuit' => 'fatou']);
 
         $this->actingAs($fatou)->post("/circuit/{$depot->id}/decider", [
             'remarque_maire' => 'RAS',
             'destination_category' => 'conseiller',
-            'destination_value' => 'Zeroug',
+            'destination_value' => "Conseiller chargé de l'informatique",
         ])->assertRedirect();
 
         $depot->refresh();
         $this->assertSame('service', $depot->statut_circuit);
-        $this->assertSame('Zeroug', $depot->service_assigne);
+        $this->assertSame("Conseiller chargé de l'informatique", $depot->service_assigne);
         $this->assertSame('conseiller', $depot->destination_type);
-        $this->assertSame('Chez le Conseiller : Zeroug', $depot->statutLabel());
+        $this->assertSame("Chez le Conseiller : Conseiller chargé de l'informatique", $depot->statutLabel());
     }
 
     public function test_cabinet_can_route_a_demande_to_a_specific_division_of_a_service(): void
@@ -436,13 +445,13 @@ class CircuitWorkflowTest extends TestCase
         Orientation::create(['name' => 'Etat Civil']);
         // Le nom de la personne et le nom de la Division sont volontairement
         // différents : le routage doit se faire sur le nom de la Division
-        // ("service"/"division_title"), pas sur celui du titulaire ("name").
+        // ("service"/"role_title"), pas sur celui du titulaire ("name").
         User::factory()->create([
             'role' => UserRole::User,
             'role_kind' => 'division',
             'division_of' => 'Etat Civil',
             'name' => 'Zeineb Mint Sidi',
-            'division_title' => 'Guichet Unique',
+            'role_title' => 'Guichet Unique',
             'service' => 'Guichet Unique',
         ]);
         $depot = $this->makeDepot();
@@ -465,8 +474,8 @@ class CircuitWorkflowTest extends TestCase
     {
         $fatou = User::factory()->create(['role' => UserRole::Fatou]);
         Orientation::create(['name' => 'Etat Civil']);
-        $division1 = User::factory()->create(['role' => UserRole::User, 'role_kind' => 'division', 'division_of' => 'Etat Civil', 'name' => 'Personne A', 'division_title' => 'Division A', 'service' => 'Division A']);
-        $division2 = User::factory()->create(['role' => UserRole::User, 'role_kind' => 'division', 'division_of' => 'Etat Civil', 'name' => 'Personne B', 'division_title' => 'Division B', 'service' => 'Division B']);
+        $division1 = User::factory()->create(['role' => UserRole::User, 'role_kind' => 'division', 'division_of' => 'Etat Civil', 'name' => 'Personne A', 'role_title' => 'Division A', 'service' => 'Division A']);
+        $division2 = User::factory()->create(['role' => UserRole::User, 'role_kind' => 'division', 'division_of' => 'Etat Civil', 'name' => 'Personne B', 'role_title' => 'Division B', 'service' => 'Division B']);
         $depot = $this->makeDepot();
         $depot->update(['statut_circuit' => 'fatou']);
 
@@ -492,7 +501,7 @@ class CircuitWorkflowTest extends TestCase
             'role_kind' => 'division',
             'division_of' => 'Etat Civil',
             'name' => 'Ancien Titulaire',
-            'division_title' => 'Guichet Unique',
+            'role_title' => 'Guichet Unique',
             'service' => 'Guichet Unique',
         ]);
         $depot = $this->makeDepot();
@@ -503,7 +512,7 @@ class CircuitWorkflowTest extends TestCase
             'destination_value' => 'Guichet Unique',
         ]);
 
-        // Changement de titulaire : seul "name" change, "division_title" et
+        // Changement de titulaire : seul "name" change, "role_title" et
         // "service" restent identiques.
         $admin = User::factory()->create(['role' => UserRole::Admin]);
         $this->actingAs($admin)->put("/utilisateurs/{$division->id}", [
@@ -512,7 +521,7 @@ class CircuitWorkflowTest extends TestCase
             'role' => 'user',
             'role_kind' => 'division',
             'division_of' => 'Etat Civil',
-            'division_title' => 'Guichet Unique',
+            'role_title' => 'Guichet Unique',
         ]);
 
         $this->assertSame('Guichet Unique', $division->fresh()->service);
@@ -557,7 +566,7 @@ class CircuitWorkflowTest extends TestCase
             'role_kind' => 'division',
             'division_of' => 'Etat Civil',
             'name' => 'Dah Med Salem Hamza',
-            'division_title' => 'Guichet Unique',
+            'role_title' => 'Guichet Unique',
             'service' => 'Guichet Unique',
         ]);
 
@@ -571,6 +580,27 @@ class CircuitWorkflowTest extends TestCase
         });
         $response->assertSee('Guichet Unique');
         $response->assertSee('Dah Med Salem Hamza');
+    }
+
+    public function test_fatou_index_shows_the_current_officeholders_name_alongside_each_conseillers_title(): void
+    {
+        $fatou = User::factory()->create(['role' => UserRole::Fatou]);
+        User::factory()->create([
+            'role' => UserRole::User,
+            'role_kind' => 'conseiller',
+            'name' => 'Ahmednah O/ Amoine',
+            'role_title' => "Conseiller chargé de l'informatique",
+            'service' => "Conseiller chargé de l'informatique",
+        ]);
+
+        $response = $this->actingAs($fatou)->get('/circuit/fatou');
+
+        $response->assertOk();
+        $response->assertViewHas('peopleByKind', function ($map) {
+            $entry = $map['conseiller']->first();
+
+            return $entry['title'] === "Conseiller chargé de l'informatique" && $entry['name'] === 'Ahmednah O/ Amoine';
+        });
     }
 
     public function test_fatou_index_lists_the_chef_de_service_of_each_service_for_the_cascading_picker(): void

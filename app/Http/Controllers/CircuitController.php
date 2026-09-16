@@ -13,6 +13,23 @@ use Illuminate\Validation\Rule;
 class CircuitController extends Controller
 {
     /**
+     * Comptes d'un role_kind donné, avec leur titre de poste ("service", ex:
+     * "Guichet Unique" ou "Conseiller chargé de l'informatique" — l'identifiant
+     * de routage) et le nom de leur titulaire actuel (affichage uniquement).
+     * $divisionOf filtre en plus par service parent, pour Division/Chef de
+     * Service qui en dépendent.
+     */
+    private function titledAccounts(string $roleKind, ?string $divisionOf = null)
+    {
+        return User::where('role_kind', $roleKind)
+            ->when($divisionOf !== null, fn ($q) => $q->where('division_of', $divisionOf))
+            ->orderBy('service')
+            ->get(['service', 'name'])
+            ->map(fn ($u) => ['title' => $u->service, 'name' => $u->name])
+            ->values();
+    }
+
+    /**
      * Enregistre une étape dans l'historique de la demande.
      */
     private function logHistorique(Tabdepot $tabdepot, ?string $de, string $vers, ?string $commentaire = null): void
@@ -67,25 +84,20 @@ class CircuitController extends Controller
             ->paginate(5, ['*'], 'a_envoyer_page');
         $orientations = Orientation::orderBy('name')->get();
 
-        // Adjoint au Maire / Conseiller routent vers une personne précise,
-        // toutes catégories confondues : la liste vient directement des
-        // comptes utilisateurs de ce role_kind, pas d'un roster séparé.
-        $peopleByKind = collect(['maire_adjoint', 'conseiller'])
-            ->mapWithKeys(fn ($kind) => [$kind => User::where('role_kind', $kind)->orderBy('name')->pluck('name')]);
+        // Adjoint au Maire route vers une personne précise sans titre de poste
+        // propre : juste son nom. Conseiller a plusieurs titres distincts
+        // possibles (ex: "Conseiller chargé de l'informatique") : comme
+        // Division, routé par le titre, affiché avec le nom du titulaire.
+        $peopleByKind = collect([
+            'maire_adjoint' => User::where('role_kind', 'maire_adjoint')->orderBy('name')->pluck('name'),
+            'conseiller' => $this->titledAccounts('conseiller'),
+        ]);
 
         // Division et Chef de Service dépendent tous deux d'un service précis
         // (ex: les divisions d'Etat Civil, le Chef de Service Informatique) :
-        // regroupés par nom de service pour le menu en cascade. Une Division
-        // est identifiée (et routée) par son propre nom ("service", ex:
-        // "Guichet Unique"), pas par celui de la personne qui l'occupe — mais
-        // le nom du titulaire actuel est quand même transmis pour affichage,
-        // par cohérence avec Chef de Service qui montre déjà un nom.
+        // regroupés par nom de service pour le menu en cascade.
         $divisionsByService = $orientations->mapWithKeys(
-            fn ($o) => [$o->name => User::where('role_kind', 'division')->where('division_of', $o->name)
-                ->orderBy('service')
-                ->get(['service', 'name'])
-                ->map(fn ($u) => ['title' => $u->service, 'name' => $u->name])
-                ->values()]
+            fn ($o) => [$o->name => $this->titledAccounts('division', $o->name)]
         );
         $chefServiceByService = $orientations->mapWithKeys(
             fn ($o) => [$o->name => User::where('role_kind', 'chef_service')->where('division_of', $o->name)->orderBy('name')->pluck('name')]

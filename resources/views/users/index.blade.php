@@ -46,8 +46,8 @@ Les Utilisateurs
                                     <span class="badge badge-{{ $u->isAdmin() ? 'danger' : ($u->specialServiceLabel() ? 'warning' : 'info') }}">
                                         {{ $u->isAdmin() ? 'Admin' : ($u->specialServiceLabel() ?: 'User') }}
                                     </span>
-                                    @if($u->specialServiceKind() === 'division' && $u->division_title)
-                                        <br><small class="text-muted">{{ $u->division_title }}</small>
+                                    @if(in_array($u->specialServiceKind(), \App\Models\User::rolesWithOwnTitle()) && $u->role_title)
+                                        <br><small class="text-muted">{{ $u->role_title }}</small>
                                     @endif
                                 </td>
                                 <td>
@@ -68,7 +68,7 @@ Les Utilisateurs
                                        data-role="{{ $u->role->value }}"
                                        data-role-kind="{{ $u->role_kind }}"
                                        data-division-of="{{ $u->division_of }}"
-                                       data-division-title="{{ $u->division_title }}"
+                                       data-role-title="{{ $u->role_title }}"
                                        data-service="{{ $u->service }}"
                                        data-can-manage-users="{{ $u->can_manage_users !== false ? '1' : '0' }}"
                                        data-can-access-cabinet="{{ $u->can_access_cabinet !== false ? '1' : '0' }}"
@@ -186,11 +186,11 @@ Les Utilisateurs
                         </select>
                     </div>
                     <p class="text-muted mb-0" id="create_adjoint_note" style="display:none; font-size:0.85em;"></p>
-                    <div class="input-group mt-2" id="create_division_title_group" style="display:none;">
+                    <div class="input-group mt-2" id="create_role_title_group" style="display:none;">
                         <div class="input-group-prepend">
-                            <span class="input-group-text">Nom de la Division</span>
+                            <span class="input-group-text" id="create_role_title_label">Nom de la Division</span>
                         </div>
-                        <input type="text" class="form-control" name="division_title" id="create_division_title" placeholder="Ex: Guichet Unique">
+                        <input type="text" class="form-control" name="role_title" id="create_role_title" placeholder="Ex: Guichet Unique">
                     </div>
                     <div class="input-group mt-2" id="create_division_of_group" style="display:none;">
                         <div class="input-group-prepend">
@@ -282,11 +282,11 @@ Les Utilisateurs
                         </select>
                     </div>
                     <p class="text-muted mb-0" id="edit_adjoint_note" style="display:none; font-size:0.85em;"></p>
-                    <div class="input-group mt-2" id="edit_division_title_group" style="display:none;">
+                    <div class="input-group mt-2" id="edit_role_title_group" style="display:none;">
                         <div class="input-group-prepend">
-                            <span class="input-group-text">Nom de la Division</span>
+                            <span class="input-group-text" id="edit_role_title_label">Nom de la Division</span>
                         </div>
-                        <input type="text" class="form-control" name="division_title" id="edit_division_title" placeholder="Ex: Guichet Unique">
+                        <input type="text" class="form-control" name="role_title" id="edit_role_title" placeholder="Ex: Guichet Unique">
                     </div>
                     <div class="input-group mt-2" id="edit_division_of_group" style="display:none;">
                         <div class="input-group-prepend">
@@ -415,7 +415,10 @@ Les Utilisateurs
 <script>
 var SPECIAL_SERVICE_ROLES = @json(\App\Models\User::specialServiceRoles());
 var SERVICE_NESTED_KINDS = @json(\App\Models\User::serviceNestedRoleKinds());
+var ROLES_WITH_OWN_TITLE = @json(\App\Models\User::rolesWithOwnTitle());
 var DIVISION_OF_LABELS = { division: 'Division de', chef_service: 'Chef du service' };
+var ROLE_TITLE_LABELS = { division: 'Nom de la Division', conseiller: 'Titre du Conseiller' };
+var ROLE_TITLE_PLACEHOLDERS = { division: 'Ex: Guichet Unique', conseiller: "Ex: Conseiller chargé de l'informatique" };
 
 $('#editUserModal').on('show.bs.modal', function (event) {
     var button = $(event.relatedTarget);
@@ -443,8 +446,8 @@ $('#editUserModal').on('show.bs.modal', function (event) {
     if (SERVICE_NESTED_KINDS.indexOf(kind) !== -1) {
         $('#edit_division_of').val(button.data('division-of'));
     }
-    if (kind === 'division') {
-        $('#edit_division_title').val(button.data('division-title'));
+    if (ROLES_WITH_OWN_TITLE.indexOf(kind) !== -1) {
+        $('#edit_role_title').val(button.data('role-title'));
     }
 });
 
@@ -486,12 +489,16 @@ function toggleServiceField(kind, prefix) {
         $('#' + prefix + '_division_of').val('');
     }
 
-    // Le nom de la Division (ex: "Guichet Unique") est distinct du nom de la
-    // personne qui l'occupe : seule la Division a ce champ, pas Chef de
-    // Service (dont le "titre" est déjà le nom du service lui-même).
-    $('#' + prefix + '_division_title_group').toggle(kind === 'division');
-    if (kind !== 'division') {
-        $('#' + prefix + '_division_title').val('');
+    // Division et Conseiller ont un titre de poste propre (ex: "Guichet
+    // Unique", "Conseiller chargé de l'informatique"), distinct du nom de la
+    // personne qui l'occupe — pas Adjoint au Maire/Chef de Service, qui
+    // n'ont qu'un seul titre possible (leur propre nom, ou celui du service).
+    var hasOwnTitle = ROLES_WITH_OWN_TITLE.indexOf(kind) !== -1;
+    $('#' + prefix + '_role_title_group').toggle(hasOwnTitle);
+    document.getElementById(prefix + '_role_title_label').textContent = ROLE_TITLE_LABELS[kind] || 'Titre du poste';
+    document.getElementById(prefix + '_role_title').placeholder = ROLE_TITLE_PLACEHOLDERS[kind] || '';
+    if (!hasOwnTitle) {
+        $('#' + prefix + '_role_title').val('');
     }
 
     $('#' + prefix + '_admin_permissions_group').toggle(kind === 'admin');

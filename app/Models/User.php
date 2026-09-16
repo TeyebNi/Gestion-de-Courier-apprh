@@ -38,7 +38,7 @@ class User extends Authenticatable
         'role',
         'role_kind',
         'division_of',
-        'division_title',
+        'role_title',
         'service',
         'can_manage_users',
         'can_access_cabinet',
@@ -162,6 +162,19 @@ class User extends Authenticatable
     public static function serviceNestedRoleKinds(): array
     {
         return ['division', 'chef_service'];
+    }
+
+    /**
+     * Parmi les rôles "à la carte", ceux qui ont plusieurs titres distincts
+     * possibles (ex: "Guichet Unique" pour une Division, "Conseiller chargé
+     * de l'informatique" pour un Conseiller) : "role_title" identifie alors
+     * le poste lui-même, indépendamment de qui l'occupe ("name"). Un rôle
+     * absent d'ici (Adjoint au Maire, Chef de Service) est identifié par le
+     * nom de la personne, faute de titre propre distinct à saisir.
+     */
+    public static function rolesWithOwnTitle(): array
+    {
+        return ['division', 'conseiller'];
     }
 
     /**

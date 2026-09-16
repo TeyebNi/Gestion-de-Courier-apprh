@@ -180,6 +180,24 @@ document.addEventListener('DOMContentLoaded', function () {
         });
     }
 
+    // Comme populateSelect, mais pour des rôles à titre de poste propre
+    // (Division, Conseiller) : chaque option est {title, name}, la valeur
+    // soumise est le titre (routage), le texte affiché ajoute le nom du
+    // titulaire actuel pour la clarté.
+    function populateTitledSelect(select, items, placeholder, labelPrefix) {
+        select.innerHTML = '';
+        var placeholderOpt = document.createElement('option');
+        placeholderOpt.value = '';
+        placeholderOpt.textContent = placeholder;
+        select.appendChild(placeholderOpt);
+        items.forEach(function (item) {
+            var opt = document.createElement('option');
+            opt.value = item.title;
+            opt.textContent = labelPrefix + ' ' + item.title + ' — ' + item.name;
+            select.appendChild(opt);
+        });
+    }
+
     function setFinal(cardId, category, value) {
         document.getElementById('final_category_' + cardId).value = category || '';
         document.getElementById('final_value_' + cardId).value = value || '';
@@ -203,12 +221,18 @@ document.addEventListener('DOMContentLoaded', function () {
             if (preselectedService) { servicePick.value = preselectedService; }
             serviceWrap.style.display = '';
             onServicePickChange(servicePick);
-        } else if (category === 'maire_adjoint' || category === 'conseiller') {
+        } else if (category === 'maire_adjoint') {
             var personPick = personWrap.querySelector('select');
             document.getElementById('person_pick_label_' + cardId).textContent = PERSON_LABELS[category];
             populateSelect(personPick, PEOPLE_BY_KIND[category] || [], 'Sélectionner...', PERSON_CATEGORY_LABELS[category]);
             personWrap.style.display = '';
             setFinal(cardId, category, personPick.value);
+        } else if (category === 'conseiller') {
+            var conseillerPick = personWrap.querySelector('select');
+            document.getElementById('person_pick_label_' + cardId).textContent = PERSON_LABELS[category];
+            populateTitledSelect(conseillerPick, PEOPLE_BY_KIND[category] || [], 'Sélectionner...', PERSON_CATEGORY_LABELS[category]);
+            personWrap.style.display = '';
+            setFinal(cardId, category, conseillerPick.value);
         }
     }
 
