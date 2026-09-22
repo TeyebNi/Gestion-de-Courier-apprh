@@ -690,6 +690,32 @@ class DepotTest extends TestCase
         $this->assertStringNotContainsString('2026-08-30', $html);
     }
 
+    public function test_receipt_shows_nom_tel_and_nni_when_present(): void
+    {
+        $demande = $this->makeDepot([
+            'nom' => 'Ahmed Cheikh',
+            'tel' => '22334455',
+            'nni' => '1234567890',
+        ]);
+
+        $html = view('depot.print_reçu', ['detailf' => $demande])->render();
+
+        $this->assertStringContainsString('Ahmed Cheikh', $html);
+        $this->assertStringContainsString('22334455', $html);
+        $this->assertStringContainsString('1234567890', $html);
+    }
+
+    public function test_receipt_hides_nom_tel_and_nni_rows_when_absent(): void
+    {
+        $demande = $this->makeDepot();
+
+        $html = view('depot.print_reçu', ['detailf' => $demande])->render();
+
+        $this->assertStringNotContainsString('Nom et Prénom', $html);
+        $this->assertStringNotContainsString('Téléphone', $html);
+        $this->assertStringNotContainsString('NNI/NIF', $html);
+    }
+
     public function test_daterecp_formatted_does_not_crash_on_malformed_legacy_data(): void
     {
         $demande = $this->makeDepot(['daterecp' => 'valeur-invalide']);

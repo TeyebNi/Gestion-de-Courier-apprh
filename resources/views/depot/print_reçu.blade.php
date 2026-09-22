@@ -191,6 +191,30 @@
                 <td class="detail-value">{{ $detailf->objet ?: '—' }}</td>
             </tr>
 
+            @if($detailf->nom)
+            <tr>
+                <td class="detail-label">Nom et Prénom</td>
+                <td class="detail-sep">:</td>
+                <td class="detail-value">{{ $detailf->nom }}</td>
+            </tr>
+            @endif
+
+            @if($detailf->tel)
+            <tr>
+                <td class="detail-label">Téléphone</td>
+                <td class="detail-sep">:</td>
+                <td class="detail-value">{{ $detailf->tel }}</td>
+            </tr>
+            @endif
+
+            @if($detailf->nni)
+            <tr>
+                <td class="detail-label">NNI/NIF</td>
+                <td class="detail-sep">:</td>
+                <td class="detail-value">{{ $detailf->nni }}</td>
+            </tr>
+            @endif
+
             <tr>
                 <td class="detail-label">Origine</td>
                 <td class="detail-sep">:</td>
