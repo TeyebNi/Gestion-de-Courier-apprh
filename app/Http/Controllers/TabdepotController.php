@@ -85,14 +85,13 @@ class TabdepotController extends Controller
             'origine' => ['required', 'in:interne,externe'],
             'objet' => ['nullable', 'string', 'max:255'],
             'nom' => ['nullable', 'string', 'max:255'],
-            'tel' => ['nullable', 'string', 'max:20'],
+            'tel' => ['nullable', 'regex:/^[234]\d{7}$/'],
             'nni' => ['nullable', 'digits:10'],
-            'nif' => ['nullable', 'digits:10'],
             'piece_jointe' => ['nullable', 'file', 'mimes:jpg,jpeg,png,pdf', 'max:10240'],
         ], [
             'origine.required' => "L'origine est obligatoire.",
-            'nni.digits' => 'Le NNI doit contenir exactement 10 chiffres.',
-            'nif.digits' => 'Le NIF doit contenir exactement 10 chiffres.',
+            'tel.regex' => 'Le téléphone doit contenir 8 chiffres et commencer par 2, 3 ou 4.',
+            'nni.digits' => 'Le NNI/NIF doit contenir exactement 10 chiffres.',
             'piece_jointe.mimes' => 'La pièce jointe doit être une image (JPG, PNG) ou un PDF.',
             'piece_jointe.max' => 'La pièce jointe ne doit pas dépasser 10 Mo.',
         ]);
@@ -103,7 +102,6 @@ class TabdepotController extends Controller
             'nom' => $request->nom,
             'tel' => $request->tel,
             'nni' => $request->nni,
-            'nif' => $request->nif,
             'daterecp' => now()->format('Y-m-d'),
             'piece_jointe' => $request->hasFile('piece_jointe')
                 ? $request->file('piece_jointe')->store('pieces-jointes', 'public')
@@ -138,14 +136,13 @@ class TabdepotController extends Controller
             'origine' => ['required', 'in:interne,externe'],
             'objet' => ['nullable', 'string', 'max:255'],
             'nom' => ['nullable', 'string', 'max:255'],
-            'tel' => ['nullable', 'string', 'max:20'],
+            'tel' => ['nullable', 'regex:/^[234]\d{7}$/'],
             'nni' => ['nullable', 'digits:10'],
-            'nif' => ['nullable', 'digits:10'],
             'piece_jointe' => ['nullable', 'file', 'mimes:jpg,jpeg,png,pdf', 'max:10240'],
         ], [
             'origine.required' => "L'origine est obligatoire.",
-            'nni.digits' => 'Le NNI doit contenir exactement 10 chiffres.',
-            'nif.digits' => 'Le NIF doit contenir exactement 10 chiffres.',
+            'tel.regex' => 'Le téléphone doit contenir 8 chiffres et commencer par 2, 3 ou 4.',
+            'nni.digits' => 'Le NNI/NIF doit contenir exactement 10 chiffres.',
             'piece_jointe.mimes' => 'La pièce jointe doit être une image (JPG, PNG) ou un PDF.',
             'piece_jointe.max' => 'La pièce jointe ne doit pas dépasser 10 Mo.',
         ]);
@@ -166,7 +163,6 @@ class TabdepotController extends Controller
             'nom' => $request->nom,
             'tel' => $request->tel,
             'nni' => $request->nni,
-            'nif' => $request->nif,
             'piece_jointe' => $piece_jointe,
         ]);
 

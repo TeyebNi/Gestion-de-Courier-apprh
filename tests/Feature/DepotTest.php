@@ -112,7 +112,7 @@ class DepotTest extends TestCase
         $this->assertDatabaseCount('tabdepot', 0);
     }
 
-    public function test_store_rejects_a_nni_that_is_not_10_digits(): void
+    public function test_store_rejects_a_nni_nif_that_is_not_10_digits(): void
     {
         $user = User::factory()->create(['role' => UserRole::User]);
 
@@ -125,20 +125,33 @@ class DepotTest extends TestCase
         $this->assertDatabaseCount('tabdepot', 0);
     }
 
-    public function test_store_rejects_a_nif_that_is_not_10_digits(): void
+    public function test_store_rejects_a_phone_number_with_the_wrong_length(): void
     {
         $user = User::factory()->create(['role' => UserRole::User]);
 
         $response = $this->actingAs($user)->post('/depot', [
             'origine' => 'externe',
-            'nif' => '12345',
+            'tel' => '223344',
         ]);
 
-        $response->assertSessionHasErrors('nif');
+        $response->assertSessionHasErrors('tel');
         $this->assertDatabaseCount('tabdepot', 0);
     }
 
-    public function test_store_saves_nom_tel_nni_and_nif(): void
+    public function test_store_rejects_a_phone_number_not_starting_with_2_3_or_4(): void
+    {
+        $user = User::factory()->create(['role' => UserRole::User]);
+
+        $response = $this->actingAs($user)->post('/depot', [
+            'origine' => 'externe',
+            'tel' => '12345678',
+        ]);
+
+        $response->assertSessionHasErrors('tel');
+        $this->assertDatabaseCount('tabdepot', 0);
+    }
+
+    public function test_store_saves_nom_tel_and_nni_nif(): void
     {
         $user = User::factory()->create(['role' => UserRole::User]);
 
@@ -147,17 +160,15 @@ class DepotTest extends TestCase
             'nom' => 'Ahmed Cheikh',
             'tel' => '22334455',
             'nni' => '1234567890',
-            'nif' => '0987654321',
         ])->assertRedirect(route('depot.index'));
 
         $demande = Tabdepot::firstOrFail();
         $this->assertSame('Ahmed Cheikh', $demande->nom);
         $this->assertSame('22334455', $demande->tel);
         $this->assertSame('1234567890', $demande->nni);
-        $this->assertSame('0987654321', $demande->nif);
     }
 
-    public function test_update_can_change_nom_tel_nni_and_nif(): void
+    public function test_update_can_change_nom_tel_and_nni_nif(): void
     {
         $user = User::factory()->create(['role' => UserRole::User]);
         $demande = $this->makeDepot();
@@ -165,16 +176,14 @@ class DepotTest extends TestCase
         $this->actingAs($user)->put("/depot/{$demande->id}", [
             'origine' => 'externe',
             'nom' => 'Nouveau Nom',
-            'tel' => '11223344',
+            'tel' => '31223344',
             'nni' => '1111111111',
-            'nif' => '2222222222',
         ]);
 
         $demande->refresh();
         $this->assertSame('Nouveau Nom', $demande->nom);
-        $this->assertSame('11223344', $demande->tel);
+        $this->assertSame('31223344', $demande->tel);
         $this->assertSame('1111111111', $demande->nni);
-        $this->assertSame('2222222222', $demande->nif);
     }
 
     public function test_store_accepts_an_internal_demande_without_any_service_detail(): void
@@ -216,7 +225,7 @@ class DepotTest extends TestCase
         $this->assertNull($demande->origine_detail);
     }
 
-    public function test_an_invalid_nni_error_reopens_the_create_modal_with_the_message_inline(): void
+    public function test_an_invalid_nni_nif_error_reopens_the_create_modal_with_the_message_inline(): void
     {
         $user = User::factory()->create(['role' => UserRole::User]);
 
@@ -228,25 +237,25 @@ class DepotTest extends TestCase
         $response->assertRedirect('/depot');
         $followUp = $this->actingAs($user)->get('/depot');
 
-        $followUp->assertSee('Le NNI doit contenir exactement 10 chiffres.');
+        $followUp->assertSee('Le NNI/NIF doit contenir exactement 10 chiffres.');
         $followUp->assertSee("$('#exampleModal').modal('show');", false);
     }
 
-    public function test_an_invalid_nif_error_reopens_the_edit_modal_for_the_right_demande(): void
+    public function test_an_invalid_phone_error_reopens_the_edit_modal_for_the_right_demande(): void
     {
         $user = User::factory()->create(['role' => UserRole::User]);
         $demande = $this->makeDepot();
 
         $this->actingAs($user)->from('/depot')->put("/depot/{$demande->id}", [
             'origine' => 'externe',
-            'nif' => '123',
+            'tel' => '123',
             'form_source' => 'edit',
             'depot_id' => $demande->id,
         ]);
 
         $followUp = $this->actingAs($user)->get('/depot');
 
-        $followUp->assertSee('Le NIF doit contenir exactement 10 chiffres.');
+        $followUp->assertSee('Le téléphone doit contenir 8 chiffres et commencer par 2, 3 ou 4.');
         $followUp->assertSee(json_encode((string) $demande->id), false);
         $followUp->assertSee("$('#exampleModal-edit').modal('show');", false);
     }
