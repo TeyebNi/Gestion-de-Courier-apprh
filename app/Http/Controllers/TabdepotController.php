@@ -31,7 +31,12 @@ class TabdepotController extends Controller
             ->paginate(5)
             ->appends(['search' => $search]);
 
-        return view('depot.index', compact('tabdepot', 'search'));
+        // Simple aperçu du prochain code (pas une réservation : le code réel
+        // est toujours attribué à l'enregistrement, à partir de l'id auto-
+        // incrémenté) — juste pour rassurer l'accueil avant de valider.
+        $nextReference = sprintf('%03d', (Tabdepot::withTrashed()->max('id') ?? 0) + 1);
+
+        return view('depot.index', compact('tabdepot', 'search', 'nextReference'));
     }
 
     public function exportExcel(Request $request)

@@ -47,6 +47,17 @@ class DepotTest extends TestCase
         $this->assertSame(sprintf('%03d', $demande->id), $demande->reference);
     }
 
+    public function test_index_shows_a_preview_of_the_next_reference_code(): void
+    {
+        $user = User::factory()->create(['role' => UserRole::User]);
+        $existing = $this->makeDepot();
+
+        $response = $this->actingAs($user)->get('/depot');
+
+        $response->assertOk();
+        $response->assertSee(sprintf('value="%03d" disabled', $existing->id + 1), false);
+    }
+
     public function test_store_generates_distinct_reference_codes_for_successive_demandes(): void
     {
         $user = User::factory()->create(['role' => UserRole::User]);

@@ -108,6 +108,13 @@ Dashboard Courier
         <input type="hidden" name="form_source" value="create">
       <div class="input-group">
         <div class="input-group-prepend">
+        <span class="input-group-text">Code</span>
+      </div>
+      <input type="text" class="form-control" value="{{ $nextReference }}" disabled>
+    </div>
+    <small class="text-muted d-block mt-1 mb-2">Attribué automatiquement à l'enregistrement.</small>
+      <div class="input-group">
+        <div class="input-group-prepend">
         <span class="input-group-text">Origine *</span>
       </div>
      <select id="create_origine" class="form-control" name="origine" required>
