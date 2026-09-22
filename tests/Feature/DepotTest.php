@@ -29,14 +29,61 @@ class DepotTest extends TestCase
 
         $response = $this->actingAs($user)->post('/depot', [
             'origine' => 'externe',
-            'reference' => 'MI/2026/245',
         ]);
 
         $response->assertRedirect(route('depot.index'));
 
         $demande = Tabdepot::firstOrFail();
-        $this->assertSame('MI/2026/245', $demande->reference);
         $this->assertSame(now()->format('Y-m-d'), $demande->daterecp);
+    }
+
+    public function test_store_auto_generates_a_sequential_reference_code(): void
+    {
+        $user = User::factory()->create(['role' => UserRole::User]);
+
+        $this->actingAs($user)->post('/depot', ['origine' => 'externe']);
+
+        $demande = Tabdepot::firstOrFail();
+        $this->assertSame(sprintf('%03d', $demande->id), $demande->reference);
+    }
+
+    public function test_store_generates_distinct_reference_codes_for_successive_demandes(): void
+    {
+        $user = User::factory()->create(['role' => UserRole::User]);
+
+        $this->actingAs($user)->post('/depot', ['origine' => 'externe']);
+        $this->actingAs($user)->post('/depot', ['origine' => 'externe']);
+
+        $references = Tabdepot::orderBy('id')->pluck('reference');
+        $this->assertCount(2, $references->unique());
+    }
+
+    public function test_reference_cannot_be_overridden_via_the_request(): void
+    {
+        $user = User::factory()->create(['role' => UserRole::User]);
+
+        $this->actingAs($user)->post('/depot', [
+            'origine' => 'externe',
+            'reference' => 'FORCED-CODE',
+        ]);
+
+        $demande = Tabdepot::firstOrFail();
+        $this->assertNotSame('FORCED-CODE', $demande->reference);
+        $this->assertSame(sprintf('%03d', $demande->id), $demande->reference);
+    }
+
+    public function test_reference_is_never_changed_by_update(): void
+    {
+        $user = User::factory()->create(['role' => UserRole::User]);
+        $demande = $this->makeDepot();
+        $originalReference = $demande->reference;
+
+        $this->actingAs($user)->put("/depot/{$demande->id}", [
+            'origine' => 'externe',
+            'reference' => 'FORCED-CODE',
+        ]);
+
+        $this->assertSame($originalReference, $demande->fresh()->reference);
     }
 
     public function test_store_logs_who_registered_the_demande(): void
@@ -45,7 +92,6 @@ class DepotTest extends TestCase
 
         $this->actingAs($user)->post('/depot', [
             'origine' => 'externe',
-            'reference' => 'MI/2026/245',
         ]);
 
         $demande = Tabdepot::firstOrFail();
@@ -56,126 +102,79 @@ class DepotTest extends TestCase
         $this->assertSame($user->id, $historique->user_id);
     }
 
-    public function test_store_requires_a_code(): void
-    {
-        $user = User::factory()->create(['role' => UserRole::User]);
-
-        $response = $this->actingAs($user)->post('/depot', [
-            'origine' => 'externe',
-        ]);
-
-        $response->assertSessionHasErrors('reference');
-        $this->assertDatabaseCount('tabdepot', 0);
-    }
-
     public function test_store_requires_an_origine(): void
     {
         $user = User::factory()->create(['role' => UserRole::User]);
 
-        $response = $this->actingAs($user)->post('/depot', [
-            'reference' => 'MI/2026/245',
-        ]);
+        $response = $this->actingAs($user)->post('/depot', []);
 
         $response->assertSessionHasErrors('origine');
         $this->assertDatabaseCount('tabdepot', 0);
     }
 
-    public function test_store_rejects_a_code_already_used_by_another_demande(): void
+    public function test_store_rejects_a_nni_that_is_not_10_digits(): void
     {
         $user = User::factory()->create(['role' => UserRole::User]);
-        $this->makeDepot(['reference' => 'MI/2026/245']);
 
         $response = $this->actingAs($user)->post('/depot', [
             'origine' => 'externe',
-            'reference' => 'MI/2026/245',
+            'nni' => '12345',
         ]);
 
-        $response->assertSessionHasErrors('reference');
-        $this->assertDatabaseCount('tabdepot', 1);
+        $response->assertSessionHasErrors('nni');
+        $this->assertDatabaseCount('tabdepot', 0);
     }
 
-    public function test_store_trims_the_code_before_saving_and_checking_uniqueness(): void
+    public function test_store_rejects_a_nif_that_is_not_10_digits(): void
     {
         $user = User::factory()->create(['role' => UserRole::User]);
-        $this->makeDepot(['reference' => 'MI/2026/245']);
 
         $response = $this->actingAs($user)->post('/depot', [
             'origine' => 'externe',
-            'reference' => '  MI/2026/245  ',
+            'nif' => '12345',
         ]);
 
-        $response->assertSessionHasErrors('reference');
-        $this->assertDatabaseCount('tabdepot', 1);
+        $response->assertSessionHasErrors('nif');
+        $this->assertDatabaseCount('tabdepot', 0);
     }
 
-    public function test_store_saves_the_code_without_surrounding_whitespace(): void
+    public function test_store_saves_nom_tel_nni_and_nif(): void
     {
         $user = User::factory()->create(['role' => UserRole::User]);
 
         $this->actingAs($user)->post('/depot', [
             'origine' => 'externe',
-            'reference' => '  MI/2026/999  ',
-        ]);
+            'nom' => 'Ahmed Cheikh',
+            'tel' => '22334455',
+            'nni' => '1234567890',
+            'nif' => '0987654321',
+        ])->assertRedirect(route('depot.index'));
 
         $demande = Tabdepot::firstOrFail();
-        $this->assertSame('MI/2026/999', $demande->reference);
+        $this->assertSame('Ahmed Cheikh', $demande->nom);
+        $this->assertSame('22334455', $demande->tel);
+        $this->assertSame('1234567890', $demande->nni);
+        $this->assertSame('0987654321', $demande->nif);
     }
 
-    public function test_store_rejects_a_code_already_used_by_a_trashed_demande(): void
+    public function test_update_can_change_nom_tel_nni_and_nif(): void
     {
         $user = User::factory()->create(['role' => UserRole::User]);
-        $trashed = $this->makeDepot(['reference' => 'MI/2026/245']);
-        $trashed->delete();
+        $demande = $this->makeDepot();
 
-        $response = $this->actingAs($user)->post('/depot', [
+        $this->actingAs($user)->put("/depot/{$demande->id}", [
             'origine' => 'externe',
-            'reference' => 'MI/2026/245',
+            'nom' => 'Nouveau Nom',
+            'tel' => '11223344',
+            'nni' => '1111111111',
+            'nif' => '2222222222',
         ]);
 
-        $response->assertSessionHasErrors('reference');
-    }
-
-    public function test_update_rejects_a_code_already_used_by_another_demande(): void
-    {
-        $user = User::factory()->create(['role' => UserRole::User]);
-        $this->makeDepot(['reference' => 'MI/2026/245']);
-        $other = $this->makeDepot(['reference' => 'MI/2026/999']);
-
-        $response = $this->actingAs($user)->put("/depot/{$other->id}", [
-            'origine' => 'externe',
-            'reference' => 'MI/2026/245',
-        ]);
-
-        $response->assertSessionHasErrors('reference');
-        $this->assertSame('MI/2026/999', $other->fresh()->reference);
-    }
-
-    public function test_update_keeping_the_same_code_is_allowed(): void
-    {
-        $user = User::factory()->create(['role' => UserRole::User]);
-        $demande = $this->makeDepot(['reference' => 'MI/2026/245']);
-
-        $response = $this->actingAs($user)->put("/depot/{$demande->id}", [
-            'origine' => 'externe',
-            'reference' => 'MI/2026/245',
-            'objet' => 'Objet mis à jour',
-        ]);
-
-        $response->assertSessionDoesntHaveErrors('reference');
-        $this->assertSame('Objet mis à jour', $demande->fresh()->objet);
-    }
-
-    public function test_store_rejects_an_unknown_origine_value(): void
-    {
-        $user = User::factory()->create(['role' => UserRole::User]);
-
-        $response = $this->actingAs($user)->post('/depot', [
-            'reference' => 'MI/2026/245',
-            'origine' => 'autre',
-        ]);
-
-        $response->assertSessionHasErrors('origine');
-        $this->assertDatabaseCount('tabdepot', 0);
+        $demande->refresh();
+        $this->assertSame('Nouveau Nom', $demande->nom);
+        $this->assertSame('11223344', $demande->tel);
+        $this->assertSame('1111111111', $demande->nni);
+        $this->assertSame('2222222222', $demande->nif);
     }
 
     public function test_store_accepts_an_internal_demande_without_any_service_detail(): void
@@ -183,7 +182,6 @@ class DepotTest extends TestCase
         $user = User::factory()->create(['role' => UserRole::User]);
 
         $this->actingAs($user)->post('/depot', [
-            'reference' => 'NOTE-1',
             'origine' => 'interne',
         ])->assertRedirect(route('depot.index'));
 
@@ -197,7 +195,6 @@ class DepotTest extends TestCase
         $user = User::factory()->create(['role' => UserRole::User]);
 
         $this->actingAs($user)->post('/depot', [
-            'reference' => 'NOTE-1',
             'origine' => 'interne',
             'origine_detail' => 'Etat Civil',
         ]);
@@ -211,7 +208,6 @@ class DepotTest extends TestCase
         $user = User::factory()->create(['role' => UserRole::User]);
 
         $this->actingAs($user)->post('/depot', [
-            'reference' => 'MI/2026/245',
             'origine' => 'externe',
             'origine_detail' => 'Ceci ne devrait jamais être enregistré',
         ]);
@@ -220,41 +216,38 @@ class DepotTest extends TestCase
         $this->assertNull($demande->origine_detail);
     }
 
-    public function test_a_duplicate_code_error_reopens_the_create_modal_with_the_message_inline(): void
+    public function test_an_invalid_nni_error_reopens_the_create_modal_with_the_message_inline(): void
     {
         $user = User::factory()->create(['role' => UserRole::User]);
-        $this->makeDepot(['reference' => 'MI/2026/245']);
 
         $response = $this->actingAs($user)->from('/depot')->post('/depot', [
             'origine' => 'externe',
-            'reference' => 'MI/2026/245',
-            'objet' => 'Second envoi',
+            'nni' => '123',
         ]);
 
         $response->assertRedirect('/depot');
         $followUp = $this->actingAs($user)->get('/depot');
 
-        $followUp->assertSee('Ce code est déjà utilisé par une autre demande.');
+        $followUp->assertSee('Le NNI doit contenir exactement 10 chiffres.');
         $followUp->assertSee("$('#exampleModal').modal('show');", false);
     }
 
-    public function test_a_duplicate_code_error_reopens_the_edit_modal_for_the_right_demande(): void
+    public function test_an_invalid_nif_error_reopens_the_edit_modal_for_the_right_demande(): void
     {
         $user = User::factory()->create(['role' => UserRole::User]);
-        $this->makeDepot(['reference' => 'MI/2026/245']);
-        $other = $this->makeDepot(['reference' => 'MI/2026/999']);
+        $demande = $this->makeDepot();
 
-        $this->actingAs($user)->from('/depot')->put("/depot/{$other->id}", [
+        $this->actingAs($user)->from('/depot')->put("/depot/{$demande->id}", [
             'origine' => 'externe',
-            'reference' => 'MI/2026/245',
+            'nif' => '123',
             'form_source' => 'edit',
-            'depot_id' => $other->id,
+            'depot_id' => $demande->id,
         ]);
 
         $followUp = $this->actingAs($user)->get('/depot');
 
-        $followUp->assertSee('Ce code est déjà utilisé par une autre demande.');
-        $followUp->assertSee(json_encode((string) $other->id), false);
+        $followUp->assertSee('Le NIF doit contenir exactement 10 chiffres.');
+        $followUp->assertSee(json_encode((string) $demande->id), false);
         $followUp->assertSee("$('#exampleModal-edit').modal('show');", false);
     }
 
@@ -264,7 +257,6 @@ class DepotTest extends TestCase
 
         $this->actingAs($user)->post('/depot', [
             'origine' => 'externe',
-            'reference' => 'MI/2026/245',
             'objet' => 'Demande de raccordement eau',
         ])->assertRedirect(route('depot.index'));
 
@@ -278,27 +270,24 @@ class DepotTest extends TestCase
 
         $response = $this->actingAs($user)->post('/depot', [
             'origine' => 'externe',
-            'reference' => 'MI/2026/245',
         ]);
 
         $response->assertSessionDoesntHaveErrors('objet');
         $this->assertDatabaseCount('tabdepot', 1);
     }
 
-    public function test_update_changes_the_code_and_objet(): void
+    public function test_update_changes_the_objet(): void
     {
         $user = User::factory()->create(['role' => UserRole::User]);
         $demande = $this->makeDepot();
 
         $response = $this->actingAs($user)->put("/depot/{$demande->id}", [
             'origine' => 'externe',
-            'reference' => 'MI/2026/999',
             'objet' => 'Nouvel objet',
         ]);
 
         $response->assertRedirect(route('depot.index'));
         $demande->refresh();
-        $this->assertSame('MI/2026/999', $demande->reference);
         $this->assertSame('Nouvel objet', $demande->objet);
     }
 
@@ -394,14 +383,14 @@ class DepotTest extends TestCase
     public function test_cannot_edit_a_demande_once_it_left_accueil(): void
     {
         $user = User::factory()->create(['role' => UserRole::User]);
-        $demande = $this->makeDepot(['statut_circuit' => 'fatou']);
+        $demande = $this->makeDepot(['statut_circuit' => 'fatou', 'objet' => 'Objet initial']);
 
         $this->actingAs($user)->put("/depot/{$demande->id}", [
             'origine' => 'externe',
-            'reference' => 'MI/2026/999',
+            'objet' => 'Objet modifié',
         ])->assertForbidden();
 
-        $this->assertSame($demande->reference, $demande->fresh()->reference);
+        $this->assertSame('Objet initial', $demande->fresh()->objet);
     }
 
     public function test_the_modifier_button_only_shows_for_demandes_still_at_accueil(): void
@@ -434,7 +423,6 @@ class DepotTest extends TestCase
 
         $this->actingAs($user)->put("/depot/{$demande->id}", [
             'origine' => 'externe',
-            'reference' => 'MI/2026/999',
         ]);
 
         $this->assertSame(1, $demande->historiques()->count());
@@ -554,7 +542,6 @@ class DepotTest extends TestCase
 
         $this->actingAs($user)->post('/depot', [
             'origine' => 'externe',
-            'reference' => 'MI/2026/245',
             'piece_jointe' => $file,
         ])->assertRedirect(route('depot.index'));
 
@@ -571,7 +558,6 @@ class DepotTest extends TestCase
 
         $response = $this->actingAs($user)->post('/depot', [
             'origine' => 'externe',
-            'reference' => 'MI/2026/245',
             'piece_jointe' => $file,
         ]);
 
@@ -585,7 +571,6 @@ class DepotTest extends TestCase
 
         $this->actingAs($user)->post('/depot', [
             'origine' => 'externe',
-            'reference' => 'MI/2026/245',
         ]);
 
         $this->assertNull(Tabdepot::firstOrFail()->piece_jointe);
@@ -600,7 +585,6 @@ class DepotTest extends TestCase
 
         $this->actingAs($user)->put("/depot/{$demande->id}", [
             'origine' => 'externe',
-            'reference' => $demande->reference,
             'piece_jointe' => $file,
         ]);
 
@@ -619,7 +603,6 @@ class DepotTest extends TestCase
 
         $this->actingAs($user)->put("/depot/{$demande->id}", [
             'origine' => 'externe',
-            'reference' => $demande->reference,
             'piece_jointe' => $newFile,
         ]);
 
@@ -638,7 +621,6 @@ class DepotTest extends TestCase
 
         $this->actingAs($user)->put("/depot/{$demande->id}", [
             'origine' => 'externe',
-            'reference' => $demande->reference,
             'objet' => 'Objet mis à jour',
         ]);
 
@@ -665,10 +647,10 @@ class DepotTest extends TestCase
 
         $response = $this->actingAs($user)->post('/depot', [
             'origine' => 'externe',
-            'reference' => 'MI/2026/245',
         ]);
 
-        $response->assertSessionHas('success', 'Demande MI/2026/245 enregistrée avec succès.');
+        $demande = Tabdepot::firstOrFail();
+        $response->assertSessionHas('success', "Demande {$demande->reference} enregistrée avec succès.");
         $response->assertSessionMissing('succes');
     }
 

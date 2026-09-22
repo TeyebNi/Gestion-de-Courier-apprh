@@ -9,7 +9,6 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Storage;
 
 use App\Traits\ExportsCsv;
-use Illuminate\Validation\Rule;
 
 class TabdepotController extends Controller
 {
@@ -82,30 +81,39 @@ class TabdepotController extends Controller
             abort(403, "Cette page est réservée à l'accueil et aux administrateurs.");
         }
 
-        $request->merge(['reference' => trim((string) $request->input('reference'))]);
-
         $request->validate([
             'origine' => ['required', 'in:interne,externe'],
-            'reference' => ['required', 'string', 'max:100', Rule::unique('tabdepot', 'reference')],
             'objet' => ['nullable', 'string', 'max:255'],
+            'nom' => ['nullable', 'string', 'max:255'],
+            'tel' => ['nullable', 'string', 'max:20'],
+            'nni' => ['nullable', 'digits:10'],
+            'nif' => ['nullable', 'digits:10'],
             'piece_jointe' => ['nullable', 'file', 'mimes:jpg,jpeg,png,pdf', 'max:10240'],
         ], [
             'origine.required' => "L'origine est obligatoire.",
-            'reference.required' => 'Le code est obligatoire.',
-            'reference.unique' => 'Ce code est déjà utilisé par une autre demande.',
+            'nni.digits' => 'Le NNI doit contenir exactement 10 chiffres.',
+            'nif.digits' => 'Le NIF doit contenir exactement 10 chiffres.',
             'piece_jointe.mimes' => 'La pièce jointe doit être une image (JPG, PNG) ou un PDF.',
             'piece_jointe.max' => 'La pièce jointe ne doit pas dépasser 10 Mo.',
         ]);
 
         $demande = Tabdepot::create([
             'origine' => $request->origine,
-            'reference' => $request->reference,
             'objet' => $request->objet,
+            'nom' => $request->nom,
+            'tel' => $request->tel,
+            'nni' => $request->nni,
+            'nif' => $request->nif,
             'daterecp' => now()->format('Y-m-d'),
             'piece_jointe' => $request->hasFile('piece_jointe')
                 ? $request->file('piece_jointe')->store('pieces-jointes', 'public')
                 : null,
         ]);
+
+        // Le code est généré automatiquement à partir de l'id auto-incrémenté
+        // (unique et sans coordination requise, même en cas de saisies
+        // simultanées) plutôt que saisi manuellement par l'accueil.
+        $demande->update(['reference' => sprintf('%03d', $demande->id)]);
 
         DemandeHistorique::create([
             'tabdepot_id' => $demande->id,
@@ -126,17 +134,18 @@ class TabdepotController extends Controller
             abort(403, "Cette demande a déjà été envoyée dans le circuit et ne peut plus être modifiée depuis l'accueil.");
         }
 
-        $request->merge(['reference' => trim((string) $request->input('reference'))]);
-
         $request->validate([
             'origine' => ['required', 'in:interne,externe'],
-            'reference' => ['required', 'string', 'max:100', Rule::unique('tabdepot', 'reference')->ignore($tabdepot->id)],
             'objet' => ['nullable', 'string', 'max:255'],
+            'nom' => ['nullable', 'string', 'max:255'],
+            'tel' => ['nullable', 'string', 'max:20'],
+            'nni' => ['nullable', 'digits:10'],
+            'nif' => ['nullable', 'digits:10'],
             'piece_jointe' => ['nullable', 'file', 'mimes:jpg,jpeg,png,pdf', 'max:10240'],
         ], [
             'origine.required' => "L'origine est obligatoire.",
-            'reference.required' => 'Le code est obligatoire.',
-            'reference.unique' => 'Ce code est déjà utilisé par une autre demande.',
+            'nni.digits' => 'Le NNI doit contenir exactement 10 chiffres.',
+            'nif.digits' => 'Le NIF doit contenir exactement 10 chiffres.',
             'piece_jointe.mimes' => 'La pièce jointe doit être une image (JPG, PNG) ou un PDF.',
             'piece_jointe.max' => 'La pièce jointe ne doit pas dépasser 10 Mo.',
         ]);
@@ -149,10 +158,15 @@ class TabdepotController extends Controller
             $piece_jointe = $request->file('piece_jointe')->store('pieces-jointes', 'public');
         }
 
+        // Le code (reference) est généré automatiquement à la création et
+        // n'est jamais modifiable depuis l'accueil.
         $tabdepot->update([
             'origine' => $request->origine,
-            'reference' => $request->reference,
             'objet' => $request->objet,
+            'nom' => $request->nom,
+            'tel' => $request->tel,
+            'nni' => $request->nni,
+            'nif' => $request->nif,
             'piece_jointe' => $piece_jointe,
         ]);
 

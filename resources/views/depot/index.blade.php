@@ -60,7 +60,7 @@ Dashboard Courier
                                     </a>
                                     @endif
                                     @if(($item->statut_circuit ?? 'accueil') === 'accueil')
-                                    <a data-id="{{$item->id}}" data-objet="{{$item->objet}}" data-reference="{{$item->reference}}" data-origine="{{$item->origine}}" data-piece-jointe-url="{{ $item->piece_jointe ? asset('storage/' . $item->piece_jointe) : '' }}" data-toggle="modal" data-target="#exampleModal-edit" type="button" class="btn btn-info btn-sm" title="Modifier"><svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"></path><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"></path></svg></a>
+                                    <a data-id="{{$item->id}}" data-objet="{{$item->objet}}" data-origine="{{$item->origine}}" data-nom="{{$item->nom}}" data-tel="{{$item->tel}}" data-nni="{{$item->nni}}" data-nif="{{$item->nif}}" data-piece-jointe-url="{{ $item->piece_jointe ? asset('storage/' . $item->piece_jointe) : '' }}" data-toggle="modal" data-target="#exampleModal-edit" type="button" class="btn btn-info btn-sm" title="Modifier"><svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"></path><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"></path></svg></a>
                                     <a data-id="{{$item->id}}" data-reference="{{ $item->reference ?: 'cette demande' }}" data-toggle="modal" data-target="#exampleModal-delete" type="button" class="btn btn-danger btn-sm" title="Supprimer"><svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"></polyline><path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"></path><path d="M10 11v6"></path><path d="M14 11v6"></path><path d="M9 6V4a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v2"></path></svg></a>
                                     @endif
                                 </td>
@@ -119,11 +119,35 @@ Dashboard Courier
       <br>
       <div class="input-group">
         <div class="input-group-prepend">
-        <span class="input-group-text">Code *</span>
+        <span class="input-group-text">Nom et Prénom</span>
       </div>
-      <input type="text" class="form-control @error('reference') is-invalid @enderror" name="reference" value="{{ old('reference') }}" placeholder="Code / référence du courrier" maxlength="100" required>
+      <input type="text" class="form-control" name="nom" value="{{ old('nom') }}" placeholder="Nom et prénom du demandeur (optionnel)" maxlength="255">
     </div>
-    @error('reference')
+      <br>
+      <div class="input-group">
+        <div class="input-group-prepend">
+        <span class="input-group-text">Téléphone</span>
+      </div>
+      <input type="text" class="form-control" name="tel" value="{{ old('tel') }}" placeholder="Téléphone (optionnel)" maxlength="20">
+    </div>
+      <br>
+      <div class="input-group">
+        <div class="input-group-prepend">
+        <span class="input-group-text">NNI</span>
+      </div>
+      <input type="text" class="form-control @error('nni') is-invalid @enderror" name="nni" value="{{ old('nni') }}" placeholder="10 chiffres (optionnel)" inputmode="numeric" maxlength="10">
+    </div>
+    @error('nni')
+      <div class="text-danger small mt-1 mb-2">{{ $message }}</div>
+    @enderror
+      <br>
+      <div class="input-group">
+        <div class="input-group-prepend">
+        <span class="input-group-text">NIF</span>
+      </div>
+      <input type="text" class="form-control @error('nif') is-invalid @enderror" name="nif" value="{{ old('nif') }}" placeholder="10 chiffres (optionnel)" inputmode="numeric" maxlength="10">
+    </div>
+    @error('nif')
       <div class="text-danger small mt-1 mb-2">{{ $message }}</div>
     @enderror
       <br>
@@ -183,11 +207,35 @@ Dashboard Courier
       <br>
       <div class="input-group">
         <div class="input-group-prepend">
-        <span class="input-group-text">Code *</span>
+        <span class="input-group-text">Nom et Prénom</span>
       </div>
-      <input id="edit_reference" type="text" class="form-control @error('reference') is-invalid @enderror" name="reference" value="{{ old('reference') }}" placeholder="Code / référence du courrier" maxlength="100" required>
+      <input id="edit_nom" type="text" class="form-control" name="nom" value="{{ old('nom') }}" placeholder="Nom et prénom du demandeur (optionnel)" maxlength="255">
     </div>
-    @error('reference')
+      <br>
+      <div class="input-group">
+        <div class="input-group-prepend">
+        <span class="input-group-text">Téléphone</span>
+      </div>
+      <input id="edit_tel" type="text" class="form-control" name="tel" value="{{ old('tel') }}" placeholder="Téléphone (optionnel)" maxlength="20">
+    </div>
+      <br>
+      <div class="input-group">
+        <div class="input-group-prepend">
+        <span class="input-group-text">NNI</span>
+      </div>
+      <input id="edit_nni" type="text" class="form-control @error('nni') is-invalid @enderror" name="nni" value="{{ old('nni') }}" placeholder="10 chiffres (optionnel)" inputmode="numeric" maxlength="10">
+    </div>
+    @error('nni')
+      <div class="text-danger small mt-1 mb-2">{{ $message }}</div>
+    @enderror
+      <br>
+      <div class="input-group">
+        <div class="input-group-prepend">
+        <span class="input-group-text">NIF</span>
+      </div>
+      <input id="edit_nif" type="text" class="form-control @error('nif') is-invalid @enderror" name="nif" value="{{ old('nif') }}" placeholder="10 chiffres (optionnel)" inputmode="numeric" maxlength="10">
+    </div>
+    @error('nif')
       <div class="text-danger small mt-1 mb-2">{{ $message }}</div>
     @enderror
       <br>
@@ -263,8 +311,11 @@ $('#exampleModal-edit').on('show.bs.modal', function (event) {
     $('#editDepotForm').attr('action', '{{ url('/depot') }}/' + id);
     $('#edit_depot_id').val(id);
     $('#edit_objet').val(button.data('objet'));
-    $('#edit_reference').val(button.data('reference'));
     $('#edit_origine').val(button.data('origine'));
+    $('#edit_nom').val(button.data('nom'));
+    $('#edit_tel').val(button.data('tel'));
+    $('#edit_nni').val(button.data('nni'));
+    $('#edit_nif').val(button.data('nif'));
     var pieceJointeUrl = button.data('piece-jointe-url');
     var currentPieceJointe = $('#edit_piece_jointe_current');
     if (pieceJointeUrl) {
