@@ -183,7 +183,10 @@ document.addEventListener('DOMContentLoaded', function () {
     // Comme populateSelect, mais pour des rôles à titre de poste propre
     // (Division, Conseiller) : chaque option est {title, name}, la valeur
     // soumise est le titre (routage), le texte affiché ajoute le nom du
-    // titulaire actuel pour la clarté.
+    // titulaire actuel pour la clarté. Le préfixe n'est ajouté que si le
+    // titre ne le porte pas déjà lui-même (ex: "Conseiller chargé de
+    // l'informatique" commence déjà par "Conseiller" — pas la peine de le
+    // répéter, contrairement à "Guichet Unique" pour une Division).
     function populateTitledSelect(select, items, placeholder, labelPrefix) {
         select.innerHTML = '';
         var placeholderOpt = document.createElement('option');
@@ -193,7 +196,9 @@ document.addEventListener('DOMContentLoaded', function () {
         items.forEach(function (item) {
             var opt = document.createElement('option');
             opt.value = item.title;
-            opt.textContent = labelPrefix + ' ' + item.title + ' — ' + item.name;
+            var alreadyPrefixed = labelPrefix && item.title.toLowerCase().indexOf(labelPrefix.toLowerCase()) === 0;
+            var label = (labelPrefix && !alreadyPrefixed) ? (labelPrefix + ' ' + item.title) : item.title;
+            opt.textContent = label + ' — ' + item.name;
             select.appendChild(opt);
         });
     }
