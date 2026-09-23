@@ -21,22 +21,34 @@ class TabdepotController extends Controller
         }
 
         $search = $request->search;
+        $statut = $request->statut;
 
         $tabdepot = Tabdepot::query()
             ->when($search, function ($query) use ($search) {
                 $query->where('reference', 'like', "%{$search}%")
                       ->orWhere('objet', 'like', "%{$search}%");
             })
+            ->when($statut, function ($query) use ($statut) {
+                match ($statut) {
+                    // "Chez un service" regroupe service/division/chef de service :
+                    // trois façons différentes d'être orientée vers un département,
+                    // par opposition à Adjoint au Maire/Conseiller (une personne).
+                    'service' => $query->where('statut_circuit', 'service')
+                        ->where(fn ($q) => $q->whereNull('destination_type')->orWhereIn('destination_type', ['service', 'division', 'chef_service'])),
+                    'maire_adjoint', 'conseiller' => $query->where('statut_circuit', 'service')->where('destination_type', $statut),
+                    default => $query->where('statut_circuit', $statut),
+                };
+            })
             ->orderby('id', 'desc')
             ->paginate(5)
-            ->appends(['search' => $search]);
+            ->appends(['search' => $search, 'statut' => $statut]);
 
         // Simple aperçu du prochain code (pas une réservation : le code réel
         // est toujours attribué à l'enregistrement, à partir de l'id auto-
         // incrémenté) — juste pour rassurer l'accueil avant de valider.
         $nextReference = sprintf('%03d', (Tabdepot::withTrashed()->max('id') ?? 0) + 1);
 
-        return view('depot.index', compact('tabdepot', 'search', 'nextReference'));
+        return view('depot.index', compact('tabdepot', 'search', 'statut', 'nextReference'));
     }
 
     public function exportExcel(Request $request)

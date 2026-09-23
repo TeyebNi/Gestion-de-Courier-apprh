@@ -337,6 +337,53 @@ class DepotTest extends TestCase
         $response->assertDontSee('AUTRE/2026/999');
     }
 
+    public function test_index_statut_filter_isolates_each_circuit_stage(): void
+    {
+        $user = User::factory()->create(['role' => UserRole::User]);
+        $this->makeDepot(['reference' => 'A-ACCUEIL']);
+        $this->makeDepot(['reference' => 'B-FATOU', 'statut_circuit' => 'fatou']);
+        $this->makeDepot(['reference' => 'C-SERVICE', 'statut_circuit' => 'service', 'destination_type' => 'service', 'service_assigne' => 'Etat Civil']);
+        $this->makeDepot(['reference' => 'D-ADJOINT', 'statut_circuit' => 'service', 'destination_type' => 'maire_adjoint', 'service_assigne' => 'Zeroug']);
+        $this->makeDepot(['reference' => 'E-CONSEILLER', 'statut_circuit' => 'service', 'destination_type' => 'conseiller', 'service_assigne' => 'Vall']);
+        $this->makeDepot(['reference' => 'F-CLOTURE', 'statut_circuit' => 'cloture']);
+
+        $cases = [
+            'accueil' => 'A-ACCUEIL',
+            'fatou' => 'B-FATOU',
+            'service' => 'C-SERVICE',
+            'maire_adjoint' => 'D-ADJOINT',
+            'conseiller' => 'E-CONSEILLER',
+            'cloture' => 'F-CLOTURE',
+        ];
+
+        foreach ($cases as $statut => $expectedReference) {
+            $response = $this->actingAs($user)->get("/depot?statut={$statut}");
+
+            $response->assertOk();
+            $response->assertSee($expectedReference);
+            foreach ($cases as $otherReference) {
+                if ($otherReference !== $expectedReference) {
+                    $response->assertDontSee($otherReference);
+                }
+            }
+        }
+    }
+
+    public function test_index_service_statut_also_includes_divisions_and_chefs_de_service(): void
+    {
+        $user = User::factory()->create(['role' => UserRole::User]);
+        $this->makeDepot(['reference' => 'DIV', 'statut_circuit' => 'service', 'destination_type' => 'division', 'service_assigne' => 'Guichet Unique']);
+        $this->makeDepot(['reference' => 'CHEF', 'statut_circuit' => 'service', 'destination_type' => 'chef_service', 'service_assigne' => 'Chef Informatique']);
+        $this->makeDepot(['reference' => 'ADJOINT', 'statut_circuit' => 'service', 'destination_type' => 'maire_adjoint', 'service_assigne' => 'Zeroug']);
+
+        $response = $this->actingAs($user)->get('/depot?statut=service');
+
+        $response->assertOk();
+        $response->assertSee('DIV');
+        $response->assertSee('CHEF');
+        $response->assertDontSee('ADJOINT');
+    }
+
     public function test_index_search_matches_objet(): void
     {
         $user = User::factory()->create(['role' => UserRole::User]);

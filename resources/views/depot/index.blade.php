@@ -15,7 +15,22 @@ Dashboard Courier
                     <button class="btn btn-primary btn-sm ml-2" data-toggle="modal" data-target="#exampleModal">Nouvelle Demande</button>
                 </h4>
                 <div class="d-flex align-items-center flex-wrap">
-                    @include('partials.search-box', ['route' => 'depot.index', 'placeholder' => 'Rechercher par code, objet...', 'minWidth' => 300])
+                    <form method="GET" action="{{ route('depot.index') }}" class="form-inline mr-2">
+                        <select name="statut" class="form-control form-control-sm mr-2" onchange="this.form.submit()">
+                            <option value="">Tous les statuts</option>
+                            <option value="accueil" @selected($statut === 'accueil')>À l'accueil</option>
+                            <option value="fatou" @selected($statut === 'fatou')>{{ \App\Models\Tabdepot::circuitStepLabel('fatou') }}</option>
+                            <option value="service" @selected($statut === 'service')>Chez un service</option>
+                            <option value="maire_adjoint" @selected($statut === 'maire_adjoint')>Chez l'Adjoint au Maire</option>
+                            <option value="conseiller" @selected($statut === 'conseiller')>Chez le Conseiller</option>
+                            <option value="cloture" @selected($statut === 'cloture')>Clôturée</option>
+                        </select>
+                        <input type="text" name="search" class="form-control form-control-sm" placeholder="Rechercher par code, objet..." value="{{ $search }}" style="min-width:220px;">
+                        <button type="submit" class="btn btn-primary btn-sm ml-2">Rechercher</button>
+                        @if($search || $statut)
+                        <a href="{{ route('depot.index') }}" class="btn btn-outline-secondary btn-sm ml-2" title="Réinitialiser">&times;</a>
+                        @endif
+                    </form>
                     <a href="{{ route('depot.export') }}" class="btn btn-success btn-sm" title="Exporter en Excel"><i class="fas fa-file-excel"></i></a>
                 </div>
             </div>
