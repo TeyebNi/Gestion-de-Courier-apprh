@@ -324,6 +324,33 @@ class DepotTest extends TestCase
         $this->assertDatabaseHas('tabdepot', ['id' => $demande->id]);
     }
 
+    public function test_export_respects_the_statut_filter(): void
+    {
+        $user = User::factory()->create(['role' => UserRole::User]);
+        $this->makeDepot(['reference' => 'A-ACCUEIL']);
+        $this->makeDepot(['reference' => 'B-FATOU', 'statut_circuit' => 'fatou']);
+
+        $response = $this->actingAs($user)->get('/depot/export?statut=fatou');
+
+        $response->assertOk();
+        $csv = $response->streamedContent();
+        $this->assertStringContainsString('B-FATOU', $csv);
+        $this->assertStringNotContainsString('A-ACCUEIL', $csv);
+    }
+
+    public function test_export_includes_nom_and_tel_columns(): void
+    {
+        $user = User::factory()->create(['role' => UserRole::User]);
+        $this->makeDepot(['nom' => 'Ahmed Cheikh', 'tel' => '22334455']);
+
+        $response = $this->actingAs($user)->get('/depot/export');
+
+        $response->assertOk();
+        $csv = $response->streamedContent();
+        $this->assertStringContainsString('Ahmed Cheikh', $csv);
+        $this->assertStringContainsString('22334455', $csv);
+    }
+
     public function test_index_search_filters_by_code(): void
     {
         $user = User::factory()->create(['role' => UserRole::User]);

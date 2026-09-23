@@ -14,6 +14,31 @@ class TabdepotController extends Controller
 {
     use ExportsCsv;
 
+    /**
+     * Filtre commun à la liste et à l'export CSV, pour que l'export ne
+     * ramène que ce que l'accueil voit réellement à l'écran (recherche +
+     * statut sélectionné), pas systématiquement tout.
+     */
+    private function applyFilters($query, ?string $search, ?string $statut)
+    {
+        return $query
+            ->when($search, function ($q) use ($search) {
+                $q->where('reference', 'like', "%{$search}%")
+                  ->orWhere('objet', 'like', "%{$search}%");
+            })
+            ->when($statut, function ($q) use ($statut) {
+                match ($statut) {
+                    // "Chez un service" regroupe service/division/chef de service :
+                    // trois façons différentes d'être orientée vers un département,
+                    // par opposition à Adjoint au Maire/Conseiller (une personne).
+                    'service' => $q->where('statut_circuit', 'service')
+                        ->where(fn ($sub) => $sub->whereNull('destination_type')->orWhereIn('destination_type', ['service', 'division', 'chef_service'])),
+                    'maire_adjoint', 'conseiller' => $q->where('statut_circuit', 'service')->where('destination_type', $statut),
+                    default => $q->where('statut_circuit', $statut),
+                };
+            });
+    }
+
     public function index(Request $request)
     {
         if (! auth()->user()->canAccessDepot()) {
@@ -23,22 +48,7 @@ class TabdepotController extends Controller
         $search = $request->search;
         $statut = $request->statut;
 
-        $tabdepot = Tabdepot::query()
-            ->when($search, function ($query) use ($search) {
-                $query->where('reference', 'like', "%{$search}%")
-                      ->orWhere('objet', 'like', "%{$search}%");
-            })
-            ->when($statut, function ($query) use ($statut) {
-                match ($statut) {
-                    // "Chez un service" regroupe service/division/chef de service :
-                    // trois façons différentes d'être orientée vers un département,
-                    // par opposition à Adjoint au Maire/Conseiller (une personne).
-                    'service' => $query->where('statut_circuit', 'service')
-                        ->where(fn ($q) => $q->whereNull('destination_type')->orWhereIn('destination_type', ['service', 'division', 'chef_service'])),
-                    'maire_adjoint', 'conseiller' => $query->where('statut_circuit', 'service')->where('destination_type', $statut),
-                    default => $query->where('statut_circuit', $statut),
-                };
-            })
+        $tabdepot = $this->applyFilters(Tabdepot::query(), $search, $statut)
             ->orderby('id', 'desc')
             ->paginate(5)
             ->appends(['search' => $search, 'statut' => $statut]);
@@ -57,12 +67,14 @@ class TabdepotController extends Controller
             abort(403, "Cette page est réservée à l'accueil et aux administrateurs.");
         }
 
-        $tabdepots = Tabdepot::orderby('id', 'asc')->get();
+        $tabdepots = $this->applyFilters(Tabdepot::query(), $request->search, $request->statut)
+            ->orderby('id', 'asc')
+            ->get();
 
         return $this->streamCsv(
             $tabdepots,
-            ['N°', 'Code', 'Objet', 'Origine', 'Détails Origine', 'Date réception', 'Statut'],
-            fn ($t, $i) => [$i + 1, $t->reference, $t->objet, $t->origine, $t->origine_detail, $t->daterecp, $t->statutLabel()],
+            ['N°', 'Code', 'Objet', 'Nom', 'Téléphone', 'Origine', 'Détails Origine', 'Date réception', 'Statut'],
+            fn ($t, $i) => [$i + 1, $t->reference, $t->objet, $t->nom, $t->tel, $t->origine, $t->origine_detail, $t->daterecp, $t->statutLabel()],
             'depot_demandes'
         );
     }

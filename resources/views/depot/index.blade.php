@@ -31,7 +31,7 @@ Dashboard Courier
                         <a href="{{ route('depot.index') }}" class="btn btn-outline-secondary btn-sm ml-2" title="Réinitialiser">&times;</a>
                         @endif
                     </form>
-                    <a href="{{ route('depot.export') }}" class="btn btn-success btn-sm" title="Exporter en Excel"><i class="fas fa-file-excel"></i></a>
+                    <a href="{{ route('depot.export', ['search' => $search, 'statut' => $statut]) }}" class="btn btn-success btn-sm" title="Exporter en Excel"><i class="fas fa-file-excel"></i></a>
                 </div>
             </div>
             <div class="card-body">
