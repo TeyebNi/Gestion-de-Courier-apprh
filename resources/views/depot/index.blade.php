@@ -26,6 +26,8 @@ Dashboard Courier
                         <thead class=" text-primary">
                             <th>Code</th>
                             <th>Objet</th>
+                            <th>Nom</th>
+                            <th>Téléphone</th>
                             <th>Origine</th>
                             <th>Statut</th>
                             <th class="text-right">Enregistrée le</th>
@@ -39,6 +41,8 @@ Dashboard Courier
                             <tr>
                                 <td>{{ $item->reference ?: '—' }}</td>
                                 <td class="text-truncate" style="max-width:280px;" title="{{ $item->objet }}">{{ $item->objet ?: '—' }}</td>
+                                <td class="text-truncate" style="max-width:160px;" title="{{ $item->nom }}">{{ $item->nom ?: '—' }}</td>
+                                <td>{{ $item->tel ?: '—' }}</td>
                                 <td>@include('partials.origine-badge', ['demande' => $item])</td>
                                   <td><span class="badge {{ $depotBadgeClass }}">{{ $item->statutLabel() }}</span></td>
                                   <td class="text-right">{{ $item->created_at->format('d/m/Y H:i') }}</td>
@@ -67,7 +71,7 @@ Dashboard Courier
                             </tr>
                             @empty
                             <tr>
-                                <td colspan="6" class="text-center text-muted">
+                                <td colspan="8" class="text-center text-muted">
                                     @if($search)
                                         Aucune demande ne correspond à « {{ $search }} ».
                                     @else

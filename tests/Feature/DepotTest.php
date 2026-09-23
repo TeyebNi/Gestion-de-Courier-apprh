@@ -674,6 +674,18 @@ class DepotTest extends TestCase
         $response->assertSessionMissing('succes');
     }
 
+    public function test_index_list_shows_nom_and_tel_columns(): void
+    {
+        $user = User::factory()->create(['role' => UserRole::User]);
+        $this->makeDepot(['nom' => 'Ahmed Cheikh', 'tel' => '22334455']);
+
+        $response = $this->actingAs($user)->get('/depot');
+
+        $response->assertOk();
+        $response->assertSee('Ahmed Cheikh');
+        $response->assertSee('22334455');
+    }
+
     public function test_index_shows_an_empty_state_when_search_matches_nothing(): void
     {
         $user = User::factory()->create(['role' => UserRole::User]);
