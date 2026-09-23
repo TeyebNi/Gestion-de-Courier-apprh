@@ -26,17 +26,7 @@ class TabdepotController extends Controller
                 $q->where('reference', 'like', "%{$search}%")
                   ->orWhere('objet', 'like', "%{$search}%");
             })
-            ->when($statut, function ($q) use ($statut) {
-                match ($statut) {
-                    // "Chez un service" regroupe service/division/chef de service :
-                    // trois façons différentes d'être orientée vers un département,
-                    // par opposition à Adjoint au Maire/Conseiller (une personne).
-                    'service' => $q->where('statut_circuit', 'service')
-                        ->where(fn ($sub) => $sub->whereNull('destination_type')->orWhereIn('destination_type', ['service', 'division', 'chef_service'])),
-                    'maire_adjoint', 'conseiller' => $q->where('statut_circuit', 'service')->where('destination_type', $statut),
-                    default => $q->where('statut_circuit', $statut),
-                };
-            });
+            ->filterByStatut($statut);
     }
 
     public function index(Request $request)

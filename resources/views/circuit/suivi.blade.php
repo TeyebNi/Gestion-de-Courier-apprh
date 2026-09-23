@@ -18,6 +18,8 @@ Suivi des Demandes
                         <option value="">Tous les statuts</option>
                         <option value="fatou" @selected($statut === 'fatou')>{{ \App\Models\Tabdepot::circuitStepLabel('fatou') }}</option>
                         <option value="service" @selected($statut === 'service')>Chez un service</option>
+                        <option value="maire_adjoint" @selected($statut === 'maire_adjoint')>Chez l'Adjoint au Maire</option>
+                        <option value="conseiller" @selected($statut === 'conseiller')>Chez le Conseiller</option>
                         <option value="cloture" @selected($statut === 'cloture')>Clôturée</option>
                     </select>
                     <div class="input-group input-group-sm">

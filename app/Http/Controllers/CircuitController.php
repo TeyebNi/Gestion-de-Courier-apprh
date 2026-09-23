@@ -273,7 +273,7 @@ class CircuitController extends Controller
         $statut = $request->statut;
 
         $demandes = Tabdepot::where('statut_circuit', '!=', 'accueil')
-            ->when($statut, fn ($q) => $q->where('statut_circuit', $statut))
+            ->filterByStatut($statut)
             ->when($search, function ($q) use ($search) {
                 $q->where(function ($sub) use ($search) {
                     $sub->where('objet', 'like', "%{$search}%")

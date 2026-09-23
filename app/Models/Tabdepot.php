@@ -22,6 +22,26 @@ class Tabdepot extends Model
         ];
     }
 
+    /**
+     * Filtre par statut réutilisé partout où un tri par étape du circuit est
+     * proposé (Gestion des Demandes, Suivi des Demandes) : "service" regroupe
+     * service/division/chef de service (routage vers un département), par
+     * opposition à Adjoint au Maire/Conseiller (routage vers une personne).
+     */
+    public function scopeFilterByStatut($query, ?string $statut)
+    {
+        if (! $statut) {
+            return $query;
+        }
+
+        return match ($statut) {
+            'service' => $query->where('statut_circuit', 'service')
+                ->where(fn ($q) => $q->whereNull('destination_type')->orWhereIn('destination_type', ['service', 'division', 'chef_service'])),
+            'maire_adjoint', 'conseiller' => $query->where('statut_circuit', 'service')->where('destination_type', $statut),
+            default => $query->where('statut_circuit', $statut),
+        };
+    }
+
     public function historiques()
     {
         return $this->hasMany(DemandeHistorique::class, 'tabdepot_id')->orderByDesc('created_at');

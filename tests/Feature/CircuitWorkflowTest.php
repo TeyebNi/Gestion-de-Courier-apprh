@@ -935,6 +935,27 @@ class CircuitWorkflowTest extends TestCase
         $response->assertDontSee('CHEZ-FATOU');
     }
 
+    public function test_suivi_can_be_filtered_by_maire_adjoint_or_conseiller(): void
+    {
+        $accueil = User::factory()->create(['role' => UserRole::User]);
+
+        $chezAdjoint = $this->makeDepot();
+        $chezAdjoint->update(['statut_circuit' => 'service', 'reference' => 'CHEZ-ADJOINT', 'destination_type' => 'maire_adjoint', 'service_assigne' => 'Zeroug']);
+
+        $chezConseiller = $this->makeDepot();
+        $chezConseiller->update(['statut_circuit' => 'service', 'reference' => 'CHEZ-CONSEILLER', 'destination_type' => 'conseiller', 'service_assigne' => 'Vall']);
+
+        $chezService = $this->makeDepot();
+        $chezService->update(['statut_circuit' => 'service', 'reference' => 'CHEZ-SERVICE', 'destination_type' => 'service', 'service_assigne' => 'Etat Civil']);
+
+        $response = $this->actingAs($accueil)->get('/circuit/suivi?statut=maire_adjoint');
+
+        $response->assertOk();
+        $response->assertSee('CHEZ-ADJOINT');
+        $response->assertDontSee('CHEZ-CONSEILLER');
+        $response->assertDontSee('CHEZ-SERVICE');
+    }
+
     public function test_cabinet_cannot_access_suivi_directly_by_url(): void
     {
         $cabinet = User::factory()->create(['role' => UserRole::Fatou]);
