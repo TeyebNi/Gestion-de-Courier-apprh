@@ -9,6 +9,7 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Storage;
 
 use App\Traits\ExportsCsv;
+use Illuminate\Validation\Rule;
 
 class TabdepotController extends Controller
 {
@@ -105,12 +106,12 @@ class TabdepotController extends Controller
             'objet' => ['nullable', 'string', 'max:255'],
             'nom' => ['nullable', 'string', 'max:255'],
             'tel' => ['nullable', 'regex:/^[234]\d{7}$/'],
-            'nni' => ['nullable', 'digits:10'],
-            'piece_jointe' => ['nullable', 'file', 'mimes:jpg,jpeg,png,pdf', 'max:10240'],
+            'nni' => ['nullable', 'string', 'max:30'],
+            'piece_jointe' => ['required', 'file', 'mimes:jpg,jpeg,png,pdf', 'max:10240'],
         ], [
             'origine.required' => "L'origine est obligatoire.",
             'tel.regex' => 'Le téléphone doit contenir 8 chiffres et commencer par 2, 3 ou 4.',
-            'nni.digits' => 'Le NNI/NIF doit contenir exactement 10 chiffres.',
+            'piece_jointe.required' => 'La pièce jointe est obligatoire.',
             'piece_jointe.mimes' => 'La pièce jointe doit être une image (JPG, PNG) ou un PDF.',
             'piece_jointe.max' => 'La pièce jointe ne doit pas dépasser 10 Mo.',
         ]);
@@ -156,12 +157,12 @@ class TabdepotController extends Controller
             'objet' => ['nullable', 'string', 'max:255'],
             'nom' => ['nullable', 'string', 'max:255'],
             'tel' => ['nullable', 'regex:/^[234]\d{7}$/'],
-            'nni' => ['nullable', 'digits:10'],
-            'piece_jointe' => ['nullable', 'file', 'mimes:jpg,jpeg,png,pdf', 'max:10240'],
+            'nni' => ['nullable', 'string', 'max:30'],
+            'piece_jointe' => [Rule::requiredIf(! $tabdepot->piece_jointe), 'nullable', 'file', 'mimes:jpg,jpeg,png,pdf', 'max:10240'],
         ], [
             'origine.required' => "L'origine est obligatoire.",
             'tel.regex' => 'Le téléphone doit contenir 8 chiffres et commencer par 2, 3 ou 4.',
-            'nni.digits' => 'Le NNI/NIF doit contenir exactement 10 chiffres.',
+            'piece_jointe.required' => 'La pièce jointe est obligatoire.',
             'piece_jointe.mimes' => 'La pièce jointe doit être une image (JPG, PNG) ou un PDF.',
             'piece_jointe.max' => 'La pièce jointe ne doit pas dépasser 10 Mo.',
         ]);
@@ -259,3 +260,4 @@ class TabdepotController extends Controller
         return redirect()->route('depot.trashed')->with('success', "Demande {$reference} supprimée définitivement.");
     }
 }
+

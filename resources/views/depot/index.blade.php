@@ -164,7 +164,7 @@ Dashboard Courier
         <div class="input-group-prepend">
         <span class="input-group-text">NNI/NIF</span>
       </div>
-      <input type="text" class="form-control @error('nni') is-invalid @enderror" name="nni" value="{{ old('nni') }}" placeholder="10 chiffres (optionnel)" inputmode="numeric" maxlength="10">
+      <input type="text" class="form-control @error('nni') is-invalid @enderror" name="nni" value="{{ old('nni') }}" placeholder="NNI ou NIF (optionnel)" maxlength="30">
     </div>
     @error('nni')
       <div class="text-danger small mt-1 mb-2">{{ $message }}</div>
@@ -178,9 +178,9 @@ Dashboard Courier
     </div>
       <br>
       <div class="form-group">
-        <label for="create_piece_jointe">Pièce jointe (scanner/joindre le document original, optionnel)</label>
+        <label for="create_piece_jointe">Pièce jointe * (scanner/joindre le document original)</label>
         <div class="custom-file">
-          <input type="file" class="custom-file-input piece-jointe-input @error('piece_jointe') is-invalid @enderror" id="create_piece_jointe" name="piece_jointe" accept=".jpg,.jpeg,.png,.pdf">
+          <input type="file" class="custom-file-input piece-jointe-input @error('piece_jointe') is-invalid @enderror" id="create_piece_jointe" name="piece_jointe" required accept=".jpg,.jpeg,.png,.pdf">
           <label class="custom-file-label" for="create_piece_jointe" data-browse="Parcourir">Choisir un fichier (JPG, PNG ou PDF)...</label>
         </div>
         @error('piece_jointe')
@@ -245,7 +245,7 @@ Dashboard Courier
         <div class="input-group-prepend">
         <span class="input-group-text">NNI/NIF</span>
       </div>
-      <input id="edit_nni" type="text" class="form-control @error('nni') is-invalid @enderror" name="nni" value="{{ old('nni') }}" placeholder="10 chiffres (optionnel)" inputmode="numeric" maxlength="10">
+      <input id="edit_nni" type="text" class="form-control @error('nni') is-invalid @enderror" name="nni" value="{{ old('nni') }}" placeholder="NNI ou NIF (optionnel)" maxlength="30">
     </div>
     @error('nni')
       <div class="text-danger small mt-1 mb-2">{{ $message }}</div>
@@ -259,7 +259,7 @@ Dashboard Courier
     </div>
       <br>
       <div class="form-group">
-        <label for="edit_piece_jointe">Pièce jointe (scanner/joindre le document original, optionnel)</label>
+        <label for="edit_piece_jointe">Pièce jointe * (obligatoire ; laisser vide pour conserver l'actuelle)</label>
         <div class="custom-file">
           <input type="file" class="custom-file-input piece-jointe-input @error('piece_jointe') is-invalid @enderror" id="edit_piece_jointe" name="piece_jointe" accept=".jpg,.jpeg,.png,.pdf">
           <label class="custom-file-label" for="edit_piece_jointe" data-browse="Parcourir">Choisir un fichier (JPG, PNG ou PDF)...</label>

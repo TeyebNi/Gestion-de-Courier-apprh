@@ -19,6 +19,7 @@ class DepotTest extends TestCase
         return Tabdepot::create(array_merge([
             'origine' => 'externe',
             'reference' => 'MI/2026/245',
+            'piece_jointe' => 'pieces-jointes/existant.jpg',
             'daterecp' => now()->format('Y-m-d'),
         ], $overrides));
     }
@@ -28,6 +29,7 @@ class DepotTest extends TestCase
         $user = User::factory()->create(['role' => UserRole::User]);
 
         $response = $this->actingAs($user)->post('/depot', [
+            'piece_jointe' => UploadedFile::fake()->image('scan.jpg'),
             'origine' => 'externe',
         ]);
 
@@ -41,7 +43,8 @@ class DepotTest extends TestCase
     {
         $user = User::factory()->create(['role' => UserRole::User]);
 
-        $this->actingAs($user)->post('/depot', ['origine' => 'externe']);
+        $this->actingAs($user)->post('/depot', [
+            'piece_jointe' => UploadedFile::fake()->image('scan.jpg'),'origine' => 'externe']);
 
         $demande = Tabdepot::firstOrFail();
         $this->assertSame(sprintf('%03d', $demande->id), $demande->reference);
@@ -62,8 +65,10 @@ class DepotTest extends TestCase
     {
         $user = User::factory()->create(['role' => UserRole::User]);
 
-        $this->actingAs($user)->post('/depot', ['origine' => 'externe']);
-        $this->actingAs($user)->post('/depot', ['origine' => 'externe']);
+        $this->actingAs($user)->post('/depot', [
+            'piece_jointe' => UploadedFile::fake()->image('scan.jpg'),'origine' => 'externe']);
+        $this->actingAs($user)->post('/depot', [
+            'piece_jointe' => UploadedFile::fake()->image('scan.jpg'),'origine' => 'externe']);
 
         $references = Tabdepot::orderBy('id')->pluck('reference');
         $this->assertCount(2, $references->unique());
@@ -74,6 +79,7 @@ class DepotTest extends TestCase
         $user = User::factory()->create(['role' => UserRole::User]);
 
         $this->actingAs($user)->post('/depot', [
+            'piece_jointe' => UploadedFile::fake()->image('scan.jpg'),
             'origine' => 'externe',
             'reference' => 'FORCED-CODE',
         ]);
@@ -102,6 +108,7 @@ class DepotTest extends TestCase
         $user = User::factory()->create(['role' => UserRole::User, 'name' => 'Fatimetou Accueil']);
 
         $this->actingAs($user)->post('/depot', [
+            'piece_jointe' => UploadedFile::fake()->image('scan.jpg'),
             'origine' => 'externe',
         ]);
 
@@ -113,26 +120,50 @@ class DepotTest extends TestCase
         $this->assertSame($user->id, $historique->user_id);
     }
 
+    public function test_store_requires_an_attachment(): void
+    {
+        $user = User::factory()->create(['role' => UserRole::User]);
+
+        $response = $this->actingAs($user)->post('/depot', ['origine' => 'externe']);
+
+        $response->assertSessionHasErrors('piece_jointe');
+        $this->assertDatabaseCount('tabdepot', 0);
+    }
+
+    public function test_nni_nif_accepts_any_length(): void
+    {
+        Storage::fake('public');
+        $user = User::factory()->create(['role' => UserRole::User]);
+
+        $this->actingAs($user)->post('/depot', [
+            'origine' => 'externe',
+            'nni' => '12345',
+            'piece_jointe' => UploadedFile::fake()->image('scan.jpg'),
+        ])->assertSessionDoesntHaveErrors('nni');
+
+        $this->assertSame('12345', Tabdepot::firstOrFail()->nni);
+    }
+
+    public function test_update_requires_an_attachment_only_when_none_exists(): void
+    {
+        $user = User::factory()->create(['role' => UserRole::User]);
+        $without = $this->makeDepot(['piece_jointe' => null]);
+        $with = $this->makeDepot(['reference' => 'AUTRE']);
+
+        $this->actingAs($user)->put("/depot/{$without->id}", ['origine' => 'externe'])
+            ->assertSessionHasErrors('piece_jointe');
+        $this->actingAs($user)->put("/depot/{$with->id}", ['origine' => 'externe'])
+            ->assertSessionDoesntHaveErrors('piece_jointe');
+    }
+
     public function test_store_requires_an_origine(): void
     {
         $user = User::factory()->create(['role' => UserRole::User]);
 
-        $response = $this->actingAs($user)->post('/depot', []);
+        $response = $this->actingAs($user)->post('/depot', [
+            'piece_jointe' => UploadedFile::fake()->image('scan.jpg'),]);
 
         $response->assertSessionHasErrors('origine');
-        $this->assertDatabaseCount('tabdepot', 0);
-    }
-
-    public function test_store_rejects_a_nni_nif_that_is_not_10_digits(): void
-    {
-        $user = User::factory()->create(['role' => UserRole::User]);
-
-        $response = $this->actingAs($user)->post('/depot', [
-            'origine' => 'externe',
-            'nni' => '12345',
-        ]);
-
-        $response->assertSessionHasErrors('nni');
         $this->assertDatabaseCount('tabdepot', 0);
     }
 
@@ -141,6 +172,7 @@ class DepotTest extends TestCase
         $user = User::factory()->create(['role' => UserRole::User]);
 
         $response = $this->actingAs($user)->post('/depot', [
+            'piece_jointe' => UploadedFile::fake()->image('scan.jpg'),
             'origine' => 'externe',
             'tel' => '223344',
         ]);
@@ -154,6 +186,7 @@ class DepotTest extends TestCase
         $user = User::factory()->create(['role' => UserRole::User]);
 
         $response = $this->actingAs($user)->post('/depot', [
+            'piece_jointe' => UploadedFile::fake()->image('scan.jpg'),
             'origine' => 'externe',
             'tel' => '12345678',
         ]);
@@ -167,6 +200,7 @@ class DepotTest extends TestCase
         $user = User::factory()->create(['role' => UserRole::User]);
 
         $this->actingAs($user)->post('/depot', [
+            'piece_jointe' => UploadedFile::fake()->image('scan.jpg'),
             'origine' => 'externe',
             'nom' => 'Ahmed Cheikh',
             'tel' => '22334455',
@@ -202,6 +236,7 @@ class DepotTest extends TestCase
         $user = User::factory()->create(['role' => UserRole::User]);
 
         $this->actingAs($user)->post('/depot', [
+            'piece_jointe' => UploadedFile::fake()->image('scan.jpg'),
             'origine' => 'interne',
         ])->assertRedirect(route('depot.index'));
 
@@ -215,6 +250,7 @@ class DepotTest extends TestCase
         $user = User::factory()->create(['role' => UserRole::User]);
 
         $this->actingAs($user)->post('/depot', [
+            'piece_jointe' => UploadedFile::fake()->image('scan.jpg'),
             'origine' => 'interne',
             'origine_detail' => 'Etat Civil',
         ]);
@@ -228,28 +264,13 @@ class DepotTest extends TestCase
         $user = User::factory()->create(['role' => UserRole::User]);
 
         $this->actingAs($user)->post('/depot', [
+            'piece_jointe' => UploadedFile::fake()->image('scan.jpg'),
             'origine' => 'externe',
             'origine_detail' => 'Ceci ne devrait jamais être enregistré',
         ]);
 
         $demande = Tabdepot::firstOrFail();
         $this->assertNull($demande->origine_detail);
-    }
-
-    public function test_an_invalid_nni_nif_error_reopens_the_create_modal_with_the_message_inline(): void
-    {
-        $user = User::factory()->create(['role' => UserRole::User]);
-
-        $response = $this->actingAs($user)->from('/depot')->post('/depot', [
-            'origine' => 'externe',
-            'nni' => '123',
-        ]);
-
-        $response->assertRedirect('/depot');
-        $followUp = $this->actingAs($user)->get('/depot');
-
-        $followUp->assertSee('Le NNI/NIF doit contenir exactement 10 chiffres.');
-        $followUp->assertSee("$('#exampleModal').modal('show');", false);
     }
 
     public function test_an_invalid_phone_error_reopens_the_edit_modal_for_the_right_demande(): void
@@ -276,6 +297,7 @@ class DepotTest extends TestCase
         $user = User::factory()->create(['role' => UserRole::User]);
 
         $this->actingAs($user)->post('/depot', [
+            'piece_jointe' => UploadedFile::fake()->image('scan.jpg'),
             'origine' => 'externe',
             'objet' => 'Demande de raccordement eau',
         ])->assertRedirect(route('depot.index'));
@@ -289,6 +311,7 @@ class DepotTest extends TestCase
         $user = User::factory()->create(['role' => UserRole::User]);
 
         $response = $this->actingAs($user)->post('/depot', [
+            'piece_jointe' => UploadedFile::fake()->image('scan.jpg'),
             'origine' => 'externe',
         ]);
 
@@ -447,7 +470,8 @@ class DepotTest extends TestCase
 
         foreach ([$cabinet, $serviceUser] as $user) {
             $this->actingAs($user)->get('/depot')->assertForbidden();
-            $this->actingAs($user)->post('/depot', ['origine' => 'externe', 'reference' => 'X'])->assertForbidden();
+            $this->actingAs($user)->post('/depot', [
+            'piece_jointe' => UploadedFile::fake()->image('scan.jpg'),'origine' => 'externe', 'reference' => 'X'])->assertForbidden();
             $this->actingAs($user)->put("/depot/{$demande->id}", ['origine' => 'externe', 'reference' => 'X'])->assertForbidden();
             $this->actingAs($user)->delete("/depot/{$demande->id}")->assertForbidden();
         }
@@ -659,17 +683,6 @@ class DepotTest extends TestCase
         $this->assertDatabaseCount('tabdepot', 0);
     }
 
-    public function test_store_without_an_attachment_leaves_piece_jointe_null(): void
-    {
-        $user = User::factory()->create(['role' => UserRole::User]);
-
-        $this->actingAs($user)->post('/depot', [
-            'origine' => 'externe',
-        ]);
-
-        $this->assertNull(Tabdepot::firstOrFail()->piece_jointe);
-    }
-
     public function test_update_can_attach_a_scan_that_was_missing_at_intake(): void
     {
         Storage::fake('public');
@@ -740,6 +753,7 @@ class DepotTest extends TestCase
         $user = User::factory()->create(['role' => UserRole::User]);
 
         $response = $this->actingAs($user)->post('/depot', [
+            'piece_jointe' => UploadedFile::fake()->image('scan.jpg'),
             'origine' => 'externe',
         ]);
 
