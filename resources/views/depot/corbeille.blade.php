@@ -15,6 +15,9 @@ Corbeille - Dépôt des Demandes
                 </h4>
                 <div class="d-flex align-items-center flex-wrap">
                     @include('partials.search-box', ['route' => 'depot.trashed', 'placeholder' => 'Rechercher par code, objet...'])
+                    @if(auth()->user()->isAdmin() && $tabdepot->total() > 0)
+                    <button type="button" class="btn btn-danger btn-sm mr-2" data-toggle="modal" data-target="#emptyTrashModal"><i class="fas fa-trash"></i> Tout supprimer</button>
+                    @endif
                     <a href="{{ route('depot.index') }}" class="btn btn-secondary btn-sm">
                         <i class="fas fa-arrow-left"></i> Retour au Dépôt
                     </a>
@@ -82,6 +85,27 @@ Corbeille - Dépôt des Demandes
 </div>
 
 @if(auth()->user()->isAdmin())
+<div class="modal fade" id="emptyTrashModal" tabindex="-1" role="dialog" aria-hidden="true">
+    <div class="modal-dialog modal-notify modal-lg modal-right modal-danger" role="document">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Vider la corbeille</h5>
+                <button type="button" class="close" data-dismiss="modal" aria-label="Close"><span aria-hidden="true">&times;</span></button>
+            </div>
+            <form method="POST" action="{{ route('depot.empty-trash') }}">
+                @csrf
+                @method('DELETE')
+                <div class="modal-body">
+                    <p>Supprimer définitivement <strong>toutes</strong> les demandes de la corbeille ? Cette action est irréversible.</p>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-warning" data-dismiss="modal">Annuler</button>
+                    <button type="submit" class="btn btn-danger">Tout supprimer</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
 <div class="modal fade" id="forceDeleteModal" tabindex="-1" role="dialog" aria-hidden="true">
     <div class="modal-dialog modal-notify modal-lg modal-right modal-danger" role="document">
         <div class="modal-content">

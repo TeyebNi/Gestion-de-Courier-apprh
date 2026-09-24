@@ -626,6 +626,33 @@ class DepotTest extends TestCase
         $this->assertDatabaseMissing('tabdepot', ['id' => $demande->id]);
     }
 
+    public function test_admin_can_empty_the_trash(): void
+    {
+        Storage::fake('public');
+        $admin = User::factory()->create(['role' => UserRole::Admin]);
+        $path = UploadedFile::fake()->image('scan.jpg')->store('pieces-jointes', 'public');
+        $trashed = $this->makeDepot(['reference' => 'T1', 'piece_jointe' => $path]);
+        $trashed->delete();
+        $this->makeDepot(['reference' => 'T2'])->delete();
+        $kept = $this->makeDepot(['reference' => 'ACTIVE']);
+
+        $this->actingAs($admin)->delete('/depot-corbeille')->assertRedirect(route('depot.trashed'));
+
+        $this->assertSame(0, Tabdepot::onlyTrashed()->count());
+        $this->assertDatabaseHas('tabdepot', ['id' => $kept->id]);
+        Storage::disk('public')->assertMissing($path);
+    }
+
+    public function test_non_admin_cannot_empty_the_trash(): void
+    {
+        $user = User::factory()->create(['role' => UserRole::User]);
+        $this->makeDepot()->delete();
+
+        $this->actingAs($user)->delete('/depot-corbeille')->assertForbidden();
+
+        $this->assertSame(1, Tabdepot::onlyTrashed()->count());
+    }
+
     public function test_index_page_shows_the_attachment_field_in_the_create_and_edit_modals(): void
     {
         $user = User::factory()->create(['role' => UserRole::User]);

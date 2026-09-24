@@ -244,6 +244,23 @@ class TabdepotController extends Controller
         return redirect()->route('depot.trashed')->with('success', "Demande {$tabdepot->reference} restaurée avec succès.");
     }
 
+    public function emptyTrash()
+    {
+        if (! auth()->user()->isAdmin()) {
+            abort(403, "Seuls les administrateurs peuvent vider la corbeille.");
+        }
+
+        $demandes = Tabdepot::onlyTrashed()->get();
+        foreach ($demandes as $demande) {
+            if ($demande->piece_jointe) {
+                Storage::disk('public')->delete($demande->piece_jointe);
+            }
+            $demande->forceDelete();
+        }
+
+        return redirect()->route('depot.trashed')->with('success', $demandes->count() . ' demande(s) supprimée(s) définitivement.');
+    }
+
     public function forceDelete($id)
     {
         if (! auth()->user()->isAdmin()) {

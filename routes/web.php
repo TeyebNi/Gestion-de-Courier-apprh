@@ -34,6 +34,7 @@ Route::middleware('auth')->group(function () {
     Route::get('depot-corbeille', [TabdepotController::class, 'trashed'])->name('depot.trashed');
     Route::post('depot-corbeille/{id}/restaurer', [TabdepotController::class, 'restore'])->name('depot.restore');
     Route::delete('depot-corbeille/{id}', [TabdepotController::class, 'forceDelete'])->name('depot.force-delete');
+    Route::delete('depot-corbeille', [TabdepotController::class, 'emptyTrash'])->name('depot.empty-trash');
 
     Route::get('notifications', [ServiceNotificationController::class, 'index'])->name('notifications.index');
     Route::patch('notifications/{notification}/read', [ServiceNotificationController::class, 'markRead'])->name('notifications.read');
