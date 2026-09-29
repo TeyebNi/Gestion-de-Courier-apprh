@@ -41,6 +41,7 @@ Suivi des Demandes
                             <th>Objet</th>
                             <th>Où se trouve la demande ?</th>
                             <th>Annotations du Maire</th>
+                            <th>Enregistrée par</th>
                             <th>Dernière mise à jour</th>
                             <th>Action</th>
                         </thead>
@@ -54,6 +55,7 @@ Suivi des Demandes
                                     <span class="badge {{ \App\Models\Tabdepot::circuitStepBadgeClass($d->statut_circuit) }}">{{ $d->statutLabel() }}</span>
                                 </td>
                                 <td class="text-truncate" style="max-width:220px;" title="{{ $d->remarque_maire }}">{{ $d->remarque_maire ?: '—' }}</td>
+                                <td>{{ $d->agentAccueil() ?: '—' }}</td>
                                 <td>{{ $d->updated_at->format('d/m/Y H:i') }}</td>
                                 <td>
                                     <a href="{{ route('circuit.historique', $d) }}" class="btn btn-info btn-sm" title="Voir l'historique complet">
@@ -63,7 +65,7 @@ Suivi des Demandes
                             </tr>
                             @empty
                             <tr>
-                                <td colspan="7" class="text-center text-muted">Aucune demande engagée dans le circuit pour le moment.</td>
+                                <td colspan="8" class="text-center text-muted">Aucune demande engagée dans le circuit pour le moment.</td>
                             </tr>
                             @endforelse
                         </tbody>

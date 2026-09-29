@@ -40,7 +40,6 @@ class TabdepotController extends Controller
         $statut = $request->statut;
 
         $tabdepot = $this->applyFilters(Tabdepot::query(), $search, $statut)
-            ->with('depotHistorique.user')
             ->orderby('id', 'desc')
             ->paginate(5)
             ->appends(['search' => $search, 'statut' => $statut]);
@@ -60,14 +59,13 @@ class TabdepotController extends Controller
         }
 
         $tabdepots = $this->applyFilters(Tabdepot::query(), $request->search, $request->statut)
-            ->with('depotHistorique.user')
             ->orderby('id', 'asc')
             ->get();
 
         return $this->streamCsv(
             $tabdepots,
-            ['N°', 'Code', 'Objet', 'Nom', 'Téléphone', 'Origine', 'Détails Origine', 'Date réception', 'Statut', 'Enregistrée par'],
-            fn ($t, $i) => [$i + 1, $t->reference, $t->objet, $t->nom, $t->tel, $t->origine, $t->origine_detail, $t->daterecp, $t->statutLabel(), $t->agentAccueil()],
+            ['N°', 'Code', 'Objet', 'Nom', 'Téléphone', 'Origine', 'Détails Origine', 'Date réception', 'Statut'],
+            fn ($t, $i) => [$i + 1, $t->reference, $t->objet, $t->nom, $t->tel, $t->origine, $t->origine_detail, $t->daterecp, $t->statutLabel()],
             'depot_demandes'
         );
     }

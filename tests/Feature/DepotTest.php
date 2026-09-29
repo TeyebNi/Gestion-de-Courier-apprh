@@ -120,38 +120,6 @@ class DepotTest extends TestCase
         $this->assertSame($user->id, $historique->user_id);
     }
 
-    public function test_index_shows_which_accueil_agent_registered_each_demande(): void
-    {
-        $accueil1 = User::factory()->create(['role' => UserRole::User, 'name' => 'Accueil Un']);
-        $accueil2 = User::factory()->create(['role' => UserRole::User, 'name' => 'Accueil Deux']);
-
-        $this->actingAs($accueil1)->post('/depot', [
-            'piece_jointe' => UploadedFile::fake()->image('scan.jpg'),
-            'origine' => 'externe',
-        ]);
-
-        $response = $this->actingAs($accueil2)->get('/depot');
-
-        $response->assertOk();
-        $response->assertSee('Accueil Un');
-    }
-
-    public function test_export_includes_who_registered_each_demande(): void
-    {
-        $accueil = User::factory()->create(['role' => UserRole::User, 'name' => 'Fatimetou Accueil']);
-
-        $this->actingAs($accueil)->post('/depot', [
-            'piece_jointe' => UploadedFile::fake()->image('scan.jpg'),
-            'origine' => 'externe',
-        ]);
-
-        $response = $this->actingAs($accueil)->get('/depot/export');
-
-        $response->assertOk();
-        $csv = $response->streamedContent();
-        $this->assertStringContainsString('Fatimetou Accueil', $csv);
-    }
-
     public function test_store_does_not_require_an_attachment(): void
     {
         $user = User::factory()->create(['role' => UserRole::User]);

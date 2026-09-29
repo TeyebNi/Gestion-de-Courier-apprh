@@ -424,6 +424,7 @@ class CircuitController extends Controller
         $statut = $request->statut;
 
         $demandes = $this->suiviQuery($search, $statut)
+            ->with('depotHistorique.user')
             ->orderByDesc('updated_at')
             ->paginate(5)
             ->withQueryString();
@@ -444,13 +445,14 @@ class CircuitController extends Controller
         }
 
         $demandes = $this->suiviQuery($request->search, $request->statut)
+            ->with('depotHistorique.user')
             ->orderByDesc('updated_at')
             ->get();
 
         return $this->streamCsv(
             $demandes,
-            ['N°', 'Code', 'Objet', 'Nom', 'Téléphone', 'Origine', 'Où se trouve la demande', 'Annotations du Maire', 'Dernière mise à jour'],
-            fn ($d, $i) => [$i + 1, $d->reference, $d->objet, $d->nom, $d->tel, $d->origine, $d->statutLabel(), $d->remarque_maire, $d->updated_at->format('d/m/Y H:i')],
+            ['N°', 'Code', 'Objet', 'Nom', 'Téléphone', 'Origine', 'Où se trouve la demande', 'Annotations du Maire', 'Enregistrée par', 'Dernière mise à jour'],
+            fn ($d, $i) => [$i + 1, $d->reference, $d->objet, $d->nom, $d->tel, $d->origine, $d->statutLabel(), $d->remarque_maire, $d->agentAccueil(), $d->updated_at->format('d/m/Y H:i')],
             'suivi_demandes'
         );
     }

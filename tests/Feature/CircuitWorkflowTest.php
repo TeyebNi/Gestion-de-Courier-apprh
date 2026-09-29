@@ -1119,6 +1119,32 @@ class CircuitWorkflowTest extends TestCase
         $response->assertDontSee('CODE-CLASSEE');
     }
 
+    public function test_suivi_shows_which_accueil_agent_registered_each_demande(): void
+    {
+        $accueil = User::factory()->create(['role' => UserRole::User, 'name' => 'Accueil Un']);
+        $viewer = User::factory()->create(['role' => UserRole::User]);
+        $depot = Tabdepot::create(['daterecp' => now()->format('Y-m-d'), 'statut_circuit' => 'fatou']);
+        DemandeHistorique::create(['tabdepot_id' => $depot->id, 'vers_statut' => 'accueil', 'user_id' => $accueil->id]);
+
+        $response = $this->actingAs($viewer)->get('/circuit/suivi');
+
+        $response->assertOk();
+        $response->assertSee('Accueil Un');
+    }
+
+    public function test_suivi_export_includes_who_registered_each_demande(): void
+    {
+        $accueil = User::factory()->create(['role' => UserRole::User, 'name' => 'Fatimetou Accueil']);
+        $depot = Tabdepot::create(['daterecp' => now()->format('Y-m-d'), 'statut_circuit' => 'fatou']);
+        DemandeHistorique::create(['tabdepot_id' => $depot->id, 'vers_statut' => 'accueil', 'user_id' => $accueil->id]);
+
+        $response = $this->actingAs($accueil)->get('/circuit/suivi/export');
+
+        $response->assertOk();
+        $csv = $response->streamedContent();
+        $this->assertStringContainsString('Fatimetou Accueil', $csv);
+    }
+
     public function test_suivi_export_respects_the_statut_filter(): void
     {
         $accueil = User::factory()->create(['role' => UserRole::User]);
