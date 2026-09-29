@@ -125,7 +125,7 @@
                     <li class="{{ request()->is('circuit/service*') ? 'active' : '' }}">
                         <a href="{{ route('circuit.service.index') }}">
                             <i class="now-ui-icons {{ auth()->user()->specialServiceLabel() ? 'users_single-02' : 'business_briefcase-24' }}"></i>
-                            <p>{{ auth()->user()->specialServiceLabel() ?: 'Courriers du Circuit' }}</p>
+                            <p>{{ auth()->user()->specialServiceLabel() ? 'Mes Courriers' : 'Courriers du Service' }}</p>
                         </a>
                     </li>
                     @endif

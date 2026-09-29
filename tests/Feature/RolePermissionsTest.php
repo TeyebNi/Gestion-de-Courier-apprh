@@ -491,36 +491,39 @@ class RolePermissionsTest extends TestCase
         $this->assertFalse($accueil->isMaireAdjoint());
     }
 
-    public function test_sidebar_shows_maire_adjoint_label_instead_of_demandes_du_circuit(): void
+    public function test_sidebar_shows_mes_courriers_for_a_maire_adjoint_and_courriers_du_service_for_a_plain_service(): void
     {
+        // "Adjoint au Maire" (ou tout autre rôle "à la carte") tout seul dans
+        // la barre latérale ne dit rien sur ce que contient la page : "Mes
+        // Courriers" est plus parlant, cohérent avec le reste du menu.
         $adjointUser = User::factory()->create(['role' => UserRole::User, 'role_kind' => 'maire_adjoint', 'service' => 'Ould Mohamed Lagdhaf']);
         $serviceUser = User::factory()->create(['role' => UserRole::User, 'service' => 'Etat Civil']);
 
         $adjointResponse = $this->actingAs($adjointUser)->get('/');
-        $adjointResponse->assertSee('Adjoint au Maire');
-        $adjointResponse->assertDontSee('Courriers du Circuit');
+        $adjointResponse->assertSee('Mes Courriers');
+        $adjointResponse->assertDontSee('Courriers du Service');
 
         $serviceResponse = $this->actingAs($serviceUser)->get('/');
-        $serviceResponse->assertSee('Courriers du Circuit');
-        $serviceResponse->assertDontSee('Adjoint au Maire');
+        $serviceResponse->assertSee('Courriers du Service');
+        $serviceResponse->assertDontSee('Mes Courriers');
     }
 
-    public static function otherSpecialLabelsProvider(): array
+    public static function otherSpecialKindsProvider(): array
     {
         return [
-            'Division' => ['division', User::DIVISION_LABEL],
-            'Conseiller' => ['conseiller', User::CONSEILLER_LABEL],
+            'Division' => ['division'],
+            'Conseiller' => ['conseiller'],
         ];
     }
 
-    #[DataProvider('otherSpecialLabelsProvider')]
-    public function test_sidebar_shows_the_other_special_role_labels(string $kind, string $label): void
+    #[DataProvider('otherSpecialKindsProvider')]
+    public function test_sidebar_shows_mes_courriers_for_the_other_special_roles(string $kind): void
     {
         $user = User::factory()->create(['role' => UserRole::User, 'role_kind' => $kind, 'service' => 'Compte Test']);
 
         $response = $this->actingAs($user)->get('/');
 
-        $response->assertSee($label);
-        $response->assertDontSee('Courriers du Circuit');
+        $response->assertSee('Mes Courriers');
+        $response->assertDontSee('Courriers du Service');
     }
 }
