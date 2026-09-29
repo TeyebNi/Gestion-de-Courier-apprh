@@ -436,7 +436,9 @@ class CircuitWorkflowTest extends TestCase
         $this->assertSame('service', $depot->statut_circuit);
         $this->assertSame("Conseiller chargé de l'informatique", $depot->service_assigne);
         $this->assertSame('conseiller', $depot->destination_type);
-        $this->assertSame("Chez le Conseiller : Conseiller chargé de l'informatique", $depot->statutLabel());
+        // Le titre seul ne dit pas qui traite le courrier : le nom du
+        // titulaire actuel est ajouté entre parenthèses.
+        $this->assertSame("Chez le Conseiller : Conseiller chargé de l'informatique (Ahmednah O/ Amoine)", $depot->statutLabel());
     }
 
     public function test_cabinet_can_route_a_demande_to_a_specific_division_of_a_service(): void
@@ -467,7 +469,9 @@ class CircuitWorkflowTest extends TestCase
         $this->assertSame('service', $depot->statut_circuit);
         $this->assertSame('Guichet Unique', $depot->service_assigne);
         $this->assertSame('division', $depot->destination_type);
-        $this->assertSame('Chez la Division : Guichet Unique', $depot->statutLabel());
+        // Le titre seul ne dit pas qui traite le courrier : le nom du
+        // titulaire actuel est ajouté entre parenthèses.
+        $this->assertSame('Chez la Division : Guichet Unique (Zeineb Mint Sidi)', $depot->statutLabel());
     }
 
     public function test_a_demande_routed_to_one_division_is_not_visible_to_another(): void
@@ -528,6 +532,21 @@ class CircuitWorkflowTest extends TestCase
         $this->assertTrue($depot->fresh()->service_assigne === 'Guichet Unique');
         $this->actingAs($division->fresh())->get('/circuit/service')
             ->assertViewHas('demandes', fn ($demandes) => $demandes->contains('id', $depot->id));
+
+        // Le nom affiché à côté du titre suit le nouveau titulaire.
+        $this->assertSame('Chez la Division : Guichet Unique (Nouveau Titulaire)', $depot->fresh()->statutLabel());
+    }
+
+    public function test_statut_label_omits_the_officeholder_name_when_their_account_no_longer_exists(): void
+    {
+        $depot = Tabdepot::create([
+            'daterecp' => now()->format('Y-m-d'),
+            'statut_circuit' => 'service',
+            'destination_type' => 'division',
+            'service_assigne' => 'Guichet Unique',
+        ]);
+
+        $this->assertSame('Chez la Division : Guichet Unique', $depot->statutLabel());
     }
 
     public function test_cabinet_can_route_a_demande_to_the_chef_de_service_of_a_service(): void

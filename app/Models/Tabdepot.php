@@ -114,13 +114,34 @@ class Tabdepot extends Model
             'fatou' => 'Chez le Cabinet de Maire',
             'maire' => 'Chez le Maire',
             'service' => (self::DESTINATION_PREFIXES[$this->destination_type] ?? 'Chez le service')
-                . ' : ' . ($this->service_assigne ?? '—'),
+                . ' : ' . ($this->service_assigne ?? '—')
+                . ($this->titulaireActuel() ? ' (' . $this->titulaireActuel() . ')' : ''),
             'cloture' => 'Clôturée (' . ($this->resolutionLabel() ?: 'traitée par le service') . ')'
                 . ($this->service_assigne
                     ? ' — ' . (self::CLOTURE_PAR_PREFIXES[$this->destination_type] ?? 'par le service') . ' : ' . $this->service_assigne
+                        . ($this->titulaireActuel() ? ' (' . $this->titulaireActuel() . ')' : '')
                     : ''),
             default => $this->statut_circuit ?? 'À l\'accueil',
         };
+    }
+
+    /**
+     * Nom du titulaire actuel d'une Division ou d'un poste de Conseiller —
+     * ces deux rôles routent par titre de poste (ex: "Guichet Unique"), pas
+     * par nom de personne, donc le titre seul ne dit pas qui traite le
+     * courrier. Affiché en complément partout où le statut est montré
+     * (Accueil, Suivi, Cabinet...). L'Adjoint au Maire et le Chef de Service
+     * n'en ont pas besoin : leur file est déjà identifiée par leur propre nom.
+     */
+    public function titulaireActuel(): ?string
+    {
+        if (! in_array($this->destination_type, ['division', 'conseiller'], true) || ! $this->service_assigne) {
+            return null;
+        }
+
+        return User::where('role_kind', $this->destination_type)
+            ->where('service', $this->service_assigne)
+            ->value('name');
     }
 
     /**

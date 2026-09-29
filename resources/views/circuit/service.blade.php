@@ -1,7 +1,7 @@
 @extends('layouts.master')
 
 @section('title')
-Courriers du Service
+{{ auth()->user()->specialServiceLabel() ? 'Mes Courriers' : 'Courriers du Service' }}
 @endsection
 
 @section('content')
@@ -33,7 +33,7 @@ document.addEventListener('DOMContentLoaded', function () {
         <div class="card">
             <div class="card-header d-flex justify-content-between align-items-center flex-wrap">
                 <h4 class="card-title mb-0" style="font-weight: 700; color: #212529;">
-                    Courriers du Service
+                    {{ auth()->user()->specialServiceLabel() ? 'Mes Courriers' : 'Courriers du Service' }}
                 </h4>
                 <form method="GET" action="{{ route('circuit.service.index') }}" class="form-inline">
                     <select name="statut" class="form-control form-control-sm mr-2" onchange="this.form.submit()">
