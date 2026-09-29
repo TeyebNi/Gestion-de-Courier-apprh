@@ -7,11 +7,15 @@ use App\Models\Orientation;
 use App\Models\ServiceNotification;
 use App\Models\Tabdepot;
 use App\Models\User;
+use App\Traits\ExportsCsv;
 use Illuminate\Http\Request;
 use Illuminate\Validation\Rule;
 
 class CircuitController extends Controller
 {
+    use ExportsCsv;
+
+
     /**
      * Comptes d'un role_kind donné, avec leur titre de poste ("service", ex:
      * "Guichet Unique" ou "Conseiller chargé de l'informatique" — l'identifiant
@@ -77,11 +81,34 @@ class CircuitController extends Controller
      * dossier papier à la main, recueille ses annotations, et les saisit ici
      * en une seule étape (plus d'envoi séparé "au Maire" dans l'application).
      */
-    public function fatouIndex()
+    /**
+     * Recherche code/objet/téléphone, commune à "en attente d'annotations" et
+     * à "déjà annotées" (et à leur export) — le statut détaillé ne concerne
+     * que les annotées ; la file d'attente n'a qu'un seul statut possible par
+     * définition ("fatou").
+     */
+    private function fatouSearch($query, ?string $search)
     {
-        $aEnvoyer = Tabdepot::where('statut_circuit', 'fatou')
+        return $query->when($search, function ($q) use ($search) {
+            $q->where(function ($sub) use ($search) {
+                $sub->where('reference', 'like', "%{$search}%")
+                    ->orWhere('objet', 'like', "%{$search}%")
+                    ->orWhere('tel', 'like', "%{$search}%");
+            });
+        });
+    }
+
+    public function fatouIndex(Request $request)
+    {
+        $search = $request->search;
+        $statut = $request->statut;
+
+        // Petite file d'attente courte, une carte détaillée par demande :
+        // 2 par page pour rester lisible sans trop défiler.
+        $aEnvoyer = $this->fatouSearch(Tabdepot::where('statut_circuit', 'fatou'), $search)
             ->orderByDesc('id')
-            ->paginate(5, ['*'], 'a_envoyer_page');
+            ->paginate(2, ['*'], 'a_envoyer_page')
+            ->appends(['search' => $search, 'statut' => $statut]);
         $orientations = Orientation::orderBy('name')->get();
 
         // Adjoint au Maire route vers une personne précise sans titre de poste
@@ -105,12 +132,50 @@ class CircuitController extends Controller
 
         // Le Cabinet n'a pas accès à Suivi (vue globale tous services) : ce
         // second tableau lui donne uniquement la trace de son propre travail
-        // d'annotation, une fois la demande sortie de la file d'attente.
-        $dejaAnnotees = Tabdepot::whereNotNull('remarque_maire')
+        // d'annotation, une fois la demande sortie de la file d'attente —
+        // avec le même filtre par statut détaillé que Suivi/Gestion des
+        // Demandes, pour retrouver une demande précise parmi les annotées.
+        $dejaAnnotees = $this->fatouSearch(Tabdepot::whereNotNull('remarque_maire'), $search)
+            ->filterByStatut($statut)
             ->orderByDesc('updated_at')
-            ->paginate(5, ['*'], 'annotees_page');
+            ->paginate(5, ['*'], 'annotees_page')
+            ->appends(['search' => $search, 'statut' => $statut]);
 
-        return view('circuit.fatou', compact('aEnvoyer', 'orientations', 'peopleByKind', 'divisionsByService', 'chefServiceByService', 'dejaAnnotees'));
+        return view('circuit.fatou', compact('aEnvoyer', 'orientations', 'peopleByKind', 'divisionsByService', 'chefServiceByService', 'dejaAnnotees', 'search', 'statut'));
+    }
+
+    /**
+     * Export Excel (CSV) du Cabinet de Maire : la file d'attente et les
+     * demandes déjà annotées, avec le même filtre (recherche + statut) que
+     * ce qui est affiché à l'écran.
+     */
+    public function fatouExportExcel(Request $request)
+    {
+        $search = $request->search;
+        $statut = $request->statut;
+
+        // Même logique que l'affichage : un statut (service/Adjoint au
+        // Maire/Conseiller/Clôturée) ne concerne que les déjà annotées, donc
+        // la file d'attente ("fatou") n'y a pas sa place dans l'export non
+        // plus — sinon l'export contiendrait des lignes qu'on ne voit plus
+        // à l'écran une fois ce statut choisi.
+        $demandes = $this->fatouSearch(Tabdepot::whereNotNull('remarque_maire'), $search)
+            ->filterByStatut($statut)
+            ->get();
+
+        if (! $statut) {
+            $demandes = $this->fatouSearch(Tabdepot::where('statut_circuit', 'fatou'), $search)->get()
+                ->merge($demandes);
+        }
+
+        $demandes = $demandes->unique('id')->sortByDesc('updated_at')->values();
+
+        return $this->streamCsv(
+            $demandes,
+            ['N°', 'Code', 'Objet', 'Nom', 'Téléphone', 'Origine', 'Statut', 'Annotations du Maire', 'Dernière mise à jour'],
+            fn ($d, $i) => [$i + 1, $d->reference, $d->objet, $d->nom, $d->tel, $d->origine, $d->statutLabel(), $d->remarque_maire, $d->updated_at->format('d/m/Y H:i')],
+            'cabinet_demandes'
+        );
     }
 
     /**
@@ -189,7 +254,28 @@ class CircuitController extends Controller
     /**
      * Service : liste des demandes orientées vers le service de l'utilisateur connecté.
      */
-    public function serviceIndex()
+    /**
+     * Filtre commun à "Demandes du Service" et à son export : borné au
+     * statut_circuit demandé (service = en cours, cloture = traitées), scopé
+     * au service de l'utilisateur (sauf pour un admin qui voit tout), et à la
+     * même recherche code/objet/téléphone des deux côtés. Sert aussi bien un
+     * service réel qu'un Adjoint au Maire/Conseiller/Division/Chef de
+     * Service : tous passent par cette même page.
+     */
+    private function serviceQuery(string $statutCircuit, $user, ?string $search)
+    {
+        return Tabdepot::where('statut_circuit', $statutCircuit)
+            ->when(! $user->canAccessAllServices(), fn ($q) => $q->where('service_assigne', $user->service))
+            ->when($search, function ($q) use ($search) {
+                $q->where(function ($sub) use ($search) {
+                    $sub->where('reference', 'like', "%{$search}%")
+                        ->orWhere('objet', 'like', "%{$search}%")
+                        ->orWhere('tel', 'like', "%{$search}%");
+                });
+            });
+    }
+
+    public function serviceIndex(Request $request)
     {
         $user = auth()->user();
 
@@ -197,17 +283,62 @@ class CircuitController extends Controller
             abort(403, "Cette page est réservée aux agents de service et aux administrateurs.");
         }
 
-        $demandes = Tabdepot::where('statut_circuit', 'service')
-            ->when(! $user->canAccessAllServices(), fn ($q) => $q->where('service_assigne', $user->service))
+        // Le statut ne concerne que les demandes traitées (leur type de
+        // résolution), les demandes en cours n'ayant qu'un seul état possible
+        // ici.
+        $search = $request->search;
+        $statut = $request->statut;
+
+        $demandes = $this->serviceQuery('service', $user, $search)
             ->orderByDesc('id')
-            ->paginate(5, ['*'], 'demandes_page');
+            ->paginate(5, ['*'], 'demandes_page')
+            ->appends(['search' => $search, 'statut' => $statut]);
 
-        $demandesTraitees = Tabdepot::where('statut_circuit', 'cloture')
-            ->when(! $user->canAccessAllServices(), fn ($q) => $q->where('service_assigne', $user->service))
+        $demandesTraitees = $this->serviceQuery('cloture', $user, $search)
+            ->when($statut, fn ($q) => $q->where('resolution_service', $statut))
             ->orderByDesc('updated_at')
-            ->paginate(5, ['*'], 'traitees_page');
+            ->paginate(5, ['*'], 'traitees_page')
+            ->appends(['search' => $search, 'statut' => $statut]);
 
-        return view('circuit.service', compact('demandes', 'demandesTraitees'));
+        return view('circuit.service', compact('demandes', 'demandesTraitees', 'search', 'statut'));
+    }
+
+    /**
+     * Export Excel (CSV) de "Demandes du Service" : les demandes en cours et
+     * les demandes traitées, avec le même filtre (recherche + résolution)
+     * que ce qui est affiché à l'écran.
+     */
+    public function serviceExportExcel(Request $request)
+    {
+        $user = auth()->user();
+
+        if (! $user->isAdmin() && empty($user->service)) {
+            abort(403, "Cette page est réservée aux agents de service et aux administrateurs.");
+        }
+
+        $search = $request->search;
+        $statut = $request->statut;
+
+        // Même logique que l'affichage : une résolution (Traitée/Classée/
+        // Convoquée) ne concerne que les demandes déjà traitées, donc les
+        // demandes en cours n'ont pas leur place dans l'export une fois ce
+        // filtre choisi.
+        $demandes = $this->serviceQuery('cloture', $user, $search)
+            ->when($statut, fn ($q) => $q->where('resolution_service', $statut))
+            ->get();
+
+        if (! $statut) {
+            $demandes = $this->serviceQuery('service', $user, $search)->get()->merge($demandes);
+        }
+
+        $demandes = $demandes->sortByDesc('updated_at')->values();
+
+        return $this->streamCsv(
+            $demandes,
+            ['N°', 'Code', 'Objet', 'Nom', 'Téléphone', 'Origine', 'Statut', 'Annotations du Maire', 'Dernière mise à jour'],
+            fn ($d, $i) => [$i + 1, $d->reference, $d->objet, $d->nom, $d->tel, $d->origine, $d->statutLabel(), $d->remarque_maire, $d->updated_at->format('d/m/Y H:i')],
+            'demandes_service'
+        );
     }
 
     /**
@@ -257,6 +388,26 @@ class CircuitController extends Controller
     }
 
     /**
+     * Filtre commun à Suivi et à son export : "tous les statuts", ou choisi
+     * dans la liste (fatou/service/maire_adjoint/conseiller/cloture) — pour
+     * que l'export ne ramène que ce qui est réellement affiché à l'écran.
+     */
+    private function suiviQuery(?string $search, ?string $statut)
+    {
+        return Tabdepot::where('statut_circuit', '!=', 'accueil')
+            ->filterByStatut($statut)
+            ->when($search, function ($q) use ($search) {
+                $q->where(function ($sub) use ($search) {
+                    $sub->where('objet', 'like', "%{$search}%")
+                        ->orWhere('reference', 'like', "%{$search}%")
+                        ->orWhere('tel', 'like', "%{$search}%")
+                        ->orWhere('id', 'like', "%{$search}%")
+                        ->orWhere('id', ltrim($search, '0') ?: '0');
+                });
+            });
+    }
+
+    /**
      * Accueil / Admin : suivi de toutes les demandes engagées dans le circuit.
      */
     public function suiviIndex(Request $request)
@@ -272,21 +423,36 @@ class CircuitController extends Controller
         $search = $request->search;
         $statut = $request->statut;
 
-        $demandes = Tabdepot::where('statut_circuit', '!=', 'accueil')
-            ->filterByStatut($statut)
-            ->when($search, function ($q) use ($search) {
-                $q->where(function ($sub) use ($search) {
-                    $sub->where('objet', 'like', "%{$search}%")
-                        ->orWhere('reference', 'like', "%{$search}%")
-                        ->orWhere('id', 'like', "%{$search}%")
-                        ->orWhere('id', ltrim($search, '0') ?: '0');
-                });
-            })
+        $demandes = $this->suiviQuery($search, $statut)
             ->orderByDesc('updated_at')
             ->paginate(5)
             ->withQueryString();
 
         return view('circuit.suivi', compact('demandes', 'search', 'statut'));
+    }
+
+    /**
+     * Export Excel (CSV) de Suivi des Demandes, respectant le même filtre par
+     * statut et la même recherche que ce qui est affiché à l'écran : "tous",
+     * ou seulement un service/l'Adjoint au Maire/le Conseiller/le Cabinet
+     * (fatou)/les clôturées, selon ce qui est sélectionné.
+     */
+    public function suiviExportExcel(Request $request)
+    {
+        if (! auth()->user()->canAccessSuivi()) {
+            abort(403, "Cette page est réservée à l'accueil et aux administrateurs.");
+        }
+
+        $demandes = $this->suiviQuery($request->search, $request->statut)
+            ->orderByDesc('updated_at')
+            ->get();
+
+        return $this->streamCsv(
+            $demandes,
+            ['N°', 'Code', 'Objet', 'Nom', 'Téléphone', 'Origine', 'Où se trouve la demande', 'Annotations du Maire', 'Dernière mise à jour'],
+            fn ($d, $i) => [$i + 1, $d->reference, $d->objet, $d->nom, $d->tel, $d->origine, $d->statutLabel(), $d->remarque_maire, $d->updated_at->format('d/m/Y H:i')],
+            'suivi_demandes'
+        );
     }
 
     /**

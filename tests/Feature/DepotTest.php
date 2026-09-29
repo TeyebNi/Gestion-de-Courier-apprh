@@ -120,14 +120,46 @@ class DepotTest extends TestCase
         $this->assertSame($user->id, $historique->user_id);
     }
 
-    public function test_store_requires_an_attachment(): void
+    public function test_index_shows_which_accueil_agent_registered_each_demande(): void
+    {
+        $accueil1 = User::factory()->create(['role' => UserRole::User, 'name' => 'Accueil Un']);
+        $accueil2 = User::factory()->create(['role' => UserRole::User, 'name' => 'Accueil Deux']);
+
+        $this->actingAs($accueil1)->post('/depot', [
+            'piece_jointe' => UploadedFile::fake()->image('scan.jpg'),
+            'origine' => 'externe',
+        ]);
+
+        $response = $this->actingAs($accueil2)->get('/depot');
+
+        $response->assertOk();
+        $response->assertSee('Accueil Un');
+    }
+
+    public function test_export_includes_who_registered_each_demande(): void
+    {
+        $accueil = User::factory()->create(['role' => UserRole::User, 'name' => 'Fatimetou Accueil']);
+
+        $this->actingAs($accueil)->post('/depot', [
+            'piece_jointe' => UploadedFile::fake()->image('scan.jpg'),
+            'origine' => 'externe',
+        ]);
+
+        $response = $this->actingAs($accueil)->get('/depot/export');
+
+        $response->assertOk();
+        $csv = $response->streamedContent();
+        $this->assertStringContainsString('Fatimetou Accueil', $csv);
+    }
+
+    public function test_store_does_not_require_an_attachment(): void
     {
         $user = User::factory()->create(['role' => UserRole::User]);
 
         $response = $this->actingAs($user)->post('/depot', ['origine' => 'externe']);
 
-        $response->assertSessionHasErrors('piece_jointe');
-        $this->assertDatabaseCount('tabdepot', 0);
+        $response->assertSessionDoesntHaveErrors('piece_jointe');
+        $this->assertDatabaseCount('tabdepot', 1);
     }
 
     public function test_nni_nif_accepts_any_length(): void
@@ -144,14 +176,14 @@ class DepotTest extends TestCase
         $this->assertSame('12345', Tabdepot::firstOrFail()->nni);
     }
 
-    public function test_update_requires_an_attachment_only_when_none_exists(): void
+    public function test_update_does_not_require_an_attachment(): void
     {
         $user = User::factory()->create(['role' => UserRole::User]);
         $without = $this->makeDepot(['piece_jointe' => null]);
         $with = $this->makeDepot(['reference' => 'AUTRE']);
 
         $this->actingAs($user)->put("/depot/{$without->id}", ['origine' => 'externe'])
-            ->assertSessionHasErrors('piece_jointe');
+            ->assertSessionDoesntHaveErrors('piece_jointe');
         $this->actingAs($user)->put("/depot/{$with->id}", ['origine' => 'externe'])
             ->assertSessionDoesntHaveErrors('piece_jointe');
     }
@@ -432,6 +464,19 @@ class DepotTest extends TestCase
         $response->assertSee('DIV');
         $response->assertSee('CHEF');
         $response->assertDontSee('ADJOINT');
+    }
+
+    public function test_index_search_matches_tel(): void
+    {
+        $user = User::factory()->create(['role' => UserRole::User]);
+        $this->makeDepot(['reference' => 'CODE-1', 'tel' => '22334455']);
+        $this->makeDepot(['reference' => 'CODE-2', 'tel' => '33445566']);
+
+        $response = $this->actingAs($user)->get('/depot?search=22334455');
+
+        $response->assertOk();
+        $response->assertSee('CODE-1');
+        $response->assertDontSee('CODE-2');
     }
 
     public function test_index_search_matches_objet(): void
@@ -883,5 +928,47 @@ class DepotTest extends TestCase
         $demande = $this->makeDepot();
 
         $this->actingAs($cabinet)->get("/depot/print_re%C3%A7u/{$demande->id}")->assertOk();
+    }
+
+    public function test_check_tel_reports_no_previous_demande_for_an_unused_number(): void
+    {
+        $user = User::factory()->create(['role' => UserRole::User]);
+
+        $response = $this->actingAs($user)->getJson('/depot/verifier-telephone?tel=22334455');
+
+        $response->assertOk();
+        $response->assertJson(['exists' => false]);
+    }
+
+    public function test_check_tel_reports_who_and_when_for_a_reused_number(): void
+    {
+        $accueil = User::factory()->create(['role' => UserRole::User, 'name' => 'Fatimetou Accueil']);
+
+        $this->actingAs($accueil)->post('/depot', [
+            'piece_jointe' => UploadedFile::fake()->image('scan.jpg'),
+            'origine' => 'externe',
+            'tel' => '22334455',
+        ]);
+        $demande = Tabdepot::firstOrFail();
+
+        $response = $this->actingAs($accueil)->getJson('/depot/verifier-telephone?tel=22334455');
+
+        $response->assertOk();
+        $response->assertJson([
+            'exists' => true,
+            'reference' => $demande->reference,
+            'agent' => 'Fatimetou Accueil',
+        ]);
+    }
+
+    public function test_check_tel_excludes_the_demande_being_edited(): void
+    {
+        $user = User::factory()->create(['role' => UserRole::User]);
+        $demande = $this->makeDepot(['tel' => '22334455']);
+
+        $response = $this->actingAs($user)->getJson('/depot/verifier-telephone?tel=22334455&exclude_id=' . $demande->id);
+
+        $response->assertOk();
+        $response->assertJson(['exists' => false]);
     }
 }

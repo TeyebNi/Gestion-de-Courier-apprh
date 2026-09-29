@@ -31,9 +31,43 @@ document.addEventListener('DOMContentLoaded', function () {
 <div class="row">
     <div class="col-md-12">
         <div class="card">
+            <div class="card-header d-flex justify-content-between align-items-center flex-wrap">
+                <h4 class="card-title mb-0" style="font-weight: 700; color: #212529;">
+                    Cabinet de Maire
+                </h4>
+                <form method="GET" action="{{ route('circuit.fatou.index') }}" class="form-inline">
+                    <select name="statut" class="form-control form-control-sm mr-2" onchange="this.form.submit()">
+                        <option value="">Tous les statuts</option>
+                        <option value="service" @selected($statut === 'service')>Chez un service</option>
+                        <option value="maire_adjoint" @selected($statut === 'maire_adjoint')>Chez l'Adjoint au Maire</option>
+                        <option value="conseiller" @selected($statut === 'conseiller')>Chez le Conseiller</option>
+                        <option value="cloture" @selected($statut === 'cloture')>Clôturée</option>
+                    </select>
+                    <input type="text" name="search" class="form-control form-control-sm" placeholder="Rechercher par code, objet, téléphone..." value="{{ $search }}" style="min-width:220px;">
+                    <button type="submit" class="btn btn-primary btn-sm ml-2">Rechercher</button>
+                    @if($search || $statut)
+                    <a href="{{ route('circuit.fatou.index') }}" class="btn btn-outline-secondary btn-sm ml-2" title="Réinitialiser">&times;</a>
+                    @endif
+                </form>
+                <a href="{{ route('circuit.fatou.export', ['search' => $search, 'statut' => $statut]) }}" class="btn btn-success btn-sm ml-2" title="Exporter en Excel"><i class="fas fa-file-excel"></i></a>
+            </div>
+        </div>
+    </div>
+</div>
+
+{{-- Le statut (service/Adjoint/Conseiller/Clôturée) ne concerne que les
+     demandes déjà annotées ; la file d'attente n'a qu'un seul statut
+     possible ("fatou") et n'y répond jamais — l'afficher quand même à côté
+     d'un résultat filtré ne ferait que masquer ce résultat. On ne la montre
+     donc que quand aucun statut n'est choisi (la recherche texte, elle,
+     s'y applique et reste visible). --}}
+@if(! $statut)
+<div class="row">
+    <div class="col-md-12">
+        <div class="card">
             <div class="card-header">
                 <h4 class="card-title mb-0" style="font-weight: 700; color: #212529;">
-                    Cabinet de Maire — Demandes en attente d'annotations
+                    Demandes en attente d'annotations
                 </h4>
                 <p class="text-muted mb-0" style="font-size: 0.9em;">
                     Portez le dossier au Maire, recueillez ses annotations, puis saisissez-les ici.
@@ -99,6 +133,7 @@ document.addEventListener('DOMContentLoaded', function () {
         </div>
     </div>
 </div>
+@endif
 
 <div class="row">
     <div class="col-md-12">

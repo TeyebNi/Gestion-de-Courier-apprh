@@ -62,6 +62,7 @@ class UserController extends Controller
         $request->validate([
             'name' => ['required', 'string', 'max:255', "regex:/^[\pL\s'-]+$/u"],
             'email' => ['required', 'email', 'max:255', Rule::unique('users', 'email')],
+            'tel' => [Rule::requiredIf($request->role === 'admin'), 'nullable', 'regex:/^[234]\d{7}$/', Rule::unique('users', 'tel')],
             'password' => ['required', 'string', 'min:8', 'confirmed'],
             'role' => ['required', 'in:admin,user,fatou'],
             'role_kind' => ['nullable', Rule::in(array_merge(['user'], array_keys(User::specialServiceRoles())))],
@@ -71,6 +72,9 @@ class UserController extends Controller
         ], [
             'name.regex' => "Le nom ne doit contenir que des lettres, espaces, apostrophes et tirets.",
             'email.unique' => 'Cet email est déjà utilisé par un autre utilisateur.',
+            'tel.required' => 'Le téléphone est obligatoire pour un compte Admin (utilisé pour identifier qui a déposé une demande, et pour se connecter).',
+            'tel.regex' => 'Le téléphone doit contenir 8 chiffres et commencer par 2, 3 ou 4.',
+            'tel.unique' => 'Ce téléphone est déjà utilisé par un autre utilisateur.',
             'division_of.required' => 'Veuillez choisir de quel service dépend ce compte.',
             'division_of.in' => 'Veuillez choisir un service valide.',
             'role_title.required' => 'Veuillez indiquer le titre de ce poste.',
@@ -97,6 +101,7 @@ class UserController extends Controller
         $user = User::create([
             'name' => $request->name,
             'email' => $request->email,
+            'tel' => $request->role === 'admin' ? $request->tel : null,
             'password' => bcrypt($request->password),
             'role' => UserRole::from($request->role),
             'role_kind' => $specialKind,
@@ -158,6 +163,7 @@ class UserController extends Controller
     $request->validate([
         'name' => ['required', 'string', 'max:255', "regex:/^[\pL\s'-]+$/u"],
         'email' => ['required', 'email', 'max:255', Rule::unique('users', 'email')->ignore($user->id)],
+        'tel' => [Rule::requiredIf($request->role === 'admin'), 'nullable', 'regex:/^[234]\d{7}$/', Rule::unique('users', 'tel')->ignore($user->id)],
         'role' => ['required', 'in:admin,user,fatou'],
         'role_kind' => ['nullable', Rule::in(array_merge(['user'], array_keys(User::specialServiceRoles())))],
         'division_of' => [Rule::requiredIf(in_array($request->role_kind, User::serviceNestedRoleKinds())), 'nullable', Rule::in(Orientation::pluck('name'))],
@@ -169,6 +175,9 @@ class UserController extends Controller
     ], [
         'name.regex' => "Le nom ne doit contenir que des lettres, espaces, apostrophes et tirets.",
         'email.unique' => 'Cet email est déjà utilisé par un autre utilisateur.',
+        'tel.required' => 'Le téléphone est obligatoire pour un compte Admin (utilisé pour identifier qui a déposé une demande, et pour se connecter).',
+        'tel.regex' => 'Le téléphone doit contenir 8 chiffres et commencer par 2, 3 ou 4.',
+        'tel.unique' => 'Ce téléphone est déjà utilisé par un autre utilisateur.',
         'division_of.required' => 'Veuillez choisir de quel service dépend ce compte.',
         'division_of.in' => 'Veuillez choisir un service valide.',
         'role_title.required' => 'Veuillez indiquer le titre de ce poste.',
@@ -202,6 +211,7 @@ class UserController extends Controller
     $user->update([
         'name' => $request->name,
         'email' => $request->email,
+        'tel' => $request->role === 'admin' ? $request->tel : null,
         'role' => UserRole::from($request->role),
         'role_kind' => $specialKind,
         'division_of' => in_array($specialKind, User::serviceNestedRoleKinds()) ? $request->division_of : null,

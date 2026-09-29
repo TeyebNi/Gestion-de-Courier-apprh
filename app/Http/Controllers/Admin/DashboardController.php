@@ -12,15 +12,14 @@ use Illuminate\Support\Carbon;
 class DashboardController extends Controller
 {
     /**
-     * Répartition des demandes assignées, pour le graphique "Demandes par
+     * Répartition des demandes assignées, pour les cartes "Demandes par
      * Service" : service_assigne contient soit le nom d'un service, soit le
      * nom propre d'une personne (Adjoint au Maire/Division/Chef de Service/
-     * Conseiller). Les regrouper telles quelles donnerait une barre par
+     * Conseiller). Les regrouper telles quelles donnerait une carte par
      * personne, noyée parmi les services. On regroupe donc chaque Division
-     * et chaque Chef de Service dans le service dont ils dépendent, et
-     * l'Adjoint au Maire/le Conseiller dans une catégorie unique par rôle —
-     * avec, en complément, un détail personne par personne pour ces deux
-     * derniers rôles.
+     * et chaque Chef de Service dans le service dont ils dépendent — sans y
+     * mélanger l'Adjoint au Maire/le Conseiller, qui ont chacun leur propre
+     * détail précis, personne par personne, dans leur propre section.
      */
     private function workloadChartData($assignedQuery): array
     {
@@ -33,23 +32,22 @@ class DashboardController extends Controller
         $maireAdjointCountsMap = [];
         $conseillerCountsMap = [];
         foreach ($assignedQuery->get(['service_assigne', 'destination_type']) as $d) {
+            if ($d->destination_type === 'maire_adjoint') {
+                $maireAdjointCountsMap[$d->service_assigne] = ($maireAdjointCountsMap[$d->service_assigne] ?? 0) + 1;
+                continue;
+            }
+            if ($d->destination_type === 'conseiller') {
+                $conseillerCountsMap[$d->service_assigne] = ($conseillerCountsMap[$d->service_assigne] ?? 0) + 1;
+                continue;
+            }
             $label = match ($d->destination_type) {
-                'maire_adjoint' => User::MAIRE_ADJOINT_LABEL,
-                'conseiller' => User::CONSEILLER_LABEL,
                 'division', 'chef_service' => $nestedParents[$d->service_assigne] ?? $d->service_assigne,
                 default => $d->service_assigne,
             };
             $serviceCountsMap[$label] = ($serviceCountsMap[$label] ?? 0) + 1;
-
-            if ($d->destination_type === 'maire_adjoint') {
-                $maireAdjointCountsMap[$d->service_assigne] = ($maireAdjointCountsMap[$d->service_assigne] ?? 0) + 1;
-            } elseif ($d->destination_type === 'conseiller') {
-                $conseillerCountsMap[$d->service_assigne] = ($conseillerCountsMap[$d->service_assigne] ?? 0) + 1;
-            }
         }
+        // Pas de troncature à 8 : chaque service compte, même les plus petits.
         arsort($serviceCountsMap);
-        $serviceCountsMap = array_slice($serviceCountsMap, 0, 8, true);
-
         arsort($maireAdjointCountsMap);
         arsort($conseillerCountsMap);
 
@@ -60,6 +58,57 @@ class DashboardController extends Controller
             'maireAdjointCounts' => collect(array_values($maireAdjointCountsMap)),
             'conseillerLabels' => collect(array_keys($conseillerCountsMap)),
             'conseillerCounts' => collect(array_values($conseillerCountsMap)),
+        ] + $this->stageAndClotureData();
+    }
+
+    /**
+     * Répartition de toutes les demandes (pas seulement celles déjà
+     * assignées à un service) par étape du circuit — en distinguant, au
+     * stade "chez un service", les trois destinations possibles (service,
+     * Adjoint au Maire, Conseiller) plutôt qu'un unique bloc "en circuit" —
+     * et, pour les demandes clôturées, un détail par type de résolution.
+     */
+    private function stageAndClotureData(): array
+    {
+        $stageOrder = ["À l'accueil", 'Chez le Cabinet de Maire', 'Chez un service', "Chez l'Adjoint au Maire", 'Chez le Conseiller', 'Clôturée'];
+        $stageCountsMap = [];
+        foreach (Tabdepot::selectRaw('statut_circuit, destination_type, count(*) as c')
+            ->groupBy('statut_circuit', 'destination_type')
+            ->get() as $row) {
+            $label = match (true) {
+                ($row->statut_circuit ?? 'accueil') === 'accueil' => "À l'accueil",
+                $row->statut_circuit === 'fatou' => 'Chez le Cabinet de Maire',
+                $row->statut_circuit === 'service' && $row->destination_type === 'maire_adjoint' => "Chez l'Adjoint au Maire",
+                $row->statut_circuit === 'service' && $row->destination_type === 'conseiller' => 'Chez le Conseiller',
+                $row->statut_circuit === 'service' => 'Chez un service',
+                $row->statut_circuit === 'cloture' => 'Clôturée',
+                default => "À l'accueil",
+            };
+            $stageCountsMap[$label] = ($stageCountsMap[$label] ?? 0) + $row->c;
+        }
+        // Ordre fixe (le trajet réel de la demande), pas trié par valeur.
+        $orderedStageCountsMap = [];
+        foreach ($stageOrder as $label) {
+            if (isset($stageCountsMap[$label])) {
+                $orderedStageCountsMap[$label] = $stageCountsMap[$label];
+            }
+        }
+        $stageCountsMap = $orderedStageCountsMap;
+
+        $clotureLabels = ['traiter' => 'Traitées', 'classer' => 'Classées', 'convoquer' => 'Convoquées'];
+        $clotureCountsMap = [];
+        foreach (Tabdepot::where('statut_circuit', 'cloture')
+            ->selectRaw('resolution_service, count(*) as c')
+            ->groupBy('resolution_service')
+            ->pluck('c', 'resolution_service') as $key => $c) {
+            $clotureCountsMap[$clotureLabels[$key] ?? 'Non précisée'] = $c;
+        }
+
+        return [
+            'stageLabels' => collect(array_keys($stageCountsMap)),
+            'stageCounts' => collect(array_values($stageCountsMap)),
+            'clotureLabels' => collect(array_keys($clotureCountsMap)),
+            'clotureCounts' => collect(array_values($clotureCountsMap)),
         ];
     }
 

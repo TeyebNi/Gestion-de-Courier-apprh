@@ -15,7 +15,7 @@ class LoginTest extends TestCase
         $user = User::factory()->create(['password' => bcrypt('secret123')]);
 
         $response = $this->post('/login', [
-            'email' => $user->email,
+            'login' => $user->email,
             'password' => 'secret123',
         ]);
 
@@ -28,12 +28,25 @@ class LoginTest extends TestCase
         $user = User::factory()->create(['password' => bcrypt('secret123')]);
 
         $response = $this->post('/login', [
-            'email' => $user->email,
+            'login' => $user->email,
             'password' => 'wrong-password',
         ]);
 
-        $response->assertSessionHasErrors('email');
+        $response->assertSessionHasErrors('login');
         $this->assertGuest();
+    }
+
+    public function test_accueil_user_can_login_with_phone_number(): void
+    {
+        $user = User::factory()->create(['tel' => '22334455', 'password' => bcrypt('secret123')]);
+
+        $response = $this->post('/login', [
+            'login' => '22334455',
+            'password' => 'secret123',
+        ]);
+
+        $response->assertRedirect('/');
+        $this->assertAuthenticatedAs($user);
     }
 
     public function test_authenticated_user_can_logout(): void

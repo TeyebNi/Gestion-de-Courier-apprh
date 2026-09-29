@@ -14,7 +14,7 @@ Corbeille - Dépôt des Demandes
                     Corbeille — Demandes supprimées
                 </h4>
                 <div class="d-flex align-items-center flex-wrap">
-                    @include('partials.search-box', ['route' => 'depot.trashed', 'placeholder' => 'Rechercher par code, objet...'])
+                    @include('partials.search-box', ['route' => 'depot.trashed', 'placeholder' => 'Rechercher par code, objet, téléphone...'])
                     @if(auth()->user()->isAdmin() && $tabdepot->total() > 0)
                     <button type="button" class="btn btn-danger btn-sm mr-2" data-toggle="modal" data-target="#emptyTrashModal"><i class="fas fa-trash"></i> Tout supprimer</button>
                     @endif

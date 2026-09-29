@@ -26,10 +26,11 @@ Suivi des Demandes
                         <div class="input-group-prepend">
                             <span class="input-group-text"><i class="fas fa-barcode"></i></span>
                         </div>
-                        <input type="text" name="search" id="scan_search" class="form-control" placeholder="Scannez le code-barres, ou tapez le code, l'objet..." value="{{ $search }}" autofocus autocomplete="off">
+                        <input type="text" name="search" id="scan_search" class="form-control" placeholder="Scannez le code-barres, ou tapez le code, l'objet, le téléphone..." value="{{ $search }}" autofocus autocomplete="off">
                     </div>
                     <button type="submit" class="btn btn-primary btn-sm ml-2">Rechercher</button>
                 </form>
+                <a href="{{ route('circuit.suivi.export', ['search' => $search, 'statut' => $statut]) }}" class="btn btn-success btn-sm ml-2" title="Exporter en Excel"><i class="fas fa-file-excel"></i></a>
             </div>
             <div class="card-body">
                 <div class="table-responsive">

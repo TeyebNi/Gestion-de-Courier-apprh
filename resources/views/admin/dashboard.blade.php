@@ -81,6 +81,21 @@ Tableau de bord
     .dashboard-page .card-tasks { border-top-color: #1d3457; }
     .dashboard-page .card-header .card-title { font-weight: 700; color: #2c3e50; }
     .dashboard-page .table thead th { color: #1d3457 !important; }
+
+    /* ---- Grilles de répartition (par service/personne/étape) : mêmes
+       cartes que les KPI, en plus compact pour tenir à plusieurs par ligne. */
+    .dashboard-page .card-stats-mini .icon-big { width: 42px; height: 42px; }
+    .dashboard-page .card-stats-mini .icon-big i { font-size: 17px; }
+    .dashboard-page .card-stats-mini .card-category {
+        font-size: 0.76rem;
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        max-width: 140px;
+        margin-bottom: 2px;
+    }
+    .dashboard-page .card-stats-mini .card-title { font-size: 1.35rem; margin-bottom: 0; }
+    .dashboard-page .card-stats-mini .card-body { padding: 12px 14px; }
 </style>
 
 <div class="dashboard-page">
@@ -234,6 +249,8 @@ Tableau de bord
     </div>
 </div>
 
+@include('partials.dashboard-workload-charts')
+
 <!-- Évolution -->
 <div class="row">
     <div class="col-lg-12">
@@ -302,8 +319,6 @@ Tableau de bord
     </div>
 </div>
 
-@include('partials.dashboard-workload-charts')
-
 @elseif($isCabinet)
 
 <!-- Dashboard minimal Cabinet de Maire -->
@@ -363,6 +378,8 @@ Tableau de bord
     </div>
 </div>
 
+@include('partials.dashboard-workload-charts')
+
 <div class="row">
     <div class="col-md-12">
         <div class="card card-tasks">
@@ -399,8 +416,6 @@ Tableau de bord
         </div>
     </div>
 </div>
-
-@include('partials.dashboard-workload-charts')
 
 @else
 <div class="row">
@@ -488,6 +503,10 @@ Tableau de bord
     @endif
 
 </div>
+
+@if($isAdmin)
+    @include('partials.dashboard-workload-charts')
+@endif
 
 <!-- Évolution -->
 <div class="row">
@@ -578,10 +597,6 @@ Tableau de bord
     </div>
 </div>
 
-@if($isAdmin)
-    @include('partials.dashboard-workload-charts')
-@endif
-
 @endif
 
 </div>
@@ -618,9 +633,6 @@ document.addEventListener('DOMContentLoaded', function () {
         }
     });
 
-    @if($isAdmin)
-        @include('partials.dashboard-workload-charts-script')
-    @endif
 });
 </script>
 @elseif($isPlainUser)
@@ -651,15 +663,6 @@ document.addEventListener('DOMContentLoaded', function () {
             plugins: { legend: { display: false } }
         }
     });
-
-    @include('partials.dashboard-workload-charts-script')
-});
-</script>
-@elseif($isCabinet)
-<script src="{{ asset('assets/js/plugins/chartjs.min.js') }}"></script>
-<script>
-document.addEventListener('DOMContentLoaded', function () {
-    @include('partials.dashboard-workload-charts-script')
 });
 </script>
 @endif

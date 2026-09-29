@@ -48,6 +48,26 @@ class Tabdepot extends Model
     }
 
     /**
+     * L'entrée d'historique du dépôt initial ("→ accueil"), pour retrouver
+     * quel agent Accueil a enregistré cette demande — utile maintenant que
+     * plusieurs comptes Accueil distincts coexistent.
+     */
+    public function depotHistorique()
+    {
+        return $this->hasOne(DemandeHistorique::class, 'tabdepot_id')->where('vers_statut', 'accueil')->oldest();
+    }
+
+    /**
+     * Nom de l'agent Accueil qui a enregistré cette demande, ou null si
+     * l'information n'est pas disponible (donnée historique, ou compte
+     * supprimé depuis).
+     */
+    public function agentAccueil(): ?string
+    {
+        return $this->depotHistorique?->user?->name;
+    }
+
+    /**
      * Date de réception affichée au format local, tolérante à une valeur
      * historique mal formée plutôt que de faire planter la page.
      */

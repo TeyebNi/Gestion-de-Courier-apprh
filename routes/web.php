@@ -26,6 +26,7 @@ Route::middleware('auth')->group(function () {
 
     // Accessible aux utilisateurs connectés (admin ET user)
     Route::get('depot', [TabdepotController::class, 'index'])->name('depot.index');
+    Route::get('depot/verifier-telephone', [TabdepotController::class, 'checkTel'])->name('depot.check-tel');
     Route::get('depot/export', [TabdepotController::class, 'exportExcel'])->name('depot.export');
     Route::post('depot', [TabdepotController::class, 'store'])->name('depot.store');
     Route::get('depot/print_reçu/{idt}',[TabdepotController::class,'print_facture'])->name('depot.print_reçu');
@@ -44,13 +45,16 @@ Route::middleware('auth')->group(function () {
     // dossier à la main et saisit ses annotations lui-même (route "decider").
     Route::post('circuit/{tabdepot}/envoyer-fatou', [CircuitController::class, 'sendToFatou'])->name('circuit.envoyer-fatou');
     Route::get('circuit/suivi', [CircuitController::class, 'suiviIndex'])->name('circuit.suivi');
+    Route::get('circuit/suivi/export', [CircuitController::class, 'suiviExportExcel'])->name('circuit.suivi.export');
 
     Route::middleware('fatou')->group(function () {
         Route::get('circuit/fatou', [CircuitController::class, 'fatouIndex'])->name('circuit.fatou.index');
+        Route::get('circuit/fatou/export', [CircuitController::class, 'fatouExportExcel'])->name('circuit.fatou.export');
         Route::post('circuit/{tabdepot}/decider', [CircuitController::class, 'decide'])->name('circuit.decider');
     });
 
     Route::get('circuit/service', [CircuitController::class, 'serviceIndex'])->name('circuit.service.index');
+    Route::get('circuit/service/export', [CircuitController::class, 'serviceExportExcel'])->name('circuit.service.export');
     Route::post('circuit/{tabdepot}/cloturer', [CircuitController::class, 'closeDemande'])->name('circuit.cloturer');
 
     // Cette route générique doit rester APRÈS toutes les routes littérales ci-dessus

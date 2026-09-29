@@ -1,52 +1,52 @@
-@if($serviceLabels->isNotEmpty())
-<div class="row">
-    <div class="col-md-12">
-        <div class="card card-chart">
-            <div class="card-header">
-                <h5 class="card-category">Charge de travail</h5>
-                <h4 class="card-title">Demandes par Service</h4>
-            </div>
-            <div class="card-body">
-                <div class="chart-area">
-                    <canvas id="serviceChart"></canvas>
-                </div>
-            </div>
-        </div>
-    </div>
-</div>
-@endif
+@include('partials.dashboard-stat-grid', [
+    'title' => 'Demandes par Service',
+    'subtitle' => 'Charge de travail',
+    'labels' => $serviceLabels,
+    'counts' => $serviceCounts,
+    'icon' => 'business_briefcase-24',
+])
 
-@if($maireAdjointLabels->isNotEmpty() || $conseillerLabels->isNotEmpty())
-<div class="row">
-    @if($maireAdjointLabels->isNotEmpty())
-    <div class="col-md-6">
-        <div class="card card-chart">
-            <div class="card-header">
-                <h5 class="card-category">Charge de travail</h5>
-                <h4 class="card-title">Demandes par Adjoint au Maire</h4>
-            </div>
-            <div class="card-body">
-                <div class="chart-area">
-                    <canvas id="maireAdjointChart"></canvas>
-                </div>
-            </div>
-        </div>
-    </div>
-    @endif
-    @if($conseillerLabels->isNotEmpty())
-    <div class="col-md-6">
-        <div class="card card-chart">
-            <div class="card-header">
-                <h5 class="card-category">Charge de travail</h5>
-                <h4 class="card-title">Demandes par Conseiller</h4>
-            </div>
-            <div class="card-body">
-                <div class="chart-area">
-                    <canvas id="conseillerChart"></canvas>
-                </div>
-            </div>
-        </div>
-    </div>
-    @endif
-</div>
-@endif
+@include('partials.dashboard-stat-grid', [
+    'title' => 'Demandes par Adjoint au Maire',
+    'subtitle' => 'Charge de travail',
+    'labels' => $maireAdjointLabels,
+    'counts' => $maireAdjointCounts,
+    'icon' => 'users_single-02',
+])
+
+@include('partials.dashboard-stat-grid', [
+    'title' => 'Demandes par Conseiller',
+    'subtitle' => 'Charge de travail',
+    'labels' => $conseillerLabels,
+    'counts' => $conseillerCounts,
+    'icon' => 'users_single-02',
+])
+
+@include('partials.dashboard-stat-grid', [
+    'title' => 'Demandes par Étape du Circuit',
+    'subtitle' => "Vue d'ensemble",
+    'labels' => $stageLabels,
+    'counts' => $stageCounts,
+    'colWidth' => 'col-lg-2 col-md-4 col-6',
+    'itemIcons' => [
+        "À l'accueil" => ['ui-1_calendar-60', 'info'],
+        'Chez le Cabinet de Maire' => ['ui-1_send', 'primary'],
+        'Chez un service' => ['business_briefcase-24', 'success'],
+        "Chez l'Adjoint au Maire" => ['users_single-02', 'warning'],
+        'Chez le Conseiller' => ['users_single-02', 'warning'],
+        'Clôturée' => ['ui-1_check', 'danger'],
+    ],
+])
+
+@include('partials.dashboard-stat-grid', [
+    'title' => 'Clôtures par Résolution',
+    'subtitle' => 'Détail',
+    'labels' => $clotureLabels,
+    'counts' => $clotureCounts,
+    'itemIcons' => [
+        'Traitées' => ['ui-1_check', 'success'],
+        'Classées' => ['files_box', 'info'],
+        'Convoquées' => ['ui-1_bell-53', 'warning'],
+        'Non précisée' => ['ui-1_simple-remove', 'danger'],
+    ],
+])

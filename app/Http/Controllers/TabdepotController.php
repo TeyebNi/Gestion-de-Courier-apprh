@@ -9,7 +9,6 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Storage;
 
 use App\Traits\ExportsCsv;
-use Illuminate\Validation\Rule;
 
 class TabdepotController extends Controller
 {
@@ -25,7 +24,8 @@ class TabdepotController extends Controller
         return $query
             ->when($search, function ($q) use ($search) {
                 $q->where('reference', 'like', "%{$search}%")
-                  ->orWhere('objet', 'like', "%{$search}%");
+                  ->orWhere('objet', 'like', "%{$search}%")
+                  ->orWhere('tel', 'like', "%{$search}%");
             })
             ->filterByStatut($statut);
     }
@@ -40,6 +40,7 @@ class TabdepotController extends Controller
         $statut = $request->statut;
 
         $tabdepot = $this->applyFilters(Tabdepot::query(), $search, $statut)
+            ->with('depotHistorique.user')
             ->orderby('id', 'desc')
             ->paginate(5)
             ->appends(['search' => $search, 'statut' => $statut]);
@@ -59,13 +60,14 @@ class TabdepotController extends Controller
         }
 
         $tabdepots = $this->applyFilters(Tabdepot::query(), $request->search, $request->statut)
+            ->with('depotHistorique.user')
             ->orderby('id', 'asc')
             ->get();
 
         return $this->streamCsv(
             $tabdepots,
-            ['N°', 'Code', 'Objet', 'Nom', 'Téléphone', 'Origine', 'Détails Origine', 'Date réception', 'Statut'],
-            fn ($t, $i) => [$i + 1, $t->reference, $t->objet, $t->nom, $t->tel, $t->origine, $t->origine_detail, $t->daterecp, $t->statutLabel()],
+            ['N°', 'Code', 'Objet', 'Nom', 'Téléphone', 'Origine', 'Détails Origine', 'Date réception', 'Statut', 'Enregistrée par'],
+            fn ($t, $i) => [$i + 1, $t->reference, $t->objet, $t->nom, $t->tel, $t->origine, $t->origine_detail, $t->daterecp, $t->statutLabel(), $t->agentAccueil()],
             'depot_demandes'
         );
     }
@@ -95,6 +97,42 @@ class TabdepotController extends Controller
             ->header('Content-Type', 'application/pdf');
     }
 
+    /**
+     * Vérifie si un numéro de téléphone a déjà été utilisé dans une demande
+     * précédente, pour alerter l'accueil avant l'enregistrement (qui, quand)
+     * plutôt que de le découvrir après coup.
+     */
+    public function checkTel(Request $request)
+    {
+        if (! auth()->user()->canAccessDepot()) {
+            abort(403, "Cette page est réservée à l'accueil et aux administrateurs.");
+        }
+
+        $tel = $request->query('tel');
+        $excludeId = $request->query('exclude_id');
+
+        if (! $tel) {
+            return response()->json(['exists' => false]);
+        }
+
+        $demande = Tabdepot::where('tel', $tel)
+            ->when($excludeId, fn ($q) => $q->where('id', '!=', $excludeId))
+            ->orderByDesc('id')
+            ->first();
+
+        if (! $demande) {
+            return response()->json(['exists' => false]);
+        }
+
+        return response()->json([
+            'exists' => true,
+            'reference' => $demande->reference,
+            'date' => $demande->created_at->format('d/m/Y'),
+            'heure' => $demande->created_at->format('H:i'),
+            'agent' => $demande->agentAccueil() ?? 'un agent introuvable',
+        ]);
+    }
+
     public function store(Request $request)
     {
         if (! auth()->user()->canAccessDepot()) {
@@ -107,11 +145,10 @@ class TabdepotController extends Controller
             'nom' => ['nullable', 'string', 'max:255'],
             'tel' => ['nullable', 'regex:/^[234]\d{7}$/'],
             'nni' => ['nullable', 'string', 'max:30'],
-            'piece_jointe' => ['required', 'file', 'mimes:jpg,jpeg,png,pdf', 'max:10240'],
+            'piece_jointe' => ['nullable', 'file', 'mimes:jpg,jpeg,png,pdf', 'max:10240'],
         ], [
             'origine.required' => "L'origine est obligatoire.",
             'tel.regex' => 'Le téléphone doit contenir 8 chiffres et commencer par 2, 3 ou 4.',
-            'piece_jointe.required' => 'La pièce jointe est obligatoire.',
             'piece_jointe.mimes' => 'La pièce jointe doit être une image (JPG, PNG) ou un PDF.',
             'piece_jointe.max' => 'La pièce jointe ne doit pas dépasser 10 Mo.',
         ]);
@@ -158,11 +195,10 @@ class TabdepotController extends Controller
             'nom' => ['nullable', 'string', 'max:255'],
             'tel' => ['nullable', 'regex:/^[234]\d{7}$/'],
             'nni' => ['nullable', 'string', 'max:30'],
-            'piece_jointe' => [Rule::requiredIf(! $tabdepot->piece_jointe), 'nullable', 'file', 'mimes:jpg,jpeg,png,pdf', 'max:10240'],
+            'piece_jointe' => ['nullable', 'file', 'mimes:jpg,jpeg,png,pdf', 'max:10240'],
         ], [
             'origine.required' => "L'origine est obligatoire.",
             'tel.regex' => 'Le téléphone doit contenir 8 chiffres et commencer par 2, 3 ou 4.',
-            'piece_jointe.required' => 'La pièce jointe est obligatoire.',
             'piece_jointe.mimes' => 'La pièce jointe doit être une image (JPG, PNG) ou un PDF.',
             'piece_jointe.max' => 'La pièce jointe ne doit pas dépasser 10 Mo.',
         ]);
@@ -223,7 +259,8 @@ class TabdepotController extends Controller
         $tabdepot = Tabdepot::onlyTrashed()
             ->when($search, function ($query) use ($search) {
                 $query->where('reference', 'like', "%{$search}%")
-                      ->orWhere('objet', 'like', "%{$search}%");
+                      ->orWhere('objet', 'like', "%{$search}%")
+                      ->orWhere('tel', 'like', "%{$search}%");
             })
             ->orderByDesc('deleted_at')
             ->paginate(5)

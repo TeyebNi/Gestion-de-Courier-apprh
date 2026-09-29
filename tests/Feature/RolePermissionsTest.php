@@ -64,6 +64,7 @@ class RolePermissionsTest extends TestCase
         $response = $this->actingAs($admin)->put("/utilisateurs/{$admin->id}", [
             'name' => 'Jean Dupont',
             'email' => $admin->email,
+            'tel' => '22334455',
             'role' => 'admin',
             'can_manage_users' => '0',
         ]);
@@ -80,6 +81,7 @@ class RolePermissionsTest extends TestCase
         $this->actingAs($admin)->put("/utilisateurs/{$target->id}", [
             'name' => 'Jean Dupont',
             'email' => $target->email,
+            'tel' => '22334455',
             'role' => 'admin',
             'can_manage_users' => '0',
         ])->assertRedirect(route('users.index'));
@@ -208,7 +210,10 @@ class RolePermissionsTest extends TestCase
         $response->assertSee('Demandes par Service');
         $response->assertSee('Demandes par Adjoint au Maire');
         $response->assertViewHas('serviceLabels', function ($labels) {
-            return $labels->contains('Informatique') && $labels->contains('Adjoint au Maire');
+            return $labels->contains('Informatique') && ! $labels->contains('Adjoint au Maire');
+        });
+        $response->assertViewHas('maireAdjointLabels', function ($labels) {
+            return $labels->contains('Zeroug');
         });
     }
 
@@ -238,7 +243,7 @@ class RolePermissionsTest extends TestCase
         $response->assertSee('Évolution des Demandes');
     }
 
-    public function test_admin_dashboard_workload_chart_groups_divisions_under_their_service_and_pools_special_roles(): void
+    public function test_admin_dashboard_workload_chart_groups_divisions_under_their_service_and_keeps_special_roles_separate(): void
     {
         $admin = User::factory()->create(['role' => UserRole::Admin]);
 
@@ -272,9 +277,10 @@ class RolePermissionsTest extends TestCase
         ]);
         $makeDepot(['statut_circuit' => 'service', 'destination_type' => 'chef_service', 'service_assigne' => 'Chef Informatique']);
 
-        // Deux Adjoints au Maire différents : leurs demandes doivent se
-        // regrouper dans une seule catégorie "Adjoint au Maire", pas une
-        // barre par personne, dans le graphique global "Demandes par Service".
+        // Deux Adjoints au Maire différents : ne doivent pas apparaître dans
+        // le graphique global "Demandes par Service" (ni fondus dans une
+        // catégorie générique, ni comptés un par un) — seulement dans leur
+        // propre détail personne par personne, ci-dessous.
         $makeDepot(['statut_circuit' => 'service', 'destination_type' => 'maire_adjoint', 'service_assigne' => 'Zeroug']);
         $makeDepot(['statut_circuit' => 'service', 'destination_type' => 'maire_adjoint', 'service_assigne' => 'Zeroug']);
         $makeDepot(['statut_circuit' => 'service', 'destination_type' => 'maire_adjoint', 'service_assigne' => 'Guiya']);
@@ -285,10 +291,10 @@ class RolePermissionsTest extends TestCase
 
         $response->assertOk();
         $response->assertViewHas('serviceLabels', function ($labels) {
-            return $labels->toArray() === ['Informatique', 'Adjoint au Maire', 'Conseiller'];
+            return $labels->toArray() === ['Informatique'];
         });
         $response->assertViewHas('serviceCounts', function ($counts) {
-            return $counts->toArray() === [4, 3, 1];
+            return $counts->toArray() === [4];
         });
 
         // Détail individuel : un graphique séparé par Adjoint au Maire et par
@@ -307,6 +313,16 @@ class RolePermissionsTest extends TestCase
         });
         $response->assertSee('Demandes par Adjoint au Maire');
         $response->assertSee('Demandes par Conseiller');
+
+        // Vue d'ensemble par étape : "Chez un service" (2 Informatique + 1
+        // Division + 1 Chef de Service = 4), Adjoint au Maire (3) et
+        // Conseiller (1) comptés à part, pas mélangés dans un seul bloc.
+        $response->assertViewHas('stageLabels', function ($labels) {
+            return $labels->toArray() === ['Chez un service', "Chez l'Adjoint au Maire", 'Chez le Conseiller'];
+        });
+        $response->assertViewHas('stageCounts', function ($counts) {
+            return $counts->toArray() === [4, 3, 1];
+        });
     }
 
     public function test_service_dashboard_recent_demandes_are_ordered_and_labeled_by_last_update(): void
@@ -404,7 +420,10 @@ class RolePermissionsTest extends TestCase
         $response->assertSee('Demandes par Service');
         $response->assertSee('Demandes par Conseiller');
         $response->assertViewHas('serviceLabels', function ($labels) {
-            return $labels->contains('Informatique') && $labels->contains('Conseiller');
+            return $labels->contains('Informatique') && ! $labels->contains('Conseiller');
+        });
+        $response->assertViewHas('conseillerLabels', function ($labels) {
+            return $labels->contains('Vall');
         });
     }
 

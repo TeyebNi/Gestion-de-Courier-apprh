@@ -1054,4 +1054,204 @@ class CircuitWorkflowTest extends TestCase
 
         $this->actingAs($cabinet)->get("/circuit/{$depot->id}/historique")->assertForbidden();
     }
+
+    public function test_fatou_index_paginates_a_envoyer_by_two_and_deja_annotees_by_five(): void
+    {
+        $cabinet = User::factory()->create(['role' => UserRole::Fatou]);
+
+        for ($i = 0; $i < 3; $i++) {
+            Tabdepot::create(['daterecp' => now()->format('Y-m-d'), 'statut_circuit' => 'fatou']);
+        }
+        for ($i = 0; $i < 6; $i++) {
+            Tabdepot::create(['daterecp' => now()->format('Y-m-d'), 'statut_circuit' => 'cloture', 'remarque_maire' => 'Vu par le Maire']);
+        }
+
+        $response = $this->actingAs($cabinet)->get('/circuit/fatou');
+
+        $response->assertOk();
+        $response->assertViewHas('aEnvoyer', fn ($p) => $p->count() === 2 && $p->total() === 3);
+        $response->assertViewHas('dejaAnnotees', fn ($p) => $p->count() === 5 && $p->total() === 6);
+    }
+
+    public function test_fatou_deja_annotees_search_filters_by_code_objet_or_tel(): void
+    {
+        $cabinet = User::factory()->create(['role' => UserRole::Fatou]);
+
+        Tabdepot::create(['daterecp' => now()->format('Y-m-d'), 'statut_circuit' => 'cloture', 'remarque_maire' => 'Vu', 'reference' => 'CODE-1', 'objet' => 'Raccordement eau', 'tel' => '22334455']);
+        Tabdepot::create(['daterecp' => now()->format('Y-m-d'), 'statut_circuit' => 'cloture', 'remarque_maire' => 'Vu', 'reference' => 'CODE-2', 'objet' => 'Certificat de résidence', 'tel' => '33445566']);
+
+        $response = $this->actingAs($cabinet)->get('/circuit/fatou?search=22334455');
+
+        $response->assertOk();
+        $response->assertSee('CODE-1');
+        $response->assertDontSee('CODE-2');
+    }
+
+    public function test_service_index_search_filters_both_tables_by_code_objet_or_tel(): void
+    {
+        $serviceUser = User::factory()->create(['role' => UserRole::User, 'service' => 'Etat Civil']);
+
+        Tabdepot::create(['daterecp' => now()->format('Y-m-d'), 'statut_circuit' => 'service', 'service_assigne' => 'Etat Civil', 'reference' => 'CODE-1', 'tel' => '22334455']);
+        Tabdepot::create(['daterecp' => now()->format('Y-m-d'), 'statut_circuit' => 'service', 'service_assigne' => 'Etat Civil', 'reference' => 'CODE-2', 'tel' => '33445566']);
+        Tabdepot::create(['daterecp' => now()->format('Y-m-d'), 'statut_circuit' => 'cloture', 'service_assigne' => 'Etat Civil', 'reference' => 'CODE-3', 'tel' => '22334455']);
+        Tabdepot::create(['daterecp' => now()->format('Y-m-d'), 'statut_circuit' => 'cloture', 'service_assigne' => 'Etat Civil', 'reference' => 'CODE-4', 'tel' => '33445566']);
+
+        $response = $this->actingAs($serviceUser)->get('/circuit/service?search=22334455');
+
+        $response->assertOk();
+        $response->assertSee('CODE-1');
+        $response->assertDontSee('CODE-2');
+        $response->assertSee('CODE-3');
+        $response->assertDontSee('CODE-4');
+    }
+
+    public function test_service_index_deja_traitees_can_be_filtered_by_resolution(): void
+    {
+        $serviceUser = User::factory()->create(['role' => UserRole::User, 'service' => 'Etat Civil']);
+
+        Tabdepot::create(['daterecp' => now()->format('Y-m-d'), 'statut_circuit' => 'cloture', 'service_assigne' => 'Etat Civil', 'resolution_service' => 'traiter', 'reference' => 'CODE-TRAITEE']);
+        Tabdepot::create(['daterecp' => now()->format('Y-m-d'), 'statut_circuit' => 'cloture', 'service_assigne' => 'Etat Civil', 'resolution_service' => 'classer', 'reference' => 'CODE-CLASSEE']);
+
+        $response = $this->actingAs($serviceUser)->get('/circuit/service?statut=traiter');
+
+        $response->assertOk();
+        $response->assertSee('CODE-TRAITEE');
+        $response->assertDontSee('CODE-CLASSEE');
+    }
+
+    public function test_suivi_export_respects_the_statut_filter(): void
+    {
+        $accueil = User::factory()->create(['role' => UserRole::User]);
+        Tabdepot::create(['daterecp' => now()->format('Y-m-d'), 'statut_circuit' => 'fatou', 'reference' => 'A-FATOU']);
+        Tabdepot::create(['daterecp' => now()->format('Y-m-d'), 'statut_circuit' => 'cloture', 'reference' => 'B-CLOTURE']);
+
+        $response = $this->actingAs($accueil)->get('/circuit/suivi/export?statut=cloture');
+
+        $response->assertOk();
+        $csv = $response->streamedContent();
+        $this->assertStringContainsString('B-CLOTURE', $csv);
+        $this->assertStringNotContainsString('A-FATOU', $csv);
+    }
+
+    public function test_service_export_includes_both_en_cours_and_traitees(): void
+    {
+        $serviceUser = User::factory()->create(['role' => UserRole::User, 'service' => 'Etat Civil']);
+        Tabdepot::create(['daterecp' => now()->format('Y-m-d'), 'statut_circuit' => 'service', 'service_assigne' => 'Etat Civil', 'reference' => 'CODE-EN-COURS']);
+        Tabdepot::create(['daterecp' => now()->format('Y-m-d'), 'statut_circuit' => 'cloture', 'service_assigne' => 'Etat Civil', 'resolution_service' => 'traiter', 'reference' => 'CODE-TRAITEE']);
+        Tabdepot::create(['daterecp' => now()->format('Y-m-d'), 'statut_circuit' => 'service', 'service_assigne' => 'Informatique', 'reference' => 'CODE-AUTRE-SERVICE']);
+
+        $response = $this->actingAs($serviceUser)->get('/circuit/service/export');
+
+        $response->assertOk();
+        $csv = $response->streamedContent();
+        $this->assertStringContainsString('CODE-EN-COURS', $csv);
+        $this->assertStringContainsString('CODE-TRAITEE', $csv);
+        $this->assertStringNotContainsString('CODE-AUTRE-SERVICE', $csv);
+    }
+
+    public function test_fatou_export_includes_both_a_envoyer_and_deja_annotees(): void
+    {
+        $cabinet = User::factory()->create(['role' => UserRole::Fatou]);
+        Tabdepot::create(['daterecp' => now()->format('Y-m-d'), 'statut_circuit' => 'fatou', 'reference' => 'CODE-EN-ATTENTE']);
+        Tabdepot::create(['daterecp' => now()->format('Y-m-d'), 'statut_circuit' => 'cloture', 'remarque_maire' => 'Vu', 'reference' => 'CODE-ANNOTEE']);
+
+        $response = $this->actingAs($cabinet)->get('/circuit/fatou/export');
+
+        $response->assertOk();
+        $csv = $response->streamedContent();
+        $this->assertStringContainsString('CODE-EN-ATTENTE', $csv);
+        $this->assertStringContainsString('CODE-ANNOTEE', $csv);
+    }
+
+    public function test_fatou_search_also_filters_the_en_attente_queue(): void
+    {
+        $cabinet = User::factory()->create(['role' => UserRole::Fatou]);
+
+        Tabdepot::create(['daterecp' => now()->format('Y-m-d'), 'statut_circuit' => 'fatou', 'reference' => 'CODE-1', 'tel' => '22334455']);
+        Tabdepot::create(['daterecp' => now()->format('Y-m-d'), 'statut_circuit' => 'fatou', 'reference' => 'CODE-2', 'tel' => '33445566']);
+
+        $response = $this->actingAs($cabinet)->get('/circuit/fatou?search=22334455');
+
+        $response->assertOk();
+        $response->assertSee('CODE-1');
+        $response->assertDontSee('CODE-2');
+    }
+
+    public function test_fatou_export_excludes_the_en_attente_queue_when_a_statut_is_selected(): void
+    {
+        $cabinet = User::factory()->create(['role' => UserRole::Fatou]);
+        Tabdepot::create(['daterecp' => now()->format('Y-m-d'), 'statut_circuit' => 'fatou', 'reference' => 'CODE-EN-ATTENTE']);
+        Tabdepot::create(['daterecp' => now()->format('Y-m-d'), 'statut_circuit' => 'cloture', 'remarque_maire' => 'Vu', 'reference' => 'CODE-CLOTUREE']);
+
+        $response = $this->actingAs($cabinet)->get('/circuit/fatou/export?statut=cloture');
+
+        $response->assertOk();
+        $csv = $response->streamedContent();
+        $this->assertStringNotContainsString('CODE-EN-ATTENTE', $csv);
+        $this->assertStringContainsString('CODE-CLOTUREE', $csv);
+    }
+
+    public function test_service_index_hides_en_cours_table_when_a_resolution_is_selected(): void
+    {
+        $serviceUser = User::factory()->create(['role' => UserRole::User, 'service' => 'Etat Civil']);
+        Tabdepot::create(['daterecp' => now()->format('Y-m-d'), 'statut_circuit' => 'service', 'service_assigne' => 'Etat Civil', 'reference' => 'CODE-EN-COURS']);
+        Tabdepot::create(['daterecp' => now()->format('Y-m-d'), 'statut_circuit' => 'cloture', 'service_assigne' => 'Etat Civil', 'resolution_service' => 'traiter', 'reference' => 'CODE-TRAITEE']);
+
+        $response = $this->actingAs($serviceUser)->get('/circuit/service?statut=traiter');
+
+        $response->assertOk();
+        $response->assertDontSee('Demandes orientées vers votre service');
+        $response->assertDontSee('CODE-EN-COURS');
+        $response->assertSee('CODE-TRAITEE');
+    }
+
+    public function test_service_export_excludes_en_cours_when_a_resolution_is_selected(): void
+    {
+        $serviceUser = User::factory()->create(['role' => UserRole::User, 'service' => 'Etat Civil']);
+        Tabdepot::create(['daterecp' => now()->format('Y-m-d'), 'statut_circuit' => 'service', 'service_assigne' => 'Etat Civil', 'reference' => 'CODE-EN-COURS']);
+        Tabdepot::create(['daterecp' => now()->format('Y-m-d'), 'statut_circuit' => 'cloture', 'service_assigne' => 'Etat Civil', 'resolution_service' => 'traiter', 'reference' => 'CODE-TRAITEE']);
+
+        $response = $this->actingAs($serviceUser)->get('/circuit/service/export?statut=traiter');
+
+        $response->assertOk();
+        $csv = $response->streamedContent();
+        $this->assertStringNotContainsString('CODE-EN-COURS', $csv);
+        $this->assertStringContainsString('CODE-TRAITEE', $csv);
+    }
+
+    public function test_fatou_hides_the_en_attente_queue_when_a_statut_is_selected(): void
+    {
+        $cabinet = User::factory()->create(['role' => UserRole::Fatou]);
+        Tabdepot::create(['daterecp' => now()->format('Y-m-d'), 'statut_circuit' => 'fatou', 'reference' => 'CODE-EN-ATTENTE']);
+        Tabdepot::create(['daterecp' => now()->format('Y-m-d'), 'statut_circuit' => 'cloture', 'remarque_maire' => 'Vu', 'reference' => 'CODE-CLOTUREE']);
+
+        // Le statut "Clôturée" ne concerne pas la file d'attente (toujours
+        // "fatou") : elle ne doit plus s'afficher pour laisser la place aux
+        // résultats réellement filtrés.
+        $response = $this->actingAs($cabinet)->get('/circuit/fatou?statut=cloture');
+
+        $response->assertOk();
+        $response->assertDontSee("Demandes en attente d'annotations", false);
+        $response->assertDontSee('CODE-EN-ATTENTE');
+        $response->assertSee('CODE-CLOTUREE');
+
+        // Sans statut sélectionné, elle réapparaît normalement.
+        $response = $this->actingAs($cabinet)->get('/circuit/fatou');
+        $response->assertSee("Demandes en attente d'annotations", false);
+        $response->assertSee('CODE-EN-ATTENTE');
+    }
+
+    public function test_fatou_deja_annotees_can_be_filtered_by_statut(): void
+    {
+        $cabinet = User::factory()->create(['role' => UserRole::Fatou]);
+
+        Tabdepot::create(['daterecp' => now()->format('Y-m-d'), 'statut_circuit' => 'cloture', 'remarque_maire' => 'Vu', 'reference' => 'CODE-CLOTURE']);
+        Tabdepot::create(['daterecp' => now()->format('Y-m-d'), 'statut_circuit' => 'service', 'destination_type' => 'service', 'service_assigne' => 'Informatique', 'remarque_maire' => 'Vu', 'reference' => 'CODE-SERVICE']);
+
+        $response = $this->actingAs($cabinet)->get('/circuit/fatou?statut=cloture');
+
+        $response->assertOk();
+        $response->assertSee('CODE-CLOTURE');
+        $response->assertDontSee('CODE-SERVICE');
+    }
 }

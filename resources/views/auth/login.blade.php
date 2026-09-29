@@ -28,13 +28,13 @@
                 @csrf
 
                 <div class="mb-3">
-                    <label for="email" class="form-label">Adresse Email</label>
+                    <label for="login" class="form-label">Email ou Téléphone</label>
                     <div class="input-group">
                         <span class="input-group-text">&#9993;</span>
-                        <input id="email" type="email" class="form-control @error('email') is-invalid @enderror"
-                               name="email" value="{{ old('email') }}" required autofocus autocomplete="username">
+                        <input id="login" type="text" class="form-control @error('login') is-invalid @enderror"
+                               name="login" value="{{ old('login') }}" required autofocus autocomplete="username">
                     </div>
-                    @error('email')
+                    @error('login')
                         <span class="invalid-feedback d-block">{{ $message }}</span>
                     @enderror
                 </div>

@@ -258,6 +258,7 @@ class UserManagementTest extends TestCase
         $this->actingAs($admin)->post('/utilisateurs', [
             'name' => 'Accueil Bis',
             'email' => 'accueil-bis@commune.mr',
+            'tel' => '22334455',
             'password' => 'motdepasse123',
             'password_confirmation' => 'motdepasse123',
             'role' => 'admin',

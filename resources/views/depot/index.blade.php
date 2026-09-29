@@ -25,7 +25,7 @@ Dashboard Courier
                             <option value="conseiller" @selected($statut === 'conseiller')>Chez le Conseiller</option>
                             <option value="cloture" @selected($statut === 'cloture')>Clôturée</option>
                         </select>
-                        <input type="text" name="search" class="form-control form-control-sm" placeholder="Rechercher par code, objet..." value="{{ $search }}" style="min-width:220px;">
+                        <input type="text" name="search" class="form-control form-control-sm" placeholder="Rechercher par code, objet, téléphone..." value="{{ $search }}" style="min-width:220px;">
                         <button type="submit" class="btn btn-primary btn-sm ml-2">Rechercher</button>
                         @if($search || $statut)
                         <a href="{{ route('depot.index') }}" class="btn btn-outline-secondary btn-sm ml-2" title="Réinitialiser">&times;</a>
@@ -45,6 +45,7 @@ Dashboard Courier
                             <th>Téléphone</th>
                             <th>Origine</th>
                             <th>Statut</th>
+                            <th>Enregistrée par</th>
                             <th class="text-right">Enregistrée le</th>
                             <th class="text-right">Action</th>
                         </thead>
@@ -60,6 +61,7 @@ Dashboard Courier
                                 <td>{{ $item->tel ?: '—' }}</td>
                                 <td>@include('partials.origine-badge', ['demande' => $item])</td>
                                   <td><span class="badge {{ $depotBadgeClass }}">{{ $item->statutLabel() }}</span></td>
+                                  <td>{{ $item->agentAccueil() ?: '—' }}</td>
                                   <td class="text-right">{{ $item->created_at->format('d/m/Y H:i') }}</td>
                                 <td class="text-right">
                                     <a href="{{ route('depot.print_reçu', $item->id) }}" target="_blank" class="btn btn-success btn-sm" title="Imprimer"><svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 6 2 18 2 18 9"></polyline><path d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2"></path><rect x="6" y="14" width="12" height="8"></rect></svg></a>
@@ -86,7 +88,7 @@ Dashboard Courier
                             </tr>
                             @empty
                             <tr>
-                                <td colspan="8" class="text-center text-muted">
+                                <td colspan="9" class="text-center text-muted">
                                     @if($search)
                                         Aucune demande ne correspond à « {{ $search }} ».
                                     @else
@@ -178,9 +180,9 @@ Dashboard Courier
     </div>
       <br>
       <div class="form-group">
-        <label for="create_piece_jointe">Pièce jointe * (scanner/joindre le document original)</label>
+        <label for="create_piece_jointe">Pièce jointe (scanner/joindre le document original, optionnel)</label>
         <div class="custom-file">
-          <input type="file" class="custom-file-input piece-jointe-input @error('piece_jointe') is-invalid @enderror" id="create_piece_jointe" name="piece_jointe" required accept=".jpg,.jpeg,.png,.pdf">
+          <input type="file" class="custom-file-input piece-jointe-input @error('piece_jointe') is-invalid @enderror" id="create_piece_jointe" name="piece_jointe" accept=".jpg,.jpeg,.png,.pdf">
           <label class="custom-file-label" for="create_piece_jointe" data-browse="Parcourir">Choisir un fichier (JPG, PNG ou PDF)...</label>
         </div>
         @error('piece_jointe')
@@ -259,7 +261,7 @@ Dashboard Courier
     </div>
       <br>
       <div class="form-group">
-        <label for="edit_piece_jointe">Pièce jointe * (obligatoire ; laisser vide pour conserver l'actuelle)</label>
+        <label for="edit_piece_jointe">Pièce jointe (optionnel ; laisser vide pour conserver l'actuelle)</label>
         <div class="custom-file">
           <input type="file" class="custom-file-input piece-jointe-input @error('piece_jointe') is-invalid @enderror" id="edit_piece_jointe" name="piece_jointe" accept=".jpg,.jpeg,.png,.pdf">
           <label class="custom-file-label" for="edit_piece_jointe" data-browse="Parcourir">Choisir un fichier (JPG, PNG ou PDF)...</label>
@@ -275,6 +277,27 @@ Dashboard Courier
           <button type="submit" class="btn btn-success" title="Modifier"><svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"></polyline></svg></button>
         </div>
       </form>
+    </div>
+  </div>
+</div>
+
+<!-- Modal Confirmation téléphone déjà utilisé -->
+<div class="modal fade" id="telConfirmModal" tabindex="-1" role="dialog" aria-hidden="true">
+  <div class="modal-dialog modal-dialog-centered" role="document">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title">Numéro déjà utilisé</h5>
+        <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+          <span aria-hidden="true">&times;</span>
+        </button>
+      </div>
+      <div class="modal-body">
+        <p id="telConfirmMessage"></p>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-warning" data-dismiss="modal" title="Se raviser"><svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg> Annuler</button>
+        <button type="button" id="telConfirmContinue" class="btn btn-success" title="Continuer quand même"><svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"></polyline></svg> Continuer</button>
+      </div>
     </div>
   </div>
 </div>
@@ -365,6 +388,49 @@ $('#exampleModal').on('hidden.bs.modal', function () {
 $(document).on('change', '.piece-jointe-input', function () {
     var fileName = this.files.length ? this.files[0].name : 'Choisir un fichier (JPG, PNG ou PDF)...';
     $(this).next('.custom-file-label').text(fileName);
+});
+
+// Avant d'enregistrer, on vérifie si ce téléphone a déjà servi pour une
+// demande précédente : l'accueil est prévenu (qui, quand) et peut se
+// raviser ou confirmer, plutôt que de créer un doublon sans le savoir.
+var pendingTelForm = null;
+
+function attachTelConfirm(formSelector, excludeIdGetter) {
+    $(formSelector).on('submit', function (e) {
+        var form = this;
+        var tel = $(form).find('input[name="tel"]').val();
+        if (!tel) { return; }
+        e.preventDefault();
+        var excludeId = excludeIdGetter ? excludeIdGetter() : null;
+        $.get('{{ route('depot.check-tel') }}', { tel: tel, exclude_id: excludeId })
+            .done(function (data) {
+                if (data.exists) {
+                    pendingTelForm = form;
+                    $('#telConfirmMessage').text(
+                        'Ce numéro (' + tel + ') a déjà été utilisé pour la demande ' + (data.reference || '—') +
+                        ', déposée le ' + data.date + ' à ' + data.heure + ' par ' + data.agent + '. Voulez-vous continuer ?'
+                    );
+                    $('#telConfirmModal').modal('show');
+                } else {
+                    form.submit();
+                }
+            })
+            .fail(function () {
+                // En cas d'erreur réseau, ne pas bloquer l'accueil.
+                form.submit();
+            });
+    });
+}
+
+attachTelConfirm('#exampleModal form', null);
+attachTelConfirm('#editDepotForm', function () { return $('#edit_depot_id').val(); });
+
+$('#telConfirmContinue').on('click', function () {
+    $('#telConfirmModal').modal('hide');
+    if (pendingTelForm) {
+        pendingTelForm.submit();
+        pendingTelForm = null;
+    }
 });
 
 @if ($errors->any())

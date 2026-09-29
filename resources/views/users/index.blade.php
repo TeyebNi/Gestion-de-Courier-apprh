@@ -65,6 +65,7 @@ Les Utilisateurs
                                     <a data-id="{{ $u->id }}"
                                        data-name="{{ $u->name }}"
                                        data-email="{{ $u->email }}"
+                                       data-tel="{{ $u->tel }}"
                                        data-role="{{ $u->role->value }}"
                                        data-role-kind="{{ $u->role_kind }}"
                                        data-division-of="{{ $u->division_of }}"
@@ -148,6 +149,16 @@ Les Utilisateurs
                         </div>
                         <input type="email" class="form-control" name="email" value="{{ old('email') }}" required>
                     </div>
+                    <div class="input-group mb-3" id="create_tel_group" style="display:none;">
+                        <div class="input-group-prepend">
+                            <span class="input-group-text">Téléphone</span>
+                        </div>
+                        <input type="text" class="form-control @error('tel') is-invalid @enderror" name="tel" id="create_tel" value="{{ old('tel') }}" placeholder="8 chiffres, débutant par 2, 3 ou 4" inputmode="numeric" maxlength="8">
+                        @error('tel')
+                            <div class="invalid-feedback">{{ $message }}</div>
+                        @enderror
+                    </div>
+                    <small class="text-muted d-block mb-3" id="create_tel_note" style="display:none;">Sert à identifier ce compte Accueil et à se connecter (à la place de l'email).</small>
                     <div class="input-group mb-3">
                         <div class="input-group-prepend">
                             <span class="input-group-text">Mot de passe</span>
@@ -256,6 +267,16 @@ Les Utilisateurs
                         </div>
                         <input type="email" class="form-control" name="email" id="edit_email" required>
                     </div>
+                    <div class="input-group mb-3" id="edit_tel_group" style="display:none;">
+                        <div class="input-group-prepend">
+                            <span class="input-group-text">Téléphone</span>
+                        </div>
+                        <input type="text" class="form-control @error('tel') is-invalid @enderror" name="tel" id="edit_tel" placeholder="8 chiffres, débutant par 2, 3 ou 4" inputmode="numeric" maxlength="8">
+                        @error('tel')
+                            <div class="invalid-feedback">{{ $message }}</div>
+                        @enderror
+                    </div>
+                    <small class="text-muted d-block mb-3" id="edit_tel_note" style="display:none;">Sert à identifier ce compte Accueil et à se connecter (à la place de l'email).</small>
                     <div class="input-group mb-3">
                         <div class="input-group-prepend">
                             <span class="input-group-text">Fonction</span>
@@ -431,6 +452,7 @@ $('#editUserModal').on('show.bs.modal', function (event) {
     $('#editUserForm').attr('action', '{{ url('/utilisateurs') }}/' + id);
     $('#edit_name').val(button.data('name'));
     $('#edit_email').val(button.data('email'));
+    $('#edit_tel').val(button.data('tel'));
     $('#edit_role option[data-kind="' + kind + '"]').prop('selected', true);
     $('#edit_can_manage_users').prop('checked', button.data('can-manage-users') == 1);
     $('#edit_can_access_cabinet').prop('checked', button.data('can-access-cabinet') == 1);
@@ -506,6 +528,16 @@ function toggleServiceField(kind, prefix) {
         $('#' + prefix + '_can_manage_users').prop('checked', false);
         $('#' + prefix + '_can_access_cabinet').prop('checked', false);
         $('#' + prefix + '_can_access_all_services').prop('checked', false);
+    }
+
+    // Le téléphone n'a de sens (et n'est obligatoire) que pour un compte
+    // Admin : c'est lui qui accède au Dépôt des Demandes (Accueil), et qui
+    // pourra se connecter par téléphone à la place de l'email.
+    $('#' + prefix + '_tel_group').toggle(kind === 'admin');
+    $('#' + prefix + '_tel_note').toggle(kind === 'admin');
+    document.getElementById(prefix + '_tel').required = kind === 'admin';
+    if (kind !== 'admin') {
+        $('#' + prefix + '_tel').val('');
     }
 }
 

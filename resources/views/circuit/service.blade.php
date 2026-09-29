@@ -31,6 +31,38 @@ document.addEventListener('DOMContentLoaded', function () {
 <div class="row">
     <div class="col-md-12">
         <div class="card">
+            <div class="card-header d-flex justify-content-between align-items-center flex-wrap">
+                <h4 class="card-title mb-0" style="font-weight: 700; color: #212529;">
+                    Demandes du Service
+                </h4>
+                <form method="GET" action="{{ route('circuit.service.index') }}" class="form-inline">
+                    <select name="statut" class="form-control form-control-sm mr-2" onchange="this.form.submit()">
+                        <option value="">Tous les statuts</option>
+                        <option value="traiter" @selected($statut === 'traiter')>Traitées</option>
+                        <option value="classer" @selected($statut === 'classer')>Classées</option>
+                        <option value="convoquer" @selected($statut === 'convoquer')>Convoquées</option>
+                    </select>
+                    <input type="text" name="search" class="form-control form-control-sm" placeholder="Rechercher par code, objet, téléphone..." value="{{ $search }}" style="min-width:220px;">
+                    <button type="submit" class="btn btn-primary btn-sm ml-2">Rechercher</button>
+                    @if($search || $statut)
+                    <a href="{{ route('circuit.service.index') }}" class="btn btn-outline-secondary btn-sm ml-2" title="Réinitialiser">&times;</a>
+                    @endif
+                </form>
+                <a href="{{ route('circuit.service.export', ['search' => $search, 'statut' => $statut]) }}" class="btn btn-success btn-sm ml-2" title="Exporter en Excel"><i class="fas fa-file-excel"></i></a>
+            </div>
+        </div>
+    </div>
+</div>
+
+{{-- Une résolution (Traitée/Classée/Convoquée) ne concerne que les demandes
+     déjà traitées ; les demandes en cours n'en ont pas encore et n'y
+     répondent jamais. On ne montre donc ce tableau que quand aucune
+     résolution n'est choisie (la recherche texte, elle, s'y applique et
+     reste visible). --}}
+@if(! $statut)
+<div class="row">
+    <div class="col-md-12">
+        <div class="card">
             <div class="card-header">
                 <h4 class="card-title mb-0" style="font-weight: 700; color: #212529;">
                     {{ auth()->user()->specialServiceLabel() ? 'Demandes qui vous sont orientées' : 'Demandes orientées vers votre service' }}
@@ -88,6 +120,7 @@ document.addEventListener('DOMContentLoaded', function () {
         </div>
     </div>
 </div>
+@endif
 
 <div class="row">
     <div class="col-md-12">
