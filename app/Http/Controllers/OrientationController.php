@@ -89,7 +89,7 @@ class OrientationController extends Controller
         $usersUtilisant = User::where('service', $orientation->name)->count();
 
         if ($demandesAssignees + $demandesOrigine + $usersUtilisant > 0) {
-            return redirect()->route('orientation.index')->with('error', "Impossible de supprimer « {$orientation->name} » : encore utilisée par {$demandesAssignees} demande(s) assignée(s), {$demandesOrigine} demande(s) interne(s) et {$usersUtilisant} compte(s) utilisateur.");
+            return redirect()->route('orientation.index')->with('error', "Impossible de supprimer « {$orientation->name} » : encore utilisée par {$demandesAssignees} courrier(s) assigné(s), {$demandesOrigine} courrier(s) interne(s) et {$usersUtilisant} compte(s) utilisateur.");
         }
 
         $id = $orientation->id;

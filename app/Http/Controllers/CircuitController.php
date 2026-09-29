@@ -57,7 +57,7 @@ class CircuitController extends Controller
         }
 
         if ($tabdepot->statut_circuit !== 'accueil') {
-            abort(403, "Cette demande n'est plus à l'accueil, elle ne peut pas être renvoyée au Cabinet depuis ici.");
+            abort(403, "Ce courrier n'est plus à l'accueil, il ne peut pas être renvoyé au Cabinet depuis ici.");
         }
 
         $ancien = $tabdepot->statut_circuit;
@@ -72,7 +72,7 @@ class CircuitController extends Controller
 
         $this->logHistorique($tabdepot, $ancien, 'fatou');
 
-        return back()->with('success', 'La demande a été envoyée au Cabinet.');
+        return back()->with('success', 'Le courrier a été envoyé au Cabinet.');
     }
 
     /**
@@ -174,7 +174,7 @@ class CircuitController extends Controller
             $demandes,
             ['N°', 'Code', 'Objet', 'Nom', 'Téléphone', 'Origine', 'Statut', 'Annotations du Maire', 'Dernière mise à jour'],
             fn ($d, $i) => [$i + 1, $d->reference, $d->objet, $d->nom, $d->tel, $d->origine, $d->statutLabel(), $d->remarque_maire, $d->updated_at->format('d/m/Y H:i')],
-            'cabinet_demandes'
+            'cabinet_courriers'
         );
     }
 
@@ -190,7 +190,7 @@ class CircuitController extends Controller
         }
 
         if ($tabdepot->statut_circuit !== 'fatou') {
-            abort(403, "Cette demande n'est pas en attente d'annotations du Maire.");
+            abort(403, "Ce courrier n'est pas en attente d'annotations du Maire.");
         }
 
         $request->validate([
@@ -242,13 +242,13 @@ class CircuitController extends Controller
             ServiceNotification::create([
                 'service' => $destination,
                 'iddmd' => $tabdepot->id,
-                'message' => "Nouvelle demande vous a été affectée (Code demande : {$tabdepot->id}).",
+                'message' => "Nouveau courrier vous a été affecté (Code courrier : {$tabdepot->id}).",
             ]);
         }
 
         return back()->with('success', $destination
-            ? 'Les annotations ont été enregistrées et la demande envoyée.'
-            : 'Les annotations ont été enregistrées et la demande classée.');
+            ? 'Les annotations ont été enregistrées et le courrier envoyé.'
+            : 'Les annotations ont été enregistrées et le courrier classé.');
     }
 
     /**
@@ -337,7 +337,7 @@ class CircuitController extends Controller
             $demandes,
             ['N°', 'Code', 'Objet', 'Nom', 'Téléphone', 'Origine', 'Statut', 'Annotations du Maire', 'Dernière mise à jour'],
             fn ($d, $i) => [$i + 1, $d->reference, $d->objet, $d->nom, $d->tel, $d->origine, $d->statutLabel(), $d->remarque_maire, $d->updated_at->format('d/m/Y H:i')],
-            'demandes_service'
+            'courriers_service'
         );
     }
 
@@ -350,11 +350,11 @@ class CircuitController extends Controller
         $user = auth()->user();
 
         if (! $user->canAccessAllServices() && $tabdepot->service_assigne !== $user->service) {
-            abort(403, "Cette demande n'est pas assignée à votre service.");
+            abort(403, "Ce courrier n'est pas assigné à votre service.");
         }
 
         if ($tabdepot->statut_circuit !== 'service') {
-            abort(403, "Cette demande n'est pas en attente de traitement par un service.");
+            abort(403, "Ce courrier n'est pas en attente de traitement par un service.");
         }
 
         $request->validate([
@@ -384,7 +384,7 @@ class CircuitController extends Controller
             ->where('service', $tabdepot->service_assigne)
             ->update(['is_read' => true]);
 
-        return back()->with('success', 'La demande a été marquée comme traitée.');
+        return back()->with('success', 'Le courrier a été marqué comme traité.');
     }
 
     /**
@@ -451,9 +451,9 @@ class CircuitController extends Controller
 
         return $this->streamCsv(
             $demandes,
-            ['N°', 'Code', 'Objet', 'Nom', 'Téléphone', 'Origine', 'Où se trouve la demande', 'Annotations du Maire', 'Enregistrée par', 'Dernière mise à jour'],
+            ['N°', 'Code', 'Objet', 'Nom', 'Téléphone', 'Origine', 'Où se trouve le courrier', 'Annotations du Maire', 'Enregistré par', 'Dernière mise à jour'],
             fn ($d, $i) => [$i + 1, $d->reference, $d->objet, $d->nom, $d->tel, $d->origine, $d->statutLabel(), $d->remarque_maire, $d->agentAccueil(), $d->updated_at->format('d/m/Y H:i')],
-            'suivi_demandes'
+            'suivi_courriers'
         );
     }
 
@@ -466,7 +466,7 @@ class CircuitController extends Controller
         $estSonPropreService = $tabdepot->service_assigne && $tabdepot->service_assigne === $user->service;
 
         if (! $user->canAccessSuivi() && ! $estSonPropreService) {
-            abort(403, "Vous n'avez pas accès à l'historique de cette demande.");
+            abort(403, "Vous n'avez pas accès à l'historique de ce courrier.");
         }
 
         $historiques = $tabdepot->historiques()->with('user')->paginate(5);

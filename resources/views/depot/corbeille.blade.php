@@ -1,7 +1,7 @@
 @extends('layouts.master')
 
 @section('title')
-Corbeille - Dépôt des Demandes
+Corbeille - Dépôt des Courriers
 @endsection
 
 @section('content')
@@ -11,7 +11,7 @@ Corbeille - Dépôt des Demandes
         <div class="card">
             <div class="card-header d-flex justify-content-between align-items-center flex-wrap">
                 <h4 class="card-title mb-0" style="font-weight: 700; color: #212529;">
-                    Corbeille — Demandes supprimées
+                    Corbeille — Courriers supprimés
                 </h4>
                 <div class="d-flex align-items-center flex-wrap">
                     @include('partials.search-box', ['route' => 'depot.trashed', 'placeholder' => 'Rechercher par code, objet, téléphone...'])
@@ -25,8 +25,8 @@ Corbeille - Dépôt des Demandes
             </div>
             <div class="card-body">
                 <p class="text-muted">
-                    Les demandes supprimées restent ici et peuvent être restaurées. Seule une demande encore à l'accueil
-                    peut être supprimée depuis "Gestion des Demandes".
+                    Les courriers supprimés restent ici et peuvent être restaurés. Seul un courrier encore à l'accueil
+                    peut être supprimé depuis "Gestion des Courriers".
                 </p>
 
                 <div class="table-responsive">
@@ -54,7 +54,7 @@ Corbeille - Dépôt des Demandes
                                     </form>
                                     @if(auth()->user()->isAdmin())
                                     <button type="button" class="btn btn-danger btn-sm force-delete-btn"
-                                        data-id="{{ $item->id }}" data-nom="{{ $item->reference ?: 'cette demande' }}"
+                                        data-id="{{ $item->id }}" data-nom="{{ $item->reference ?: 'ce courrier' }}"
                                         data-toggle="modal" data-target="#forceDeleteModal" title="Supprimer définitivement">
                                         <i class="fas fa-trash"></i>
                                     </button>
@@ -65,7 +65,7 @@ Corbeille - Dépôt des Demandes
                             <tr>
                                 <td colspan="5" class="text-center text-muted">
                                     @if($search)
-                                        Aucune demande supprimée ne correspond à « {{ $search }} ».
+                                        Aucun courrier supprimé ne correspond à « {{ $search }} ».
                                     @else
                                         La corbeille est vide.
                                     @endif
@@ -96,7 +96,7 @@ Corbeille - Dépôt des Demandes
                 @csrf
                 @method('DELETE')
                 <div class="modal-body">
-                    <p>Supprimer définitivement <strong>toutes</strong> les demandes de la corbeille ? Cette action est irréversible.</p>
+                    <p>Supprimer définitivement <strong>tous</strong> les courriers de la corbeille ? Cette action est irréversible.</p>
                 </div>
                 <div class="modal-footer">
                     <button type="button" class="btn btn-warning" data-dismiss="modal">Annuler</button>

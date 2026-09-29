@@ -132,7 +132,7 @@ class RolePermissionsTest extends TestCase
 
         $response->assertOk();
         $response->assertDontSee('Guichet');
-        $response->assertSee('Nombre de Demandes');
+        $response->assertSee('Nombre de Courriers');
     }
 
     public function test_unrestricted_admin_still_sees_the_full_dashboard(): void
@@ -143,7 +143,7 @@ class RolePermissionsTest extends TestCase
 
         $response->assertOk();
         $response->assertDontSee('Guichet');
-        $response->assertSee('Nombre de Demandes');
+        $response->assertSee('Nombre de Courriers');
     }
 
     public function test_dashboard_does_not_leak_raw_demande_list_to_cabinet(): void
@@ -153,7 +153,7 @@ class RolePermissionsTest extends TestCase
         $cabinetResponse = $this->actingAs($cabinet)->get('/');
         $cabinetResponse->assertOk();
         $cabinetResponse->assertSee("En attente d'annotations");
-        $cabinetResponse->assertDontSee('Dernières Demandes Déposées');
+        $cabinetResponse->assertDontSee('Derniers Courriers Déposés');
         $cabinetResponse->assertDontSee(route('depot.index'), false);
     }
 
@@ -184,7 +184,7 @@ class RolePermissionsTest extends TestCase
         $response = $this->actingAs($cabinet)->get('/');
 
         $response->assertOk();
-        $response->assertDontSee('Suivi des Demandes');
+        $response->assertDontSee('Suivi des Courriers');
     }
 
     public function test_cabinet_mini_dashboard_does_not_show_decision_totals(): void
@@ -207,8 +207,8 @@ class RolePermissionsTest extends TestCase
         $response = $this->actingAs($cabinet)->get('/');
 
         $response->assertOk();
-        $response->assertSee('Demandes par Service');
-        $response->assertSee('Demandes par Adjoint au Maire');
+        $response->assertSee('Courriers par Service');
+        $response->assertSee('Courriers par Adjoint au Maire');
         $response->assertViewHas('serviceLabels', function ($labels) {
             return $labels->contains('Informatique') && ! $labels->contains('Adjoint au Maire');
         });
@@ -227,7 +227,7 @@ class RolePermissionsTest extends TestCase
         $response->assertDontSee('Type de Demande');
         $response->assertDontSee('Acceptées / Refusées');
         $response->assertDontSee("Taux d'Acceptation", false);
-        $response->assertSee('Évolution des Demandes');
+        $response->assertSee('Évolution des Courriers');
     }
 
     public function test_admin_dashboard_no_longer_shows_type_or_acceptance_charts(): void
@@ -240,7 +240,7 @@ class RolePermissionsTest extends TestCase
         $response->assertDontSee('Type de Demande');
         $response->assertDontSee('Acceptées / Refusées');
         $response->assertDontSee("Taux d'Acceptation", false);
-        $response->assertSee('Évolution des Demandes');
+        $response->assertSee('Évolution des Courriers');
     }
 
     public function test_admin_dashboard_workload_chart_groups_divisions_under_their_service_and_keeps_special_roles_separate(): void
@@ -278,7 +278,7 @@ class RolePermissionsTest extends TestCase
         $makeDepot(['statut_circuit' => 'service', 'destination_type' => 'chef_service', 'service_assigne' => 'Chef Informatique']);
 
         // Deux Adjoints au Maire différents : ne doivent pas apparaître dans
-        // le graphique global "Demandes par Service" (ni fondus dans une
+        // le graphique global "Courriers par Service" (ni fondus dans une
         // catégorie générique, ni comptés un par un) — seulement dans leur
         // propre détail personne par personne, ci-dessous.
         $makeDepot(['statut_circuit' => 'service', 'destination_type' => 'maire_adjoint', 'service_assigne' => 'Zeroug']);
@@ -311,8 +311,8 @@ class RolePermissionsTest extends TestCase
         $response->assertViewHas('conseillerCounts', function ($counts) {
             return $counts->toArray() === [1];
         });
-        $response->assertSee('Demandes par Adjoint au Maire');
-        $response->assertSee('Demandes par Conseiller');
+        $response->assertSee('Courriers par Adjoint au Maire');
+        $response->assertSee('Courriers par Conseiller');
 
         // Vue d'ensemble par étape : "Chez un service" (2 Informatique + 1
         // Division + 1 Chef de Service = 4), Adjoint au Maire (3) et
@@ -353,7 +353,7 @@ class RolePermissionsTest extends TestCase
 
         $response->assertOk();
         $response->assertSee('circuitBellDropdown', false);
-        $response->assertSee('3 demande(s) à transmettre au Cabinet');
+        $response->assertSee('3 courrier(s) à transmettre au Cabinet');
     }
 
     public function test_cabinet_sees_a_navbar_bell_with_the_pending_count(): void
@@ -366,7 +366,7 @@ class RolePermissionsTest extends TestCase
 
         $response->assertOk();
         $response->assertSee('circuitBellDropdown', false);
-        $response->assertSee("2 demande(s) en attente d'annotations", false);
+        $response->assertSee("2 courrier(s) en attente d'annotations", false);
     }
 
     public function test_plain_service_user_does_not_see_the_circuit_bell(): void
@@ -402,7 +402,7 @@ class RolePermissionsTest extends TestCase
 
         $response->assertOk();
         $response->assertDontSee('Type de Demande');
-        $response->assertSee('Évolution des Demandes');
+        $response->assertSee('Évolution des Courriers');
         $response->assertDontSee('Acceptées / Refusées');
         $response->assertDontSee("Taux d'Acceptation", false);
     }
@@ -417,8 +417,8 @@ class RolePermissionsTest extends TestCase
         $response = $this->actingAs($accueil)->get('/');
 
         $response->assertOk();
-        $response->assertSee('Demandes par Service');
-        $response->assertSee('Demandes par Conseiller');
+        $response->assertSee('Courriers par Service');
+        $response->assertSee('Courriers par Conseiller');
         $response->assertViewHas('serviceLabels', function ($labels) {
             return $labels->contains('Informatique') && ! $labels->contains('Conseiller');
         });
@@ -498,10 +498,10 @@ class RolePermissionsTest extends TestCase
 
         $adjointResponse = $this->actingAs($adjointUser)->get('/');
         $adjointResponse->assertSee('Adjoint au Maire');
-        $adjointResponse->assertDontSee('Demandes du Circuit');
+        $adjointResponse->assertDontSee('Courriers du Circuit');
 
         $serviceResponse = $this->actingAs($serviceUser)->get('/');
-        $serviceResponse->assertSee('Demandes du Circuit');
+        $serviceResponse->assertSee('Courriers du Circuit');
         $serviceResponse->assertDontSee('Adjoint au Maire');
     }
 
@@ -521,6 +521,6 @@ class RolePermissionsTest extends TestCase
         $response = $this->actingAs($user)->get('/');
 
         $response->assertSee($label);
-        $response->assertDontSee('Demandes du Circuit');
+        $response->assertDontSee('Courriers du Circuit');
     }
 }

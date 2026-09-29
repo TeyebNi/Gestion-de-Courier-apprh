@@ -613,7 +613,7 @@ class DepotTest extends TestCase
         $response = $this->actingAs($user)->get('/depot-corbeille?search=Introuvable');
 
         $response->assertOk();
-        $response->assertSee('Aucune demande supprimée ne correspond');
+        $response->assertSee('Aucun courrier supprimé ne correspond');
     }
 
     public function test_non_admin_cannot_permanently_delete_a_trashed_demande(): void
@@ -798,7 +798,7 @@ class DepotTest extends TestCase
         ]);
 
         $demande = Tabdepot::firstOrFail();
-        $response->assertSessionHas('success', "Demande {$demande->reference} enregistrée avec succès.");
+        $response->assertSessionHas('success', "Courrier {$demande->reference} enregistré avec succès.");
         $response->assertSessionMissing('succes');
     }
 
@@ -822,7 +822,7 @@ class DepotTest extends TestCase
         $response = $this->actingAs($user)->get('/depot?search=Introuvable');
 
         $response->assertOk();
-        $response->assertSee('Aucune demande ne correspond');
+        $response->assertSee('Aucun courrier ne correspond');
     }
 
     public function test_receipt_shows_code_objet_origine_and_a_localized_date(): void

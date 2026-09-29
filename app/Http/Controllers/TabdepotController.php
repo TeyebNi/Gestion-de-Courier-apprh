@@ -66,7 +66,7 @@ class TabdepotController extends Controller
             $tabdepots,
             ['N°', 'Code', 'Objet', 'Nom', 'Téléphone', 'Origine', 'Détails Origine', 'Date réception', 'Statut'],
             fn ($t, $i) => [$i + 1, $t->reference, $t->objet, $t->nom, $t->tel, $t->origine, $t->origine_detail, $t->daterecp, $t->statutLabel()],
-            'depot_demandes'
+            'depot_courriers'
         );
     }
 
@@ -174,7 +174,7 @@ class TabdepotController extends Controller
             'user_id' => auth()->id(),
         ]);
 
-        return redirect()->route('depot.index')->with('success', "Demande {$demande->reference} enregistrée avec succès.");
+        return redirect()->route('depot.index')->with('success', "Courrier {$demande->reference} enregistré avec succès.");
     }
 
     public function update(Request $request, Tabdepot $tabdepot)
@@ -184,7 +184,7 @@ class TabdepotController extends Controller
         }
 
         if (($tabdepot->statut_circuit ?? 'accueil') !== 'accueil') {
-            abort(403, "Cette demande a déjà été envoyée dans le circuit et ne peut plus être modifiée depuis l'accueil.");
+            abort(403, "Ce courrier a déjà été envoyé dans le circuit et ne peut plus être modifié depuis l'accueil.");
         }
 
         $request->validate([
@@ -224,10 +224,10 @@ class TabdepotController extends Controller
             'tabdepot_id' => $tabdepot->id,
             'vers_statut' => $tabdepot->statut_circuit,
             'user_id' => auth()->id(),
-            'commentaire' => 'Informations de la demande modifiées par ' . auth()->user()->name . '.',
+            'commentaire' => 'Informations du courrier modifiées par ' . auth()->user()->name . '.',
         ]);
 
-        return redirect()->route('depot.index')->with('success', "Demande {$tabdepot->reference} modifiée avec succès.");
+        return redirect()->route('depot.index')->with('success', "Courrier {$tabdepot->reference} modifié avec succès.");
     }
 
     public function destroy(Tabdepot $tabdepot)
@@ -237,13 +237,13 @@ class TabdepotController extends Controller
         }
 
         if (($tabdepot->statut_circuit ?? 'accueil') !== 'accueil') {
-            abort(403, "Cette demande a déjà été envoyée dans le circuit et ne peut plus être supprimée depuis l'accueil.");
+            abort(403, "Ce courrier a déjà été envoyé dans le circuit et ne peut plus être supprimé depuis l'accueil.");
         }
 
         $reference = $tabdepot->reference;
         $tabdepot->delete();
 
-        return redirect()->route('depot.index')->with('success', "Demande {$reference} supprimée avec succès.");
+        return redirect()->route('depot.index')->with('success', "Courrier {$reference} supprimé avec succès.");
     }
 
     public function trashed(Request $request)
@@ -276,7 +276,7 @@ class TabdepotController extends Controller
         $tabdepot = Tabdepot::onlyTrashed()->findOrFail($id);
         $tabdepot->restore();
 
-        return redirect()->route('depot.trashed')->with('success', "Demande {$tabdepot->reference} restaurée avec succès.");
+        return redirect()->route('depot.trashed')->with('success', "Courrier {$tabdepot->reference} restauré avec succès.");
     }
 
     public function emptyTrash()
@@ -293,13 +293,13 @@ class TabdepotController extends Controller
             $demande->forceDelete();
         }
 
-        return redirect()->route('depot.trashed')->with('success', $demandes->count() . ' demande(s) supprimée(s) définitivement.');
+        return redirect()->route('depot.trashed')->with('success', $demandes->count() . ' courrier(s) supprimé(s) définitivement.');
     }
 
     public function forceDelete($id)
     {
         if (! auth()->user()->isAdmin()) {
-            abort(403, "Seuls les administrateurs peuvent supprimer définitivement une demande.");
+            abort(403, "Seuls les administrateurs peuvent supprimer définitivement un courrier.");
         }
 
         $tabdepot = Tabdepot::onlyTrashed()->findOrFail($id);
@@ -309,7 +309,7 @@ class TabdepotController extends Controller
         }
         $tabdepot->forceDelete();
 
-        return redirect()->route('depot.trashed')->with('success', "Demande {$reference} supprimée définitivement.");
+        return redirect()->route('depot.trashed')->with('success', "Courrier {$reference} supprimé définitivement.");
     }
 }
 

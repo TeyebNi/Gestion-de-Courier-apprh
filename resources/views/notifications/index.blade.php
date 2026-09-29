@@ -50,8 +50,8 @@ Notifications
                                 </td>
                                 <td class="text-right">
                                     @if($n->iddmd && is_numeric($n->iddmd) && in_array((int) $n->iddmd, $validDemandeIds))
-                                    <a href="{{ route('circuit.historique', $n->iddmd) }}" class="btn btn-secondary btn-sm" title="Voir la demande">
-                                        <i class="fas fa-eye"></i> Voir la demande
+                                    <a href="{{ route('circuit.historique', $n->iddmd) }}" class="btn btn-secondary btn-sm" title="Voir le courrier">
+                                        <i class="fas fa-eye"></i> Voir le courrier
                                     </a>
                                     @endif
                                     @if(!$n->is_read)

@@ -227,7 +227,7 @@ Les Utilisateurs
                         </div>
                         <div class="form-check mt-2">
                             <input type="checkbox" class="form-check-input" name="can_access_all_services" id="create_can_access_all_services" value="1">
-                            <label class="form-check-label" for="create_can_access_all_services">Voit les demandes de tous les services (Suivi du Circuit / Notifications)</label>
+                            <label class="form-check-label" for="create_can_access_all_services">Voit les courriers de tous les services (Suivi du Circuit / Notifications)</label>
                         </div>
                     </div>
                 </div>
@@ -333,7 +333,7 @@ Les Utilisateurs
                         </div>
                         <div class="form-check mt-2">
                             <input type="checkbox" class="form-check-input" name="can_access_all_services" id="edit_can_access_all_services" value="1">
-                            <label class="form-check-label" for="edit_can_access_all_services">Voit les demandes de tous les services (Suivi du Circuit / Notifications)</label>
+                            <label class="form-check-label" for="edit_can_access_all_services">Voit les courriers de tous les services (Suivi du Circuit / Notifications)</label>
                         </div>
                     </div>
                 </div>
@@ -531,7 +531,7 @@ function toggleServiceField(kind, prefix) {
     }
 
     // Le téléphone n'a de sens (et n'est obligatoire) que pour un compte
-    // Admin : c'est lui qui accède au Dépôt des Demandes (Accueil), et qui
+    // Admin : c'est lui qui accède au Dépôt des Courriers (Accueil), et qui
     // pourra se connecter par téléphone à la place de l'email.
     $('#' + prefix + '_tel_group').toggle(kind === 'admin');
     $('#' + prefix + '_tel_note').toggle(kind === 'admin');

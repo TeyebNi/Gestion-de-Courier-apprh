@@ -1,7 +1,7 @@
 @extends('layouts.master')
 
 @section('title')
-Demandes du Service
+Courriers du Service
 @endsection
 
 @section('content')
@@ -33,7 +33,7 @@ document.addEventListener('DOMContentLoaded', function () {
         <div class="card">
             <div class="card-header d-flex justify-content-between align-items-center flex-wrap">
                 <h4 class="card-title mb-0" style="font-weight: 700; color: #212529;">
-                    Demandes du Service
+                    Courriers du Service
                 </h4>
                 <form method="GET" action="{{ route('circuit.service.index') }}" class="form-inline">
                     <select name="statut" class="form-control form-control-sm mr-2" onchange="this.form.submit()">
@@ -54,8 +54,8 @@ document.addEventListener('DOMContentLoaded', function () {
     </div>
 </div>
 
-{{-- Une résolution (Traitée/Classée/Convoquée) ne concerne que les demandes
-     déjà traitées ; les demandes en cours n'en ont pas encore et n'y
+{{-- Une résolution (Traitée/Classée/Convoquée) ne concerne que les courriers
+     déjà traités ; les courriers en cours n'en ont pas encore et n'y
      répondent jamais. On ne montre donc ce tableau que quand aucune
      résolution n'est choisie (la recherche texte, elle, s'y applique et
      reste visible). --}}
@@ -65,7 +65,7 @@ document.addEventListener('DOMContentLoaded', function () {
         <div class="card">
             <div class="card-header">
                 <h4 class="card-title mb-0" style="font-weight: 700; color: #212529;">
-                    {{ auth()->user()->specialServiceLabel() ? 'Demandes qui vous sont orientées' : 'Demandes orientées vers votre service' }}
+                    {{ auth()->user()->specialServiceLabel() ? 'Courriers qui vous sont orientés' : 'Courriers orientés vers votre service' }}
                 </h4>
             </div>
             <div class="card-body">
@@ -88,12 +88,12 @@ document.addEventListener('DOMContentLoaded', function () {
                                 <td class="text-truncate" style="max-width:220px;" title="{{ $d->remarque_maire }}">{{ $d->remarque_maire ?: '—' }}</td>
                                 <td>{{ $d->updated_at->format('d/m/Y H:i') }}</td>
                                 <td>
-                                    <form action="{{ route('circuit.cloturer', $d) }}" method="post" style="display:inline;" onsubmit="return confirm('Marquer cette demande comme traitée ?');">
+                                    <form action="{{ route('circuit.cloturer', $d) }}" method="post" style="display:inline;" onsubmit="return confirm('Marquer ce courrier comme traité ?');">
                                         @csrf
                                         <input type="hidden" name="resolution" value="traiter">
                                         <button type="submit" class="btn btn-success btn-sm" title="Traiter"><i class="fas fa-check"></i> Traiter</button>
                                     </form>
-                                    <form action="{{ route('circuit.cloturer', $d) }}" method="post" style="display:inline;" onsubmit="return confirm('Classer cette demande sans traitement particulier ?');">
+                                    <form action="{{ route('circuit.cloturer', $d) }}" method="post" style="display:inline;" onsubmit="return confirm('Classer ce courrier sans traitement particulier ?');">
                                         @csrf
                                         <input type="hidden" name="resolution" value="classer">
                                         <button type="submit" class="btn btn-secondary btn-sm" title="Classer"><i class="fas fa-folder"></i> Classer</button>
@@ -107,7 +107,7 @@ document.addEventListener('DOMContentLoaded', function () {
                             </tr>
                             @empty
                             <tr>
-                                <td colspan="6" class="text-center text-muted">Aucune demande pour votre service.</td>
+                                <td colspan="6" class="text-center text-muted">Aucun courrier pour votre service.</td>
                             </tr>
                             @endforelse
                         </tbody>
@@ -127,7 +127,7 @@ document.addEventListener('DOMContentLoaded', function () {
         <div class="card">
             <div class="card-header">
                 <h4 class="card-title mb-0" style="font-weight: 700; color: #212529;">
-                    Demandes traitées
+                    Courriers traités
                 </h4>
             </div>
             <div class="card-body">
@@ -167,7 +167,7 @@ document.addEventListener('DOMContentLoaded', function () {
                             </tr>
                             @empty
                             <tr>
-                                <td colspan="6" class="text-center text-muted">Aucune demande traitée pour le moment.</td>
+                                <td colspan="6" class="text-center text-muted">Aucun courrier traité pour le moment.</td>
                             </tr>
                             @endforelse
                         </tbody>

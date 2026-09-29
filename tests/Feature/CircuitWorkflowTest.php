@@ -684,9 +684,9 @@ class CircuitWorkflowTest extends TestCase
         $response = $this->actingAs($fatou)->get('/circuit/fatou');
 
         $response->assertOk();
-        $response->assertSee('Demandes déjà annotées');
+        $response->assertSee('Courriers déjà annotés');
         $response->assertSee('Dossier vu, à traiter en priorité.');
-        $response->assertDontSee('Aucune demande annotée pour le moment.');
+        $response->assertDontSee('Aucun courrier annoté pour le moment.');
     }
 
     public function test_decide_marks_the_demande_as_unseen_by_accueil(): void
@@ -1226,7 +1226,7 @@ class CircuitWorkflowTest extends TestCase
         $response = $this->actingAs($serviceUser)->get('/circuit/service?statut=traiter');
 
         $response->assertOk();
-        $response->assertDontSee('Demandes orientées vers votre service');
+        $response->assertDontSee('Courriers orientés vers votre service');
         $response->assertDontSee('CODE-EN-COURS');
         $response->assertSee('CODE-TRAITEE');
     }
@@ -1257,13 +1257,13 @@ class CircuitWorkflowTest extends TestCase
         $response = $this->actingAs($cabinet)->get('/circuit/fatou?statut=cloture');
 
         $response->assertOk();
-        $response->assertDontSee("Demandes en attente d'annotations", false);
+        $response->assertDontSee("Courriers en attente d'annotations", false);
         $response->assertDontSee('CODE-EN-ATTENTE');
         $response->assertSee('CODE-CLOTUREE');
 
         // Sans statut sélectionné, elle réapparaît normalement.
         $response = $this->actingAs($cabinet)->get('/circuit/fatou');
-        $response->assertSee("Demandes en attente d'annotations", false);
+        $response->assertSee("Courriers en attente d'annotations", false);
         $response->assertSee('CODE-EN-ATTENTE');
     }
 

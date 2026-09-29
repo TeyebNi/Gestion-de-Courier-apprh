@@ -1,7 +1,7 @@
 @extends('layouts.master')
 
 @section('title')
-Cabinet de Maire - Circuit des Demandes
+Cabinet de Maire - Circuit des Courriers
 @endsection
 
 @section('content')
@@ -56,7 +56,7 @@ document.addEventListener('DOMContentLoaded', function () {
 </div>
 
 {{-- Le statut (service/Adjoint/Conseiller/Clôturée) ne concerne que les
-     demandes déjà annotées ; la file d'attente n'a qu'un seul statut
+     courriers déjà annotés ; la file d'attente n'a qu'un seul statut
      possible ("fatou") et n'y répond jamais — l'afficher quand même à côté
      d'un résultat filtré ne ferait que masquer ce résultat. On ne la montre
      donc que quand aucun statut n'est choisi (la recherche texte, elle,
@@ -67,7 +67,7 @@ document.addEventListener('DOMContentLoaded', function () {
         <div class="card">
             <div class="card-header">
                 <h4 class="card-title mb-0" style="font-weight: 700; color: #212529;">
-                    Demandes en attente d'annotations
+                    Courriers en attente d'annotations
                 </h4>
                 <p class="text-muted mb-0" style="font-size: 0.9em;">
                     Portez le dossier au Maire, recueillez ses annotations, puis saisissez-les ici.
@@ -124,7 +124,7 @@ document.addEventListener('DOMContentLoaded', function () {
                     </div>
                 </div>
                 @empty
-                <p class="text-center text-muted">Aucune demande en attente.</p>
+                <p class="text-center text-muted">Aucun courrier en attente.</p>
                 @endforelse
                 <div class="d-flex justify-content-center mt-3">
                     {{ $aEnvoyer->links() }}
@@ -140,7 +140,7 @@ document.addEventListener('DOMContentLoaded', function () {
         <div class="card">
             <div class="card-header">
                 <h4 class="card-title mb-0" style="font-weight: 700; color: #212529;">
-                    Demandes déjà annotées
+                    Courriers déjà annotés
                 </h4>
             </div>
             <div class="card-body">
@@ -150,7 +150,7 @@ document.addEventListener('DOMContentLoaded', function () {
                             <th>Code</th>
                             <th>Objet</th>
                             <th>Annotations du Maire</th>
-                            <th>Où se trouve la demande ?</th>
+                            <th>Où se trouve le courrier ?</th>
                             <th>Dernière mise à jour</th>
                         </thead>
                         <tbody>
@@ -166,7 +166,7 @@ document.addEventListener('DOMContentLoaded', function () {
                             </tr>
                             @empty
                             <tr>
-                                <td colspan="5" class="text-center text-muted">Aucune demande annotée pour le moment.</td>
+                                <td colspan="5" class="text-center text-muted">Aucun courrier annoté pour le moment.</td>
                             </tr>
                             @endforelse
                         </tbody>
@@ -331,7 +331,7 @@ document.addEventListener('DOMContentLoaded', function () {
     document.querySelectorAll('.top-category').forEach(function (select) {
         select.addEventListener('change', function () { onTopCategoryChange(this, null); });
 
-        // Une demande interne dont le service correspond déjà à une Orientation
+        // Un courrier interne dont le service correspond déjà à une Orientation
         // pré-sélectionne "Service" : révéler tout de suite le bon service choisi.
         if (select.value === 'service' && select.dataset.preselected) {
             onTopCategoryChange(select, select.dataset.preselected);

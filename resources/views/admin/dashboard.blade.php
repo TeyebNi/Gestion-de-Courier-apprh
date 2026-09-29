@@ -134,7 +134,7 @@ Tableau de bord
             <div class="card-footer">
                 <hr>
                 <div class="stats">
-                    <i class="now-ui-icons files_box"></i> Demandes déposées aujourd'hui
+                    <i class="now-ui-icons files_box"></i> Courriers déposés aujourd'hui
                 </div>
             </div>
         </div>
@@ -241,7 +241,7 @@ Tableau de bord
                 <hr>
                 <div class="stats">
                     <a href="{{ route('depot.trashed') }}">
-                        <i class="now-ui-icons arrows-1_refresh-69"></i> Demandes supprimées
+                        <i class="now-ui-icons arrows-1_refresh-69"></i> Courriers supprimés
                     </a>
                 </div>
             </div>
@@ -257,7 +257,7 @@ Tableau de bord
         <div class="card card-chart">
             <div class="card-header">
                 <h5 class="card-category">Suivi dans le temps</h5>
-                <h4 class="card-title">Évolution des Demandes (6 derniers mois)</h4>
+                <h4 class="card-title">Évolution des Courriers (6 derniers mois)</h4>
             </div>
             <div class="card-body">
                 <div class="chart-area">
@@ -266,20 +266,20 @@ Tableau de bord
             </div>
             <div class="card-footer">
                 <div class="stats">
-                    <i class="now-ui-icons arrows-1_refresh-69"></i> Basé sur la date de réception des demandes
+                    <i class="now-ui-icons arrows-1_refresh-69"></i> Basé sur la date de réception des courriers
                 </div>
             </div>
         </div>
     </div>
 </div>
 
-<!-- Dernières demandes -->
+<!-- Derniers courriers -->
 <div class="row">
     <div class="col-md-12">
         <div class="card card-tasks">
             <div class="card-header">
                 <h5 class="card-category">Guichet</h5>
-                <h4 class="card-title">Dernières Demandes Déposées</h4>
+                <h4 class="card-title">Derniers Courriers Déposés</h4>
             </div>
             <div class="card-body">
                 <div class="table-full-width table-responsive">
@@ -300,7 +300,7 @@ Tableau de bord
                             </tr>
                             @empty
                             <tr>
-                                <td colspan="4" class="text-center text-muted">Aucune demande pour le moment.</td>
+                                <td colspan="4" class="text-center text-muted">Aucun courrier pour le moment.</td>
                             </tr>
                             @endforelse
                         </tbody>
@@ -311,7 +311,7 @@ Tableau de bord
                 <hr>
                 <div class="stats">
                     <a href="{{ route('depot.index') }}">
-                        <i class="now-ui-icons files_box"></i> Voir toutes les demandes
+                        <i class="now-ui-icons files_box"></i> Voir tous les courriers
                     </a>
                 </div>
             </div>
@@ -385,7 +385,7 @@ Tableau de bord
         <div class="card card-tasks">
             <div class="card-header">
                 <h5 class="card-category">Cabinet de Maire</h5>
-                <h4 class="card-title">Demandes en attente</h4>
+                <h4 class="card-title">Courriers en attente</h4>
             </div>
             <div class="card-body">
                 <div class="table-full-width table-responsive">
@@ -406,7 +406,7 @@ Tableau de bord
                             </tr>
                             @empty
                             <tr>
-                                <td colspan="4" class="text-center text-muted">Aucune demande en attente.</td>
+                                <td colspan="4" class="text-center text-muted">Aucun courrier en attente.</td>
                             </tr>
                             @endforelse
                         </tbody>
@@ -431,7 +431,7 @@ Tableau de bord
                     </div>
                     <div class="col-7 col-md-8">
                         <div class="numbers">
-                            <p class="card-category">Nombre de Demandes</p>
+                            <p class="card-category">Nombre de Courriers</p>
                             <h4 class="card-title">{{ $totalDemandes }}</h4>
                         </div>
                     </div>
@@ -458,7 +458,7 @@ Tableau de bord
                     </div>
                     <div class="col-7 col-md-8">
                         <div class="numbers">
-                            <p class="card-category">Demandes Assignées</p>
+                            <p class="card-category">Courriers Assignés</p>
                             <h4 class="card-title">{{ $totalDemandesAssignees }}</h4>
                         </div>
                     </div>
@@ -486,7 +486,7 @@ Tableau de bord
                     </div>
                     <div class="col-7 col-md-8">
                         <div class="numbers">
-                            <p class="card-category">Demandes en Cours</p>
+                            <p class="card-category">Courriers en Cours</p>
                             <h4 class="card-title">{{ $totalEnCours }}</h4>
                         </div>
                     </div>
@@ -514,7 +514,7 @@ Tableau de bord
         <div class="card card-chart">
             <div class="card-header">
                 <h5 class="card-category">Suivi dans le temps</h5>
-                <h4 class="card-title">Évolution des Demandes (6 derniers mois)</h4>
+                <h4 class="card-title">Évolution des Courriers (6 derniers mois)</h4>
             </div>
             <div class="card-body">
                 <div class="chart-area">
@@ -523,20 +523,20 @@ Tableau de bord
             </div>
             <div class="card-footer">
                 <div class="stats">
-                    <i class="now-ui-icons arrows-1_refresh-69"></i> Basé sur la date de réception des demandes
+                    <i class="now-ui-icons arrows-1_refresh-69"></i> Basé sur la date de réception des courriers
                 </div>
             </div>
         </div>
     </div>
 </div>
 
-<!-- Dernières demandes -->
+<!-- Derniers courriers -->
 <div class="row">
     <div class="col-lg-12">
         <div class="card card-tasks">
             <div class="card-header">
                 <h5 class="card-category">Activité récente</h5>
-                <h4 class="card-title">{{ $isAdmin ? 'Dernières Demandes Déposées' : 'Dernières Demandes de votre Service' }}</h4>
+                <h4 class="card-title">{{ $isAdmin ? 'Derniers Courriers Déposés' : 'Derniers Courriers de votre Service' }}</h4>
             </div>
             <div class="card-body">
                 <div class="table-full-width table-responsive">
@@ -556,7 +556,7 @@ Tableau de bord
                             </tr>
                             @empty
                             <tr>
-                                <td colspan="3" class="text-center text-muted">Aucune demande pour le moment.</td>
+                                <td colspan="3" class="text-center text-muted">Aucun courrier pour le moment.</td>
                             </tr>
                             @endforelse
                         </tbody>
@@ -579,7 +579,7 @@ Tableau de bord
                             </tr>
                             @empty
                             <tr>
-                                <td colspan="4" class="text-center text-muted">Aucune demande pour le moment.</td>
+                                <td colspan="4" class="text-center text-muted">Aucun courrier pour le moment.</td>
                             </tr>
                             @endforelse
                         </tbody>
@@ -616,7 +616,7 @@ document.addEventListener('DOMContentLoaded', function () {
         data: {
             labels: months,
             datasets: [{
-                label: 'Demandes',
+                label: 'Courriers',
                 data: monthCounts,
                 borderColor: '#e8862c',
                 backgroundColor: 'rgba(232,134,44,0.15)',
@@ -647,7 +647,7 @@ document.addEventListener('DOMContentLoaded', function () {
         data: {
             labels: months,
             datasets: [{
-                label: 'Demandes',
+                label: 'Courriers',
                 data: monthCounts,
                 borderColor: '#e8862c',
                 backgroundColor: 'rgba(232,134,44,0.15)',

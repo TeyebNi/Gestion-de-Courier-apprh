@@ -1,7 +1,7 @@
 @extends('layouts.master')
 
 @section('title')
-Suivi des Demandes
+Suivi des Courriers
 @endsection
 
 @section('content')
@@ -11,7 +11,7 @@ Suivi des Demandes
         <div class="card">
             <div class="card-header d-flex justify-content-between align-items-center flex-wrap">
                 <h4 class="card-title mb-0" style="font-weight: 700; color: #212529;">
-                    Suivi des Demandes
+                    Suivi des Courriers
                 </h4>
                 <form method="GET" action="{{ route('circuit.suivi') }}" class="form-inline">
                     <select name="statut" class="form-control form-control-sm mr-2" onchange="this.form.submit()">
@@ -39,9 +39,9 @@ Suivi des Demandes
                             <th>Code</th>
                             <th>Origine</th>
                             <th>Objet</th>
-                            <th>Où se trouve la demande ?</th>
+                            <th>Où se trouve le courrier ?</th>
                             <th>Annotations du Maire</th>
-                            <th>Enregistrée par</th>
+                            <th>Enregistré par</th>
                             <th>Dernière mise à jour</th>
                             <th>Action</th>
                         </thead>
@@ -65,7 +65,7 @@ Suivi des Demandes
                             </tr>
                             @empty
                             <tr>
-                                <td colspan="8" class="text-center text-muted">Aucune demande engagée dans le circuit pour le moment.</td>
+                                <td colspan="8" class="text-center text-muted">Aucun courrier engagé dans le circuit pour le moment.</td>
                             </tr>
                             @endforelse
                         </tbody>

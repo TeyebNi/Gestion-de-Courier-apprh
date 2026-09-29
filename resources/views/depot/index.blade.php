@@ -11,8 +11,8 @@ Dashboard Courier
         <div class="card">
             <div class="card-header d-flex justify-content-between align-items-center flex-wrap">
                 <h4 class="card-title mb-0" style="font-weight: 700; color: #212529;">
-                    Gestion des Demandes
-                    <button class="btn btn-primary btn-sm ml-2" data-toggle="modal" data-target="#exampleModal">Nouvelle Demande</button>
+                    Gestion des Courriers
+                    <button class="btn btn-primary btn-sm ml-2" data-toggle="modal" data-target="#exampleModal">Nouveau Courrier</button>
                 </h4>
                 <div class="d-flex align-items-center flex-wrap">
                     <form method="GET" action="{{ route('depot.index') }}" class="form-inline mr-2">
@@ -80,7 +80,7 @@ Dashboard Courier
                                     @endif
                                     @if(($item->statut_circuit ?? 'accueil') === 'accueil')
                                     <a data-id="{{$item->id}}" data-objet="{{$item->objet}}" data-origine="{{$item->origine}}" data-nom="{{$item->nom}}" data-tel="{{$item->tel}}" data-nni="{{$item->nni}}" data-piece-jointe-url="{{ $item->piece_jointe ? asset('storage/' . $item->piece_jointe) : '' }}" data-toggle="modal" data-target="#exampleModal-edit" type="button" class="btn btn-info btn-sm" title="Modifier"><svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"></path><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"></path></svg></a>
-                                    <a data-id="{{$item->id}}" data-reference="{{ $item->reference ?: 'cette demande' }}" data-toggle="modal" data-target="#exampleModal-delete" type="button" class="btn btn-danger btn-sm" title="Supprimer"><svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"></polyline><path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"></path><path d="M10 11v6"></path><path d="M14 11v6"></path><path d="M9 6V4a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v2"></path></svg></a>
+                                    <a data-id="{{$item->id}}" data-reference="{{ $item->reference ?: 'ce courrier' }}" data-toggle="modal" data-target="#exampleModal-delete" type="button" class="btn btn-danger btn-sm" title="Supprimer"><svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"></polyline><path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"></path><path d="M10 11v6"></path><path d="M14 11v6"></path><path d="M9 6V4a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v2"></path></svg></a>
                                     @endif
                                 </td>
                             </tr>
@@ -88,9 +88,9 @@ Dashboard Courier
                             <tr>
                                 <td colspan="8" class="text-center text-muted">
                                     @if($search)
-                                        Aucune demande ne correspond à « {{ $search }} ».
+                                        Aucun courrier ne correspond à « {{ $search }} ».
                                     @else
-                                        Aucune demande enregistrée pour le moment.
+                                        Aucun courrier enregistré pour le moment.
                                     @endif
                                 </td>
                             </tr>
@@ -116,7 +116,7 @@ Dashboard Courier
   <div class="modal-dialog  modal-notify modal-lg modal-right modal-success" role="document">
     <div class="modal-content">
       <div class="modal-header">
-        <h5 class="modal-title" id="exampleModalLabel">Ajouter une Demande</h5>
+        <h5 class="modal-title" id="exampleModalLabel">Ajouter un Courrier</h5>
         <button type="button" class="close" data-dismiss="modal" aria-label="Close">
         <span aria-hidden="true">&times;</span>
     </button>
@@ -174,7 +174,7 @@ Dashboard Courier
         <div class="input-group-prepend">
         <span class="input-group-text">Objet</span>
       </div>
-      <input type="text" class="form-control" name="objet" value="{{ old('objet') }}" placeholder="Résumé de la demande (optionnel)" maxlength="255">
+      <input type="text" class="form-control" name="objet" value="{{ old('objet') }}" placeholder="Résumé du courrier (optionnel)" maxlength="255">
     </div>
       <br>
       <div class="form-group">
@@ -202,7 +202,7 @@ Dashboard Courier
   <div class="modal-dialog  modal-notify modal-lg modal-right modal-success" role="document">
     <div class="modal-content">
       <div class="modal-header">
-        <h5 class="modal-title" id="exampleModalLabel">Modifier la Demande</h5>
+        <h5 class="modal-title" id="exampleModalLabel">Modifier le Courrier</h5>
         <button type="button" class="close" data-dismiss="modal" aria-label="Close">
           <span aria-hidden="true">&times;</span>
         </button>
@@ -255,7 +255,7 @@ Dashboard Courier
         <div class="input-group-prepend">
         <span class="input-group-text">Objet</span>
       </div>
-      <input id="edit_objet" type="text" class="form-control" name="objet" value="{{ old('objet') }}" placeholder="Résumé de la demande (optionnel)" maxlength="255">
+      <input id="edit_objet" type="text" class="form-control" name="objet" value="{{ old('objet') }}" placeholder="Résumé du courrier (optionnel)" maxlength="255">
     </div>
       <br>
       <div class="form-group">
@@ -305,7 +305,7 @@ Dashboard Courier
   <div class="modal-dialog notifi modal-lg modal-right modal-danger" role="document">
     <div class="modal-content">
       <div class="modal-header">
-        <h5 class="modal-title" id="exampleModalLabel">Supprimer la Demande</h5>
+        <h5 class="modal-title" id="exampleModalLabel">Supprimer le Courrier</h5>
         <button type="button" class="close" data-dismiss="modal" aria-label="Close">
           <span aria-hidden="true">&times;</span>
         </button>
@@ -314,7 +314,7 @@ Dashboard Courier
         @csrf
         @method('DELETE')
         <div class="modal-body">
-          <p>Voulez-vous vraiment supprimer la demande <strong id="delete_depot_nom"></strong> ?</p>
+          <p>Voulez-vous vraiment supprimer le courrier <strong id="delete_depot_nom"></strong> ?</p>
         </div>
         <div class="modal-footer">
           <button type="button" class="btn btn-warning" data-dismiss="modal" title="Annuler"><svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg></button>
@@ -388,8 +388,8 @@ $(document).on('change', '.piece-jointe-input', function () {
     $(this).next('.custom-file-label').text(fileName);
 });
 
-// Avant d'enregistrer, on vérifie si ce téléphone a déjà servi pour une
-// demande précédente : l'accueil est prévenu (qui, quand) et peut se
+// Avant d'enregistrer, on vérifie si ce téléphone a déjà servi pour un
+// courrier précédent : l'accueil est prévenu (qui, quand) et peut se
 // raviser ou confirmer, plutôt que de créer un doublon sans le savoir.
 var pendingTelForm = null;
 
@@ -405,8 +405,8 @@ function attachTelConfirm(formSelector, excludeIdGetter) {
                 if (data.exists) {
                     pendingTelForm = form;
                     $('#telConfirmMessage').text(
-                        'Ce numéro (' + tel + ') a déjà été utilisé pour la demande ' + (data.reference || '—') +
-                        ', déposée le ' + data.date + ' à ' + data.heure + ' par ' + data.agent + '. Voulez-vous continuer ?'
+                        'Ce numéro (' + tel + ') a déjà été utilisé pour le courrier ' + (data.reference || '—') +
+                        ', déposé le ' + data.date + ' à ' + data.heure + ' par ' + data.agent + '. Voulez-vous continuer ?'
                     );
                     $('#telConfirmModal').modal('show');
                 } else {

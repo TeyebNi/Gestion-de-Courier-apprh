@@ -72,7 +72,7 @@ class UserController extends Controller
         ], [
             'name.regex' => "Le nom ne doit contenir que des lettres, espaces, apostrophes et tirets.",
             'email.unique' => 'Cet email est déjà utilisé par un autre utilisateur.',
-            'tel.required' => 'Le téléphone est obligatoire pour un compte Admin (utilisé pour identifier qui a déposé une demande, et pour se connecter).',
+            'tel.required' => 'Le téléphone est obligatoire pour un compte Admin (utilisé pour identifier qui a déposé un courrier, et pour se connecter).',
             'tel.regex' => 'Le téléphone doit contenir 8 chiffres et commencer par 2, 3 ou 4.',
             'tel.unique' => 'Ce téléphone est déjà utilisé par un autre utilisateur.',
             'division_of.required' => 'Veuillez choisir de quel service dépend ce compte.',
@@ -175,7 +175,7 @@ class UserController extends Controller
     ], [
         'name.regex' => "Le nom ne doit contenir que des lettres, espaces, apostrophes et tirets.",
         'email.unique' => 'Cet email est déjà utilisé par un autre utilisateur.',
-        'tel.required' => 'Le téléphone est obligatoire pour un compte Admin (utilisé pour identifier qui a déposé une demande, et pour se connecter).',
+        'tel.required' => 'Le téléphone est obligatoire pour un compte Admin (utilisé pour identifier qui a déposé un courrier, et pour se connecter).',
         'tel.regex' => 'Le téléphone doit contenir 8 chiffres et commencer par 2, 3 ou 4.',
         'tel.unique' => 'Ce téléphone est déjà utilisé par un autre utilisateur.',
         'division_of.required' => 'Veuillez choisir de quel service dépend ce compte.',

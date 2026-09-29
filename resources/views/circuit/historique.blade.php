@@ -1,7 +1,7 @@
 @extends('layouts.master')
 
 @section('title')
-Historique de la Demande
+Historique du Courrier
 @endsection
 
 @section('content')
@@ -11,7 +11,7 @@ Historique de la Demande
         <div class="card">
             <div class="card-header d-flex justify-content-between align-items-center flex-wrap">
                 <h4 class="card-title mb-0" style="font-weight: 700; color: #212529;">
-                    Demande {{ $tabdepot->reference ?: '#' . $tabdepot->id }}
+                    Courrier {{ $tabdepot->reference ?: '#' . $tabdepot->id }}
                     <span class="badge {{ \App\Models\Tabdepot::circuitStepBadgeClass($tabdepot->statut_circuit) }} ml-2">{{ $tabdepot->statutLabel() }}</span>
                 </h4>
                 @if(auth()->user()->canAccessSuivi())
@@ -20,13 +20,13 @@ Historique de la Demande
                 </a>
                 @else
                 <a href="{{ route('circuit.service.index') }}" class="btn btn-secondary btn-sm">
-                    <i class="fas fa-arrow-left"></i> Retour à vos demandes
+                    <i class="fas fa-arrow-left"></i> Retour à vos courriers
                 </a>
                 @endif
             </div>
             <div class="card-body">
 
-                <h5 class="mb-3">Détails de la demande</h5>
+                <h5 class="mb-3">Détails du courrier</h5>
                 <div class="row">
                     <div class="col-md-4 mb-3">
                         <small class="text-muted d-block">Objet</small>

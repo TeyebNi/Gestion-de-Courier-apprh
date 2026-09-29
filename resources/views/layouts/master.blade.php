@@ -99,7 +99,7 @@
                         <a href="{{ route('depot.index') }}">
                             <i class="now-ui-icons files_box"></i>
                             <p>
-                                Dépôt des Demandes
+                                Dépôt des Courriers
                                 @if($pendingSendCount > 0)
                                     <span class="badge badge-warning" title="En attente d'envoi au Cabinet">{{ $pendingSendCount }}</span>
                                 @endif
@@ -125,7 +125,7 @@
                     <li class="{{ request()->is('circuit/service*') ? 'active' : '' }}">
                         <a href="{{ route('circuit.service.index') }}">
                             <i class="now-ui-icons {{ auth()->user()->specialServiceLabel() ? 'users_single-02' : 'business_briefcase-24' }}"></i>
-                            <p>{{ auth()->user()->specialServiceLabel() ?: 'Demandes du Circuit' }}</p>
+                            <p>{{ auth()->user()->specialServiceLabel() ?: 'Courriers du Circuit' }}</p>
                         </a>
                     </li>
                     @endif
@@ -133,7 +133,7 @@
                     <li class="{{ request()->is('circuit/suivi*') ? 'active' : '' }}">
                         <a href="{{ route('circuit.suivi') }}">
                             <i class="now-ui-icons ui-1_zoom-bold"></i>
-                            <p>Suivi des Demandes</p>
+                            <p>Suivi des Courriers</p>
                         </a>
                     </li>
                     @endif
@@ -203,7 +203,7 @@
                                     @if(auth()->user()->canAccessDepot())
                                         <a class="dropdown-item" href="{{ route('depot.index') }}" style="white-space:normal;">
                                             <span class="badge badge-secondary">Accueil</span>
-                                            <div>{{ $accueilPendingCount }} demande(s) à transmettre au Cabinet</div>
+                                            <div>{{ $accueilPendingCount }} courrier(s) à transmettre au Cabinet</div>
                                         </a>
                                         <div class="dropdown-divider"></div>
                                         @if($nouvellesAnnotationsCount > 0)
@@ -217,7 +217,7 @@
                                     @if(auth()->user()->canAccessCabinet())
                                         <a class="dropdown-item" href="{{ route('circuit.fatou.index') }}" style="white-space:normal;">
                                             <span class="badge badge-info">Cabinet de Maire</span>
-                                            <div>{{ $cabinetPendingCount }} demande(s) en attente d'annotations</div>
+                                            <div>{{ $cabinetPendingCount }} courrier(s) en attente d'annotations</div>
                                         </a>
                                         <div class="dropdown-divider"></div>
                                     @endif

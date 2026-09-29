@@ -1,5 +1,5 @@
 @include('partials.dashboard-stat-grid', [
-    'title' => 'Demandes par Service',
+    'title' => 'Courriers par Service',
     'subtitle' => 'Charge de travail',
     'labels' => $serviceLabels,
     'counts' => $serviceCounts,
@@ -7,7 +7,7 @@
 ])
 
 @include('partials.dashboard-stat-grid', [
-    'title' => 'Demandes par Adjoint au Maire',
+    'title' => 'Courriers par Adjoint au Maire',
     'subtitle' => 'Charge de travail',
     'labels' => $maireAdjointLabels,
     'counts' => $maireAdjointCounts,
@@ -15,7 +15,7 @@
 ])
 
 @include('partials.dashboard-stat-grid', [
-    'title' => 'Demandes par Conseiller',
+    'title' => 'Courriers par Conseiller',
     'subtitle' => 'Charge de travail',
     'labels' => $conseillerLabels,
     'counts' => $conseillerCounts,
@@ -23,7 +23,7 @@
 ])
 
 @include('partials.dashboard-stat-grid', [
-    'title' => 'Demandes par Étape du Circuit',
+    'title' => 'Courriers par Étape du Circuit',
     'subtitle' => "Vue d'ensemble",
     'labels' => $stageLabels,
     'counts' => $stageCounts,
