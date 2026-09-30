@@ -68,6 +68,7 @@ class UserController extends Controller
             'role_kind' => ['nullable', Rule::in(array_merge(['user'], array_keys(User::specialServiceRoles())))],
             'division_of' => [Rule::requiredIf(in_array($request->role_kind, User::serviceNestedRoleKinds())), 'nullable', Rule::in(Orientation::pluck('name'))],
             'role_title' => [Rule::requiredIf(in_array($request->role_kind, User::rolesWithOwnTitle())), 'nullable', 'string', 'max:255'],
+            'ordre' => ['nullable', 'integer', 'min:0'],
             'service' => ['nullable', 'string', 'max:255'],
         ], [
             'name.regex' => "Le nom ne doit contenir que des lettres, espaces, apostrophes et tirets.",
@@ -83,6 +84,7 @@ class UserController extends Controller
         $isAdminOrFatou = in_array($request->role, ['admin', 'fatou']);
         $specialKind = ! $isAdminOrFatou && array_key_exists($request->role_kind, User::specialServiceRoles()) ? $request->role_kind : null;
         $hasOwnTitle = in_array($specialKind, User::rolesWithOwnTitle());
+        $hasDisplayOrder = in_array($specialKind, User::rolesWithDisplayOrder());
 
         // Un compte "à la carte" (Adjoint au Maire/Chef de Service) a sa
         // propre file individuelle identifiée par son propre nom. Une
@@ -107,6 +109,7 @@ class UserController extends Controller
             'role_kind' => $specialKind,
             'division_of' => in_array($specialKind, User::serviceNestedRoleKinds()) ? $request->division_of : null,
             'role_title' => $hasOwnTitle ? $request->role_title : null,
+            'ordre' => $hasDisplayOrder ? $request->ordre : null,
             'service' => $service,
             'can_manage_users' => $request->role === 'admin' ? $request->boolean('can_manage_users') : true,
             'can_access_cabinet' => $request->role === 'admin' ? $request->boolean('can_access_cabinet') : true,
@@ -168,6 +171,7 @@ class UserController extends Controller
         'role_kind' => ['nullable', Rule::in(array_merge(['user'], array_keys(User::specialServiceRoles())))],
         'division_of' => [Rule::requiredIf(in_array($request->role_kind, User::serviceNestedRoleKinds())), 'nullable', Rule::in(Orientation::pluck('name'))],
         'role_title' => [Rule::requiredIf(in_array($request->role_kind, User::rolesWithOwnTitle())), 'nullable', 'string', 'max:255'],
+        'ordre' => ['nullable', 'integer', 'min:0'],
         'service' => ['nullable', 'string', 'max:255'],
         'can_manage_users' => ['nullable', 'boolean'],
         'can_access_cabinet' => ['nullable', 'boolean'],
@@ -200,6 +204,7 @@ class UserController extends Controller
     $isAdminOrFatou = in_array($request->role, ['admin', 'fatou']);
     $specialKind = ! $isAdminOrFatou && array_key_exists($request->role_kind, User::specialServiceRoles()) ? $request->role_kind : null;
     $hasOwnTitle = in_array($specialKind, User::rolesWithOwnTitle());
+    $hasDisplayOrder = in_array($specialKind, User::rolesWithDisplayOrder());
 
     $service = match (true) {
         $isAdminOrFatou => null,
@@ -216,6 +221,7 @@ class UserController extends Controller
         'role_kind' => $specialKind,
         'division_of' => in_array($specialKind, User::serviceNestedRoleKinds()) ? $request->division_of : null,
         'role_title' => $hasOwnTitle ? $request->role_title : null,
+        'ordre' => $hasDisplayOrder ? $request->ordre : null,
         'service' => $service,
         'can_manage_users' => $request->role === 'admin' ? $request->boolean('can_manage_users') : true,
         'can_access_cabinet' => $request->role === 'admin' ? $request->boolean('can_access_cabinet') : true,

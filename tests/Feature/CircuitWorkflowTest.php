@@ -601,6 +601,36 @@ class CircuitWorkflowTest extends TestCase
         $response->assertSee('Dah Med Salem Hamza');
     }
 
+    public function test_fatou_index_orders_maire_adjoints_by_ordre_not_alphabetically(): void
+    {
+        $fatou = User::factory()->create(['role' => UserRole::Fatou]);
+        User::factory()->create(['role' => UserRole::User, 'role_kind' => 'maire_adjoint', 'name' => 'Zaza', 'service' => 'Zaza', 'ordre' => 1]);
+        User::factory()->create(['role' => UserRole::User, 'role_kind' => 'maire_adjoint', 'name' => 'Aya', 'service' => 'Aya', 'ordre' => 2]);
+        // Sans ordre renseigné : relégué après ceux qui en ont un.
+        User::factory()->create(['role' => UserRole::User, 'role_kind' => 'maire_adjoint', 'name' => 'Bba', 'service' => 'Bba']);
+
+        $response = $this->actingAs($fatou)->get('/circuit/fatou');
+
+        $response->assertOk();
+        $response->assertViewHas('peopleByKind', function ($map) {
+            return $map['maire_adjoint']->values()->toArray() === ['Zaza', 'Aya', 'Bba'];
+        });
+    }
+
+    public function test_fatou_index_orders_conseillers_by_ordre_not_alphabetically(): void
+    {
+        $fatou = User::factory()->create(['role' => UserRole::Fatou]);
+        User::factory()->create(['role' => UserRole::User, 'role_kind' => 'conseiller', 'name' => 'Zaza', 'role_title' => 'Conseiller Z', 'service' => 'Conseiller Z', 'ordre' => 1]);
+        User::factory()->create(['role' => UserRole::User, 'role_kind' => 'conseiller', 'name' => 'Aya', 'role_title' => 'Conseiller A', 'service' => 'Conseiller A', 'ordre' => 2]);
+
+        $response = $this->actingAs($fatou)->get('/circuit/fatou');
+
+        $response->assertOk();
+        $response->assertViewHas('peopleByKind', function ($map) {
+            return $map['conseiller']->pluck('title')->toArray() === ['Conseiller Z', 'Conseiller A'];
+        });
+    }
+
     public function test_fatou_index_shows_the_current_officeholders_name_alongside_each_conseillers_title(): void
     {
         $fatou = User::factory()->create(['role' => UserRole::Fatou]);

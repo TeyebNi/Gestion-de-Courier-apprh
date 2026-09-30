@@ -70,6 +70,7 @@ Les Utilisateurs
                                        data-role-kind="{{ $u->role_kind }}"
                                        data-division-of="{{ $u->division_of }}"
                                        data-role-title="{{ $u->role_title }}"
+                                       data-ordre="{{ $u->ordre }}"
                                        data-service="{{ $u->service }}"
                                        data-can-manage-users="{{ $u->can_manage_users !== false ? '1' : '0' }}"
                                        data-can-access-cabinet="{{ $u->can_access_cabinet !== false ? '1' : '0' }}"
@@ -214,6 +215,13 @@ Les Utilisateurs
                             @endforeach
                         </select>
                     </div>
+                    <div class="input-group mt-2" id="create_ordre_group" style="display:none;">
+                        <div class="input-group-prepend">
+                            <span class="input-group-text">Ordre d'affichage</span>
+                        </div>
+                        <input type="number" min="0" class="form-control" name="ordre" id="create_ordre" placeholder="Ex: 1, 2, 3...">
+                    </div>
+                    <small class="text-muted d-block mt-1" id="create_ordre_note" style="display:none;">Détermine l'ordre d'apparition dans les listes du Cabinet de Maire (le plus petit en premier). Laisser vide pour un tri alphabétique par défaut.</small>
                     <div id="create_admin_permissions_group" style="display:none;">
                         <hr>
                         <p class="text-muted mb-2" style="font-size:0.85em;">Droits admin supplémentaires (décochez pour restreindre ce compte, ex: Accueil) :</p>
@@ -320,6 +328,13 @@ Les Utilisateurs
                             @endforeach
                         </select>
                     </div>
+                    <div class="input-group mt-2" id="edit_ordre_group" style="display:none;">
+                        <div class="input-group-prepend">
+                            <span class="input-group-text">Ordre d'affichage</span>
+                        </div>
+                        <input type="number" min="0" class="form-control" name="ordre" id="edit_ordre" placeholder="Ex: 1, 2, 3...">
+                    </div>
+                    <small class="text-muted d-block mt-1" id="edit_ordre_note" style="display:none;">Détermine l'ordre d'apparition dans les listes du Cabinet de Maire (le plus petit en premier). Laisser vide pour un tri alphabétique par défaut.</small>
                     <div id="edit_admin_permissions_group" style="display:none;">
                         <hr>
                         <p class="text-muted mb-2" style="font-size:0.85em;">Droits admin supplémentaires (décochez pour restreindre ce compte, ex: Accueil) :</p>
@@ -437,6 +452,7 @@ Les Utilisateurs
 var SPECIAL_SERVICE_ROLES = @json(\App\Models\User::specialServiceRoles());
 var SERVICE_NESTED_KINDS = @json(\App\Models\User::serviceNestedRoleKinds());
 var ROLES_WITH_OWN_TITLE = @json(\App\Models\User::rolesWithOwnTitle());
+var ROLES_WITH_DISPLAY_ORDER = @json(\App\Models\User::rolesWithDisplayOrder());
 var DIVISION_OF_LABELS = { division: 'Division de', chef_service: 'Chef du service' };
 var ROLE_TITLE_LABELS = { division: 'Nom de la Division', conseiller: 'Titre du Conseiller' };
 var ROLE_TITLE_PLACEHOLDERS = { division: 'Ex: Guichet Unique', conseiller: "Ex: Conseiller chargé de l'informatique" };
@@ -470,6 +486,9 @@ $('#editUserModal').on('show.bs.modal', function (event) {
     }
     if (ROLES_WITH_OWN_TITLE.indexOf(kind) !== -1) {
         $('#edit_role_title').val(button.data('role-title'));
+    }
+    if (ROLES_WITH_DISPLAY_ORDER.indexOf(kind) !== -1) {
+        $('#edit_ordre').val(button.data('ordre'));
     }
 });
 
@@ -521,6 +540,15 @@ function toggleServiceField(kind, prefix) {
     document.getElementById(prefix + '_role_title').placeholder = ROLE_TITLE_PLACEHOLDERS[kind] || '';
     if (!hasOwnTitle) {
         $('#' + prefix + '_role_title').val('');
+    }
+
+    // Rang protocolaire (Adjoint au Maire, Conseiller) : détermine l'ordre
+    // d'affichage dans les listes de destination du Cabinet de Maire.
+    var hasDisplayOrder = ROLES_WITH_DISPLAY_ORDER.indexOf(kind) !== -1;
+    $('#' + prefix + '_ordre_group').toggle(hasDisplayOrder);
+    $('#' + prefix + '_ordre_note').toggle(hasDisplayOrder);
+    if (!hasDisplayOrder) {
+        $('#' + prefix + '_ordre').val('');
     }
 
     $('#' + prefix + '_admin_permissions_group').toggle(kind === 'admin');

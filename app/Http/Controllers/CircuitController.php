@@ -27,6 +27,9 @@ class CircuitController extends Controller
     {
         return User::where('role_kind', $roleKind)
             ->when($divisionOf !== null, fn ($q) => $q->where('division_of', $divisionOf))
+            // "ordre" (rang protocolaire, ex: pour les Conseillers) prime sur
+            // le titre quand il est renseigné ; sinon tri alphabétique par titre.
+            ->orderByRaw('ordre IS NULL, ordre')
             ->orderBy('service')
             ->get(['service', 'name'])
             ->map(fn ($u) => ['title' => $u->service, 'name' => $u->name])
@@ -116,7 +119,10 @@ class CircuitController extends Controller
         // possibles (ex: "Conseiller chargé de l'informatique") : comme
         // Division, routé par le titre, affiché avec le nom du titulaire.
         $peopleByKind = collect([
-            'maire_adjoint' => User::where('role_kind', 'maire_adjoint')->orderBy('name')->pluck('name'),
+            'maire_adjoint' => User::where('role_kind', 'maire_adjoint')
+                ->orderByRaw('ordre IS NULL, ordre')
+                ->orderBy('name')
+                ->pluck('name'),
             'conseiller' => $this->titledAccounts('conseiller'),
         ]);
 

@@ -40,6 +40,7 @@ class User extends Authenticatable
         'role_kind',
         'division_of',
         'role_title',
+        'ordre',
         'service',
         'can_manage_users',
         'can_access_cabinet',
@@ -176,6 +177,18 @@ class User extends Authenticatable
     public static function rolesWithOwnTitle(): array
     {
         return ['division', 'conseiller'];
+    }
+
+    /**
+     * Parmi les rôles "à la carte", ceux qui répondent à un ordre protocolaire
+     * fixe (ex: ordre officiel des Adjoints au Maire, des Conseillers) plutôt
+     * que d'être triés alphabétiquement : "ordre" identifie leur rang
+     * d'affichage dans les listes de destination du Cabinet de Maire.
+     * Division/Chef de Service n'en ont pas besoin, déjà groupés par service.
+     */
+    public static function rolesWithDisplayOrder(): array
+    {
+        return ['maire_adjoint', 'conseiller'];
     }
 
     /**
