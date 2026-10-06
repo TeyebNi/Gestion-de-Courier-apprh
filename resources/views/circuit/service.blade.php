@@ -220,6 +220,9 @@ document.addEventListener('DOMContentLoaded', function () {
     </div>
 </div>
 
+@endsection
+
+@section('scripts')
 <script>
 $('#resolutionModal').on('show.bs.modal', function (event) {
     var button = $(event.relatedTarget);
@@ -233,5 +236,4 @@ $('#resolutionModal').on('show.bs.modal', function (event) {
     confirmBtn.className = 'btn ' + button.data('btn-class');
 });
 </script>
-
 @endsection

@@ -390,7 +390,13 @@ class CircuitController extends Controller
             ->where('service', $tabdepot->service_assigne)
             ->update(['is_read' => true]);
 
-        return back()->with('success', 'Le courrier a été marqué comme traité.');
+        $message = match ($request->resolution) {
+            'classer' => 'Le courrier a été classé.',
+            'convoquer' => 'Le demandeur a été convoqué pour ce courrier.',
+            default => 'Le courrier a été marqué comme traité.',
+        };
+
+        return back()->with('success', $message);
     }
 
     /**

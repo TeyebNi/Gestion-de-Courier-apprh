@@ -700,6 +700,26 @@ class CircuitWorkflowTest extends TestCase
         $this->assertSame('classer', $depot->resolution_service);
     }
 
+    public function test_closing_a_demande_shows_a_success_message_matching_the_chosen_resolution(): void
+    {
+        $serviceUser = User::factory()->create(['role' => UserRole::User, 'service' => 'Etat Civil']);
+
+        $cases = [
+            'traiter' => 'Le courrier a été marqué comme traité.',
+            'classer' => 'Le courrier a été classé.',
+            'convoquer' => 'Le demandeur a été convoqué pour ce courrier.',
+        ];
+
+        foreach ($cases as $resolution => $expectedMessage) {
+            $depot = $this->makeDepot();
+            $depot->update(['statut_circuit' => 'service', 'service_assigne' => 'Etat Civil']);
+
+            $this->actingAs($serviceUser)
+                ->post("/circuit/{$depot->id}/cloturer", ['resolution' => $resolution])
+                ->assertSessionHas('success', $expectedMessage);
+        }
+    }
+
     public function test_closing_a_demande_marks_its_service_notification_as_read(): void
     {
         $serviceUser = User::factory()->create(['role' => UserRole::User, 'service' => 'Etat Civil']);
