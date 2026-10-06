@@ -27,6 +27,12 @@ class Tabdepot extends Model
      * proposé (Gestion des Demandes, Suivi des Demandes) : "service" regroupe
      * service/division/chef de service (routage vers un département), par
      * opposition à Adjoint au Maire/Conseiller (routage vers une personne).
+     * Les trois catégories incluent aussi bien les courriers encore en cours
+     * (statut_circuit "service") que déjà clôturés pour cette même catégorie
+     * — pour retrouver tout ce qui concerne un service/Adjoint/Conseiller en
+     * une seule recherche, qu'il soit terminé ou non. "Clôturée" reste un
+     * filtre à part, pour voir tout ce qui est terminé tous destinataires
+     * confondus.
      */
     public function scopeFilterByStatut($query, ?string $statut)
     {
@@ -34,10 +40,18 @@ class Tabdepot extends Model
             return $query;
         }
 
+        // "destination_type" absent (NULL) ne vaut "service" que tant que le
+        // courrier y est encore (vieilles données sans ce champ) — une fois
+        // clôturé sans avoir jamais été routé (Cabinet "classer directement"),
+        // ce NULL ne doit pas le faire apparaître comme "chez un service".
+        $serviceDestinationTypes = ['service', 'division', 'chef_service'];
+
         return match ($statut) {
-            'service' => $query->where('statut_circuit', 'service')
-                ->where(fn ($q) => $q->whereNull('destination_type')->orWhereIn('destination_type', ['service', 'division', 'chef_service'])),
-            'maire_adjoint', 'conseiller' => $query->where('statut_circuit', 'service')->where('destination_type', $statut),
+            'service' => $query->where(fn ($q) => $q
+                ->where(fn ($qq) => $qq->where('statut_circuit', 'service')
+                    ->where(fn ($qqq) => $qqq->whereNull('destination_type')->orWhereIn('destination_type', $serviceDestinationTypes)))
+                ->orWhere(fn ($qq) => $qq->where('statut_circuit', 'cloture')->whereIn('destination_type', $serviceDestinationTypes))),
+            'maire_adjoint', 'conseiller' => $query->where(fn ($q) => $q->whereIn('statut_circuit', ['service', 'cloture'])->where('destination_type', $statut)),
             default => $query->where('statut_circuit', $statut),
         };
     }
@@ -115,11 +129,13 @@ class Tabdepot extends Model
             'maire' => 'Chez le Maire',
             'service' => (self::DESTINATION_PREFIXES[$this->destination_type] ?? 'Chez le service')
                 . ' : ' . ($this->service_assigne ?? '—')
-                . ($this->titulaireActuel() ? ' (' . $this->titulaireActuel() . ')' : ''),
+                . ($this->titulaireActuel() ? ' (' . $this->titulaireActuel() . ')' : '')
+                . ($this->serviceParent() ? ' — Service : ' . $this->serviceParent() : ''),
             'cloture' => 'Clôturée (' . ($this->resolutionLabel() ?: 'traitée par le service') . ')'
                 . ($this->service_assigne
                     ? ' — ' . (self::CLOTURE_PAR_PREFIXES[$this->destination_type] ?? 'par le service') . ' : ' . $this->service_assigne
                         . ($this->titulaireActuel() ? ' (' . $this->titulaireActuel() . ')' : '')
+                        . ($this->serviceParent() ? ' — Service : ' . $this->serviceParent() : '')
                     : ''),
             default => $this->statut_circuit ?? 'À l\'accueil',
         };
@@ -142,6 +158,26 @@ class Tabdepot extends Model
         return User::where('role_kind', $this->destination_type)
             ->where('service', $this->service_assigne)
             ->value('name');
+    }
+
+    /**
+     * Service (département) dont dépend une Division ou un Chef de Service :
+     * contrairement à un service "racine", les deux routent vers un
+     * sous-ensemble d'un département précis (division_of), que le libellé de
+     * statut doit préciser — pour qu'un filtre "Chez un service" regroupant
+     * tout le monde (service/Division/Chef de Service) reste lisible : on
+     * sait aussi bien de qui il s'agit que de quel service il dépend.
+     * L'Adjoint au Maire et le Conseiller n'en ont pas besoin, transversaux.
+     */
+    public function serviceParent(): ?string
+    {
+        if (! in_array($this->destination_type, ['division', 'chef_service'], true) || ! $this->service_assigne) {
+            return null;
+        }
+
+        return User::where('role_kind', $this->destination_type)
+            ->where('service', $this->service_assigne)
+            ->value('division_of');
     }
 
     /**

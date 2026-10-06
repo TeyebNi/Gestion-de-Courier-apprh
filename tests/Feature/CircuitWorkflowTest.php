@@ -471,7 +471,10 @@ class CircuitWorkflowTest extends TestCase
         $this->assertSame('division', $depot->destination_type);
         // Le titre seul ne dit pas qui traite le courrier : le nom du
         // titulaire actuel est ajouté entre parenthèses.
-        $this->assertSame('Chez la Division : Guichet Unique (Zeineb Mint Sidi)', $depot->statutLabel());
+        // Une Division dépend d'un service précis : le nom du service
+        // (division_of) est ajouté pour que "Chez un service" (qui regroupe
+        // services/Divisions/Chefs de Service) reste lisible.
+        $this->assertSame('Chez la Division : Guichet Unique (Zeineb Mint Sidi) — Service : Etat Civil', $depot->statutLabel());
     }
 
     public function test_a_demande_routed_to_one_division_is_not_visible_to_another(): void
@@ -534,7 +537,7 @@ class CircuitWorkflowTest extends TestCase
             ->assertViewHas('demandes', fn ($demandes) => $demandes->contains('id', $depot->id));
 
         // Le nom affiché à côté du titre suit le nouveau titulaire.
-        $this->assertSame('Chez la Division : Guichet Unique (Nouveau Titulaire)', $depot->fresh()->statutLabel());
+        $this->assertSame('Chez la Division : Guichet Unique (Nouveau Titulaire) — Service : Etat Civil', $depot->fresh()->statutLabel());
     }
 
     public function test_statut_label_omits_the_officeholder_name_when_their_account_no_longer_exists(): void
@@ -573,7 +576,8 @@ class CircuitWorkflowTest extends TestCase
         $this->assertSame('service', $depot->statut_circuit);
         $this->assertSame('Chef Informatique', $depot->service_assigne);
         $this->assertSame('chef_service', $depot->destination_type);
-        $this->assertSame('Chez le Chef de Service : Chef Informatique', $depot->statutLabel());
+        // Un Chef de Service dépend lui aussi d'un service précis.
+        $this->assertSame('Chez le Chef de Service : Chef Informatique — Service : Informatique', $depot->statutLabel());
     }
 
     public function test_fatou_index_shows_the_current_officeholders_name_alongside_each_divisions_title(): void
@@ -779,6 +783,26 @@ class CircuitWorkflowTest extends TestCase
 
         $response->assertOk();
         $this->assertTrue($depot->fresh()->vue_accueil);
+    }
+
+    public function test_visiting_suivi_does_not_change_the_derniere_mise_a_jour_of_unseen_demandes(): void
+    {
+        // Marquer "vu" en visitant Suivi ne doit pas se faire passer pour une
+        // vraie mise à jour du courrier : sinon le tri par "Dernière mise à
+        // jour" devient arbitraire (tout ce qui est consulté se collapse sur
+        // le même horodatage).
+        $accueil = User::factory()->create(['role' => UserRole::User]);
+        $depot = $this->makeDepot();
+        $depot->update(['statut_circuit' => 'cloture', 'remarque_maire' => 'RAS', 'vue_accueil' => false]);
+        $depot->timestamps = false;
+        $depot->updated_at = '2026-01-01 08:00:00';
+        $depot->save();
+
+        $this->actingAs($accueil)->get('/circuit/suivi')->assertOk();
+
+        $fresh = $depot->fresh();
+        $this->assertTrue($fresh->vue_accueil);
+        $this->assertSame('2026-01-01 08:00:00', $fresh->updated_at->format('Y-m-d H:i:s'));
     }
 
     public function test_accueil_bell_shows_the_new_annotations_count(): void

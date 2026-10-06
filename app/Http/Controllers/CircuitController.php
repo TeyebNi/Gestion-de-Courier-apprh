@@ -9,6 +9,7 @@ use App\Models\Tabdepot;
 use App\Models\User;
 use App\Traits\ExportsCsv;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Validation\Rule;
 
 class CircuitController extends Controller
@@ -144,6 +145,7 @@ class CircuitController extends Controller
         $dejaAnnotees = $this->fatouSearch(Tabdepot::whereNotNull('remarque_maire'), $search)
             ->filterByStatut($statut)
             ->orderByDesc('updated_at')
+            ->orderByDesc('id')
             ->paginate(5, ['*'], 'annotees_page')
             ->appends(['search' => $search, 'statut' => $statut]);
 
@@ -303,6 +305,7 @@ class CircuitController extends Controller
         $demandesTraitees = $this->serviceQuery('cloture', $user, $search)
             ->when($statut, fn ($q) => $q->where('resolution_service', $statut))
             ->orderByDesc('updated_at')
+            ->orderByDesc('id')
             ->paginate(5, ['*'], 'traitees_page')
             ->appends(['search' => $search, 'statut' => $statut]);
 
@@ -430,7 +433,10 @@ class CircuitController extends Controller
 
         // Visiter Suivi vaut consultation : les annotations fraîchement saisies
         // par le Cabinet ne sont plus signalées comme "nouvelles" dans la cloche.
-        Tabdepot::where('vue_accueil', false)->update(['vue_accueil' => true]);
+        // "updated_at" est explicitement laissé tel quel (sinon ce simple
+        // passage marquerait tous les courriers concernés comme "mis à jour
+        // à l'instant", faussant le tri par dernière mise à jour ci-dessous).
+        Tabdepot::where('vue_accueil', false)->update(['vue_accueil' => true, 'updated_at' => DB::raw('updated_at')]);
 
         $search = $request->search;
         $statut = $request->statut;
@@ -438,6 +444,7 @@ class CircuitController extends Controller
         $demandes = $this->suiviQuery($search, $statut)
             ->with('depotHistorique.user')
             ->orderByDesc('updated_at')
+            ->orderByDesc('id')
             ->paginate(5)
             ->withQueryString();
 
@@ -459,6 +466,7 @@ class CircuitController extends Controller
         $demandes = $this->suiviQuery($request->search, $request->statut)
             ->with('depotHistorique.user')
             ->orderByDesc('updated_at')
+            ->orderByDesc('id')
             ->get();
 
         return $this->streamCsv(

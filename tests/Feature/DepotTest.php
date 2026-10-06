@@ -434,6 +434,40 @@ class DepotTest extends TestCase
         $response->assertDontSee('ADJOINT');
     }
 
+    public function test_statut_filter_also_includes_already_closed_items_of_the_same_category(): void
+    {
+        $user = User::factory()->create(['role' => UserRole::User]);
+        $this->makeDepot(['reference' => 'SERVICE-OUVERT', 'statut_circuit' => 'service', 'destination_type' => 'service', 'service_assigne' => 'Etat Civil']);
+        $this->makeDepot(['reference' => 'SERVICE-CLOS', 'statut_circuit' => 'cloture', 'destination_type' => 'service', 'service_assigne' => 'Etat Civil', 'resolution_service' => 'traiter']);
+        $this->makeDepot(['reference' => 'ADJOINT-CLOS', 'statut_circuit' => 'cloture', 'destination_type' => 'maire_adjoint', 'service_assigne' => 'Zeroug', 'resolution_service' => 'traiter']);
+        // Clôturée sans jamais avoir été routée (Cabinet "classer directement") :
+        // ne doit pas apparaître sous "Chez un service".
+        $this->makeDepot(['reference' => 'CLOS-SANS-SERVICE', 'statut_circuit' => 'cloture']);
+
+        $response = $this->actingAs($user)->get('/depot?statut=service');
+
+        $response->assertOk();
+        $response->assertSee('SERVICE-OUVERT');
+        $response->assertSee('SERVICE-CLOS');
+        $response->assertDontSee('ADJOINT-CLOS');
+        $response->assertDontSee('CLOS-SANS-SERVICE');
+    }
+
+    public function test_statut_filter_for_maire_adjoint_also_includes_already_closed_items(): void
+    {
+        $user = User::factory()->create(['role' => UserRole::User]);
+        $this->makeDepot(['reference' => 'ADJOINT-OUVERT', 'statut_circuit' => 'service', 'destination_type' => 'maire_adjoint', 'service_assigne' => 'Zeroug']);
+        $this->makeDepot(['reference' => 'ADJOINT-CLOS', 'statut_circuit' => 'cloture', 'destination_type' => 'maire_adjoint', 'service_assigne' => 'Zeroug', 'resolution_service' => 'traiter']);
+        $this->makeDepot(['reference' => 'SERVICE-CLOS', 'statut_circuit' => 'cloture', 'destination_type' => 'service', 'service_assigne' => 'Etat Civil', 'resolution_service' => 'traiter']);
+
+        $response = $this->actingAs($user)->get('/depot?statut=maire_adjoint');
+
+        $response->assertOk();
+        $response->assertSee('ADJOINT-OUVERT');
+        $response->assertSee('ADJOINT-CLOS');
+        $response->assertDontSee('SERVICE-CLOS');
+    }
+
     public function test_index_search_matches_tel(): void
     {
         $user = User::factory()->create(['role' => UserRole::User]);
