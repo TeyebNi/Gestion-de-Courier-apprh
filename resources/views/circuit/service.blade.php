@@ -95,21 +95,21 @@ document.addEventListener('DOMContentLoaded', function () {
                                     @if($d->piece_jointe)
                                     <a href="{{ asset('storage/' . $d->piece_jointe) }}" target="_blank" class="btn btn-secondary btn-sm" title="Voir la pièce jointe"><i class="fas fa-paperclip"></i></a>
                                     @endif
-                                    <form action="{{ route('circuit.cloturer', $d) }}" method="post" style="display:inline;" onsubmit="return confirm('Marquer ce courrier comme traité ?');">
-                                        @csrf
-                                        <input type="hidden" name="resolution" value="traiter">
-                                        <button type="submit" class="btn btn-success btn-sm" title="Traiter"><i class="fas fa-check"></i> Traiter</button>
-                                    </form>
-                                    <form action="{{ route('circuit.cloturer', $d) }}" method="post" style="display:inline;" onsubmit="return confirm('Classer ce courrier sans traitement particulier ?');">
-                                        @csrf
-                                        <input type="hidden" name="resolution" value="classer">
-                                        <button type="submit" class="btn btn-secondary btn-sm" title="Classer"><i class="fas fa-folder"></i> Classer</button>
-                                    </form>
-                                    <form action="{{ route('circuit.cloturer', $d) }}" method="post" style="display:inline;" onsubmit="return confirm('Convoquer le demandeur ?');">
-                                        @csrf
-                                        <input type="hidden" name="resolution" value="convoquer">
-                                        <button type="submit" class="btn btn-warning btn-sm" title="Convoquer"><i class="fas fa-phone"></i> Convoquer</button>
-                                    </form>
+                                    <button type="button" class="btn btn-success btn-sm" title="Traiter" data-toggle="modal" data-target="#resolutionModal"
+                                        data-id="{{ $d->id }}" data-resolution="traiter" data-btn-class="btn-success"
+                                        data-title="Traiter le courrier" data-body="Voulez-vous vraiment marquer le courrier {{ $d->reference ?: '#' . $d->id }} comme traité ?" data-confirm-label="Oui, traiter">
+                                        <i class="fas fa-check"></i> Traiter
+                                    </button>
+                                    <button type="button" class="btn btn-secondary btn-sm" title="Classer" data-toggle="modal" data-target="#resolutionModal"
+                                        data-id="{{ $d->id }}" data-resolution="classer" data-btn-class="btn-secondary"
+                                        data-title="Classer le courrier" data-body="Voulez-vous vraiment classer le courrier {{ $d->reference ?: '#' . $d->id }} sans traitement particulier ?" data-confirm-label="Oui, classer">
+                                        <i class="fas fa-folder"></i> Classer
+                                    </button>
+                                    <button type="button" class="btn btn-warning btn-sm" title="Convoquer" data-toggle="modal" data-target="#resolutionModal"
+                                        data-id="{{ $d->id }}" data-resolution="convoquer" data-btn-class="btn-warning"
+                                        data-title="Convoquer le demandeur" data-body="Convoquer le demandeur pour le courrier {{ $d->reference ?: '#' . $d->id }} ?" data-confirm-label="Oui, convoquer">
+                                        <i class="fas fa-phone"></i> Convoquer
+                                    </button>
                                 </td>
                             </tr>
                             @empty
@@ -194,5 +194,44 @@ document.addEventListener('DOMContentLoaded', function () {
         </div>
     </div>
 </div>
+
+<!-- Modal Traiter/Classer/Convoquer -->
+<div class="modal fade" id="resolutionModal" tabindex="-1" role="dialog" aria-hidden="true">
+    <div class="modal-dialog modal-notify modal-lg modal-right modal-success" role="document">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="resolutionModalTitle">Confirmer</h5>
+                <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                    <span aria-hidden="true">&times;</span>
+                </button>
+            </div>
+            <form id="resolutionForm" method="POST" action="">
+                @csrf
+                <input type="hidden" name="resolution" id="resolutionValue" value="">
+                <div class="modal-body">
+                    <p id="resolutionModalBody"></p>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-warning" data-dismiss="modal" title="Annuler"><svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg></button>
+                    <button type="submit" class="btn btn-success" id="resolutionModalConfirm" title="Confirmer"><svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"></polyline></svg></button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<script>
+$('#resolutionModal').on('show.bs.modal', function (event) {
+    var button = $(event.relatedTarget);
+    var id = button.data('id');
+    $('#resolutionForm').attr('action', '{{ url('/circuit') }}/' + id + '/cloturer');
+    $('#resolutionValue').val(button.data('resolution'));
+    $('#resolutionModalTitle').text(button.data('title'));
+    $('#resolutionModalBody').text(button.data('body'));
+    var confirmBtn = document.getElementById('resolutionModalConfirm');
+    confirmBtn.textContent = button.data('confirm-label');
+    confirmBtn.className = 'btn ' + button.data('btn-class');
+});
+</script>
 
 @endsection
