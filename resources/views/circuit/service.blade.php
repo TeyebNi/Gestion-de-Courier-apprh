@@ -75,6 +75,8 @@ document.addEventListener('DOMContentLoaded', function () {
                             <th>Code</th>
                             <th>Origine</th>
                             <th>Objet</th>
+                            <th>Nom</th>
+                            <th>Téléphone</th>
                             <th>Annotations du Maire</th>
                             <th>Reçue le</th>
                             <th>Action</th>
@@ -85,9 +87,14 @@ document.addEventListener('DOMContentLoaded', function () {
                                 <td>{{ $d->reference ?: '—' }}</td>
                                 <td>@include('partials.origine-badge', ['demande' => $d])</td>
                                 <td class="text-truncate" style="max-width:220px;" title="{{ $d->objet }}">{{ $d->objet ?: '—' }}</td>
+                                <td class="text-truncate" style="max-width:160px;" title="{{ $d->nom }}">{{ $d->nom ?: '—' }}</td>
+                                <td>{{ $d->tel ?: '—' }}</td>
                                 <td class="text-truncate" style="max-width:220px;" title="{{ $d->remarque_maire }}">{{ $d->remarque_maire ?: '—' }}</td>
                                 <td>{{ $d->updated_at->format('d/m/Y H:i') }}</td>
                                 <td>
+                                    @if($d->piece_jointe)
+                                    <a href="{{ asset('storage/' . $d->piece_jointe) }}" target="_blank" class="btn btn-secondary btn-sm" title="Voir la pièce jointe"><i class="fas fa-paperclip"></i></a>
+                                    @endif
                                     <form action="{{ route('circuit.cloturer', $d) }}" method="post" style="display:inline;" onsubmit="return confirm('Marquer ce courrier comme traité ?');">
                                         @csrf
                                         <input type="hidden" name="resolution" value="traiter">
@@ -107,7 +114,7 @@ document.addEventListener('DOMContentLoaded', function () {
                             </tr>
                             @empty
                             <tr>
-                                <td colspan="6" class="text-center text-muted">Aucun courrier pour votre service.</td>
+                                <td colspan="8" class="text-center text-muted">Aucun courrier pour votre service.</td>
                             </tr>
                             @endforelse
                         </tbody>
@@ -137,6 +144,8 @@ document.addEventListener('DOMContentLoaded', function () {
                             <th>Code</th>
                             <th>Origine</th>
                             <th>Objet</th>
+                            <th>Nom</th>
+                            <th>Téléphone</th>
                             <th>Résolution</th>
                             <th>Traitée le</th>
                             <th>Action</th>
@@ -147,6 +156,8 @@ document.addEventListener('DOMContentLoaded', function () {
                                 <td>{{ $d->reference ?: '—' }}</td>
                                 <td>@include('partials.origine-badge', ['demande' => $d])</td>
                                 <td class="text-truncate" style="max-width:220px;" title="{{ $d->objet }}">{{ $d->objet ?: '—' }}</td>
+                                <td class="text-truncate" style="max-width:160px;" title="{{ $d->nom }}">{{ $d->nom ?: '—' }}</td>
+                                <td>{{ $d->tel ?: '—' }}</td>
                                 <td>
                                     @if($d->resolution_service === 'traiter')
                                         <span class="badge badge-success">Traitée</span>
@@ -160,6 +171,9 @@ document.addEventListener('DOMContentLoaded', function () {
                                 </td>
                                 <td>{{ $d->updated_at->format('d/m/Y H:i') }}</td>
                                 <td>
+                                    @if($d->piece_jointe)
+                                    <a href="{{ asset('storage/' . $d->piece_jointe) }}" target="_blank" class="btn btn-secondary btn-sm" title="Voir la pièce jointe"><i class="fas fa-paperclip"></i></a>
+                                    @endif
                                     <a href="{{ route('circuit.historique', $d) }}" class="btn btn-info btn-sm" title="Voir l'historique complet">
                                         <i class="fas fa-history"></i> Historique
                                     </a>
@@ -167,7 +181,7 @@ document.addEventListener('DOMContentLoaded', function () {
                             </tr>
                             @empty
                             <tr>
-                                <td colspan="6" class="text-center text-muted">Aucun courrier traité pour le moment.</td>
+                                <td colspan="8" class="text-center text-muted">Aucun courrier traité pour le moment.</td>
                             </tr>
                             @endforelse
                         </tbody>

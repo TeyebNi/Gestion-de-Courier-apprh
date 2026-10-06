@@ -1136,6 +1136,46 @@ class CircuitWorkflowTest extends TestCase
         $response->assertDontSee('CODE-2');
     }
 
+    public function test_service_index_shows_nom_tel_and_piece_jointe_for_en_cours_and_traitees(): void
+    {
+        $fatou = User::factory()->create(['role' => UserRole::Fatou]);
+        $serviceUser = User::factory()->create(['role' => UserRole::User, 'service' => 'Etat Civil']);
+        Orientation::create(['name' => 'Etat Civil']);
+
+        $depot = Tabdepot::create([
+            'nom' => 'Citoyen En Cours',
+            'tel' => '22334455',
+            'piece_jointe' => 'pieces-jointes/scan-en-cours.jpg',
+            'daterecp' => now()->format('Y-m-d'),
+            'statut_circuit' => 'fatou',
+        ]);
+        $this->actingAs($fatou)->post("/circuit/{$depot->id}/decider", [
+            'remarque_maire' => 'RAS',
+            'destination_category' => 'service',
+            'destination_value' => 'Etat Civil',
+        ]);
+
+        $traite = Tabdepot::create([
+            'nom' => 'Citoyen Traite',
+            'tel' => '33445566',
+            'piece_jointe' => 'pieces-jointes/scan-traite.jpg',
+            'daterecp' => now()->format('Y-m-d'),
+            'statut_circuit' => 'cloture',
+            'service_assigne' => 'Etat Civil',
+            'resolution_service' => 'traiter',
+        ]);
+
+        $response = $this->actingAs($serviceUser)->get('/circuit/service');
+
+        $response->assertOk();
+        $response->assertSee('Citoyen En Cours');
+        $response->assertSee('22334455');
+        $response->assertSee('Citoyen Traite');
+        $response->assertSee('33445566');
+        $response->assertSee(asset('storage/pieces-jointes/scan-en-cours.jpg'), false);
+        $response->assertSee(asset('storage/pieces-jointes/scan-traite.jpg'), false);
+    }
+
     public function test_service_index_search_filters_both_tables_by_code_objet_or_tel(): void
     {
         $serviceUser = User::factory()->create(['role' => UserRole::User, 'service' => 'Etat Civil']);
