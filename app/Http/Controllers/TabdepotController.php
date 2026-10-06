@@ -96,6 +96,28 @@ class TabdepotController extends Controller
     }
 
     /**
+     * Sert le document original scanné (pièce jointe) — stocké sur le disque
+     * privé "local" (jamais exposé en direct par le serveur web, contrairement
+     * à l'ancien disque "public") : cette route, avec son propre contrôle
+     * d'accès, est désormais l'unique façon d'y accéder.
+     */
+    public function pieceJointe(Tabdepot $tabdepot)
+    {
+        $user = auth()->user();
+        $estSonPropreService = $tabdepot->service_assigne && $tabdepot->service_assigne === $user->service;
+
+        if (! $user->canAccessDepot() && ! $user->canAccessCabinet() && ! $estSonPropreService && ! $user->canAccessAllServices()) {
+            abort(403, "Vous n'avez pas accès à cette pièce jointe.");
+        }
+
+        if (! $tabdepot->piece_jointe || ! Storage::disk('local')->exists($tabdepot->piece_jointe)) {
+            abort(404, 'Pièce jointe introuvable.');
+        }
+
+        return Storage::disk('local')->response($tabdepot->piece_jointe);
+    }
+
+    /**
      * Vérifie si un numéro de téléphone a déjà été utilisé dans une demande
      * précédente, pour alerter l'accueil avant l'enregistrement (qui, quand)
      * plutôt que de le découvrir après coup.
@@ -159,7 +181,7 @@ class TabdepotController extends Controller
             'nni' => $request->nni,
             'daterecp' => now()->format('Y-m-d'),
             'piece_jointe' => $request->hasFile('piece_jointe')
-                ? $request->file('piece_jointe')->store('pieces-jointes', 'public')
+                ? $request->file('piece_jointe')->store('pieces-jointes', 'local')
                 : null,
         ]);
 
@@ -204,9 +226,9 @@ class TabdepotController extends Controller
         $piece_jointe = $tabdepot->piece_jointe;
         if ($request->hasFile('piece_jointe')) {
             if ($piece_jointe) {
-                Storage::disk('public')->delete($piece_jointe);
+                Storage::disk('local')->delete($piece_jointe);
             }
-            $piece_jointe = $request->file('piece_jointe')->store('pieces-jointes', 'public');
+            $piece_jointe = $request->file('piece_jointe')->store('pieces-jointes', 'local');
         }
 
         // Le code (reference) est généré automatiquement à la création et
@@ -288,7 +310,7 @@ class TabdepotController extends Controller
         $demandes = Tabdepot::onlyTrashed()->get();
         foreach ($demandes as $demande) {
             if ($demande->piece_jointe) {
-                Storage::disk('public')->delete($demande->piece_jointe);
+                Storage::disk('local')->delete($demande->piece_jointe);
             }
             $demande->forceDelete();
         }
@@ -305,7 +327,7 @@ class TabdepotController extends Controller
         $tabdepot = Tabdepot::onlyTrashed()->findOrFail($id);
         $reference = $tabdepot->reference;
         if ($tabdepot->piece_jointe) {
-            Storage::disk('public')->delete($tabdepot->piece_jointe);
+            Storage::disk('local')->delete($tabdepot->piece_jointe);
         }
         $tabdepot->forceDelete();
 

@@ -235,6 +235,12 @@ class CircuitController extends Controller
             'statut_circuit' => $destination ? 'service' : 'cloture',
             'service_assigne' => $destination,
             'destination_type' => $destinationType,
+            // Classée directement par le Cabinet (sans passer par un service) :
+            // c'est la même résolution que "Classer" côté service, pour que le
+            // statut affiché ("Classée") et les filtres par résolution restent
+            // corrects, au lieu de tomber sur le texte générique par défaut
+            // ("traitée par le service") qui ne s'applique pas ici.
+            'resolution_service' => $destination ? null : 'classer',
             'vue_accueil' => false,
         ]);
 

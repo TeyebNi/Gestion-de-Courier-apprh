@@ -126,6 +126,100 @@ class UserManagementTest extends TestCase
         $this->assertDatabaseMissing('users', ['email' => 'conseiller@commune.mr']);
     }
 
+    public function test_cannot_create_a_maire_adjoint_whose_name_collides_with_another_special_account(): void
+    {
+        $admin = User::factory()->create(['role' => UserRole::Admin]);
+        User::factory()->create(['role' => UserRole::User, 'role_kind' => 'maire_adjoint', 'name' => 'Sidi Mohamed', 'service' => 'Sidi Mohamed']);
+
+        $response = $this->actingAs($admin)->post('/utilisateurs', [
+            'name' => 'Sidi Mohamed',
+            'email' => 'autre@commune.mr',
+            'password' => 'motdepasse123',
+            'password_confirmation' => 'motdepasse123',
+            'role' => 'user',
+            'role_kind' => 'maire_adjoint',
+        ]);
+
+        $response->assertSessionHasErrors('name');
+        $this->assertDatabaseMissing('users', ['email' => 'autre@commune.mr']);
+    }
+
+    public function test_cannot_create_a_division_whose_title_collides_with_another_services_division(): void
+    {
+        $admin = User::factory()->create(['role' => UserRole::Admin]);
+        \App\Models\Orientation::create(['name' => 'Etat Civil']);
+        \App\Models\Orientation::create(['name' => 'Urbanisme']);
+        User::factory()->create(['role' => UserRole::User, 'role_kind' => 'division', 'division_of' => 'Etat Civil', 'role_title' => 'Guichet Unique', 'service' => 'Guichet Unique']);
+
+        // Même titre "Guichet Unique", mais sous un AUTRE service : le
+        // routage ("service") étant une valeur globale, la collision existe
+        // quand même et doit être bloquée.
+        $response = $this->actingAs($admin)->post('/utilisateurs', [
+            'name' => 'Autre Titulaire',
+            'email' => 'division2@commune.mr',
+            'password' => 'motdepasse123',
+            'password_confirmation' => 'motdepasse123',
+            'role' => 'user',
+            'role_kind' => 'division',
+            'division_of' => 'Urbanisme',
+            'role_title' => 'Guichet Unique',
+        ]);
+
+        $response->assertSessionHasErrors('role_title');
+        $this->assertDatabaseMissing('users', ['email' => 'division2@commune.mr']);
+    }
+
+    public function test_cannot_create_a_special_account_whose_routing_key_collides_with_an_existing_orientation(): void
+    {
+        $admin = User::factory()->create(['role' => UserRole::Admin]);
+        \App\Models\Orientation::create(['name' => 'Informatique']);
+
+        $response = $this->actingAs($admin)->post('/utilisateurs', [
+            'name' => 'Informatique',
+            'email' => 'adjoint@commune.mr',
+            'password' => 'motdepasse123',
+            'password_confirmation' => 'motdepasse123',
+            'role' => 'user',
+            'role_kind' => 'maire_adjoint',
+        ]);
+
+        $response->assertSessionHasErrors('name');
+        $this->assertDatabaseMissing('users', ['email' => 'adjoint@commune.mr']);
+    }
+
+    public function test_updating_an_account_to_a_colliding_routing_key_is_rejected(): void
+    {
+        $admin = User::factory()->create(['role' => UserRole::Admin]);
+        User::factory()->create(['role' => UserRole::User, 'role_kind' => 'maire_adjoint', 'name' => 'Premier Adjoint', 'service' => 'Premier Adjoint']);
+        $target = User::factory()->create(['role' => UserRole::User, 'role_kind' => 'maire_adjoint', 'name' => 'Deuxieme Adjoint', 'service' => 'Deuxieme Adjoint']);
+
+        $response = $this->actingAs($admin)->put("/utilisateurs/{$target->id}", [
+            'name' => 'Premier Adjoint',
+            'email' => $target->email,
+            'role' => 'user',
+            'role_kind' => 'maire_adjoint',
+        ]);
+
+        $response->assertSessionHasErrors('name');
+        $this->assertSame('Deuxieme Adjoint', $target->fresh()->service);
+    }
+
+    public function test_updating_an_account_without_changing_its_own_routing_key_is_allowed(): void
+    {
+        $admin = User::factory()->create(['role' => UserRole::Admin]);
+        $target = User::factory()->create(['role' => UserRole::User, 'role_kind' => 'maire_adjoint', 'name' => 'Un Adjoint', 'service' => 'Un Adjoint']);
+
+        $response = $this->actingAs($admin)->put("/utilisateurs/{$target->id}", [
+            'name' => 'Un Adjoint',
+            'email' => $target->email,
+            'role' => 'user',
+            'role_kind' => 'maire_adjoint',
+        ]);
+
+        $response->assertRedirect(route('users.index'));
+        $response->assertSessionDoesntHaveErrors();
+    }
+
     public function test_admin_can_create_a_division_account_under_a_service(): void
     {
         $admin = User::factory()->create(['role' => UserRole::Admin]);
@@ -347,6 +441,56 @@ class UserManagementTest extends TestCase
         $this->assertNull($target->service);
     }
 
+    public function test_a_plain_user_account_without_a_service_also_requires_a_phone_number(): void
+    {
+        // Un compte "user" sans service a lui aussi accès au Dépôt des
+        // Demandes (Accueil) — voir User::canAccessDepot() — donc le même
+        // besoin d'être identifiable par téléphone qu'un compte Admin.
+        $admin = User::factory()->create(['role' => UserRole::Admin]);
+
+        $response = $this->actingAs($admin)->post('/utilisateurs', [
+            'name' => 'Sans Service',
+            'email' => 'sans-service@commune.mr',
+            'password' => 'motdepasse123',
+            'password_confirmation' => 'motdepasse123',
+            'role' => 'user',
+        ]);
+
+        $response->assertSessionHasErrors('tel');
+        $this->assertDatabaseMissing('users', ['email' => 'sans-service@commune.mr']);
+
+        $response = $this->actingAs($admin)->post('/utilisateurs', [
+            'name' => 'Sans Service',
+            'email' => 'sans-service@commune.mr',
+            'tel' => '22334455',
+            'password' => 'motdepasse123',
+            'password_confirmation' => 'motdepasse123',
+            'role' => 'user',
+        ]);
+
+        $response->assertSessionDoesntHaveErrors('tel');
+        $newUser = User::where('email', 'sans-service@commune.mr')->firstOrFail();
+        $this->assertSame('22334455', $newUser->tel);
+        $this->assertTrue($newUser->canAccessDepot());
+    }
+
+    public function test_a_plain_user_account_with_a_service_does_not_require_a_phone_number(): void
+    {
+        $admin = User::factory()->create(['role' => UserRole::Admin]);
+
+        $response = $this->actingAs($admin)->post('/utilisateurs', [
+            'name' => 'Avec Service',
+            'email' => 'avec-service@commune.mr',
+            'password' => 'motdepasse123',
+            'password_confirmation' => 'motdepasse123',
+            'role' => 'user',
+            'service' => 'Etat Civil',
+        ]);
+
+        $response->assertSessionDoesntHaveErrors('tel');
+        $this->assertDatabaseHas('users', ['email' => 'avec-service@commune.mr']);
+    }
+
     public function test_cannot_demote_the_last_remaining_admin(): void
     {
         $admin = User::factory()->create(['role' => UserRole::Admin, 'name' => 'Jean Dupont']);
@@ -355,6 +499,7 @@ class UserManagementTest extends TestCase
             'name' => $admin->name,
             'email' => $admin->email,
             'role' => 'user',
+            'service' => 'Etat Civil',
         ]);
 
         $response->assertRedirect(route('users.index'));

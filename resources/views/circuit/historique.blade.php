@@ -76,7 +76,7 @@ Historique du Courrier
 
                 @if($tabdepot->piece_jointe)
                 <p>
-                    <a href="{{ asset('storage/' . $tabdepot->piece_jointe) }}" target="_blank" class="btn btn-info btn-sm">
+                    <a href="{{ route('depot.piece-jointe', $tabdepot) }}" target="_blank" class="btn btn-info btn-sm">
                         <i class="fas fa-paperclip"></i> Voir le document original (scan)
                     </a>
                 </p>

@@ -33,6 +33,48 @@ class UserController extends Controller
         ]);
     }
 
+    /**
+     * Reproduit User::canAccessDepot() à partir des champs du formulaire
+     * (avant la création/mise à jour du compte) : un compte Admin, ou un
+     * compte "user" sans rôle à la carte ni service, aura accès à l'Accueil
+     * — le téléphone doit donc lui être demandé dans les deux cas, pour
+     * rester identifiable dans l'historique et pouvoir se connecter par
+     * téléphone, plutôt que de ne l'exiger que pour un compte Admin alors
+     * qu'un simple oubli de service donne les mêmes droits en silence.
+     */
+    private function willAccessDepot(Request $request): bool
+    {
+        if ($request->role === 'admin') {
+            return true;
+        }
+
+        return $request->role === 'user'
+            && (empty($request->role_kind) || $request->role_kind === 'user')
+            && empty($request->service);
+    }
+
+    /**
+     * "service" sert d'identifiant de file unique pour router les courriers
+     * (Tabdepot.service_assigne) : un Adjoint au Maire/Division/Chef de
+     * Service/Conseiller dont le nom ou le titre de poste coïncide avec un
+     * autre compte "à la carte" — ou avec un service réel (Orientation) —
+     * partagerait silencieusement sa file avec lui. Rien ne l'empêchait
+     * jusqu'ici ; c'est ce que cette vérification bloque.
+     */
+    private function routingKeyTaken(?string $service, ?int $ignoreUserId = null): bool
+    {
+        if (! $service) {
+            return false;
+        }
+
+        $usedByAnotherAccount = User::whereNotNull('role_kind')
+            ->where('service', $service)
+            ->when($ignoreUserId, fn ($q) => $q->where('id', '!=', $ignoreUserId))
+            ->exists();
+
+        return $usedByAnotherAccount || Orientation::where('name', $service)->exists();
+    }
+
     public function index(Request $request)
 {
     if (! auth()->user()->canManageUsers()) {
@@ -62,7 +104,7 @@ class UserController extends Controller
         $request->validate([
             'name' => ['required', 'string', 'max:255', "regex:/^[\pL\s'-]+$/u"],
             'email' => ['required', 'email', 'max:255', Rule::unique('users', 'email')],
-            'tel' => [Rule::requiredIf($request->role === 'admin'), 'nullable', 'regex:/^[234]\d{7}$/', Rule::unique('users', 'tel')],
+            'tel' => [Rule::requiredIf($this->willAccessDepot($request)), 'nullable', 'regex:/^[234]\d{7}$/', Rule::unique('users', 'tel')],
             'password' => ['required', 'string', 'min:8', 'confirmed'],
             'role' => ['required', 'in:admin,user,fatou'],
             'role_kind' => ['nullable', Rule::in(array_merge(['user'], array_keys(User::specialServiceRoles())))],
@@ -73,7 +115,7 @@ class UserController extends Controller
         ], [
             'name.regex' => "Le nom ne doit contenir que des lettres, espaces, apostrophes et tirets.",
             'email.unique' => 'Cet email est déjà utilisé par un autre utilisateur.',
-            'tel.required' => 'Le téléphone est obligatoire pour un compte Admin (utilisé pour identifier qui a déposé un courrier, et pour se connecter).',
+            'tel.required' => "Le téléphone est obligatoire pour ce compte, qui a accès à l'Accueil (utilisé pour identifier qui a déposé un courrier, et pour se connecter).",
             'tel.regex' => 'Le téléphone doit contenir 8 chiffres et commencer par 2, 3 ou 4.',
             'tel.unique' => 'Ce téléphone est déjà utilisé par un autre utilisateur.',
             'division_of.required' => 'Veuillez choisir de quel service dépend ce compte.',
@@ -100,10 +142,16 @@ class UserController extends Controller
             default => $request->service,
         };
 
+        if ($specialKind !== null && $this->routingKeyTaken($service)) {
+            return back()
+                ->withErrors([($hasOwnTitle ? 'role_title' : 'name') => "« {$service} » est déjà utilisé comme identifiant de file par un autre compte ou service. Choisissez un nom/titre différent, pour éviter que deux comptes ne se partagent la même file."])
+                ->withInput();
+        }
+
         $user = User::create([
             'name' => $request->name,
             'email' => $request->email,
-            'tel' => $request->role === 'admin' ? $request->tel : null,
+            'tel' => $this->willAccessDepot($request) ? $request->tel : null,
             'password' => bcrypt($request->password),
             'role' => UserRole::from($request->role),
             'role_kind' => $specialKind,
@@ -166,7 +214,7 @@ class UserController extends Controller
     $request->validate([
         'name' => ['required', 'string', 'max:255', "regex:/^[\pL\s'-]+$/u"],
         'email' => ['required', 'email', 'max:255', Rule::unique('users', 'email')->ignore($user->id)],
-        'tel' => [Rule::requiredIf($request->role === 'admin'), 'nullable', 'regex:/^[234]\d{7}$/', Rule::unique('users', 'tel')->ignore($user->id)],
+        'tel' => [Rule::requiredIf($this->willAccessDepot($request)), 'nullable', 'regex:/^[234]\d{7}$/', Rule::unique('users', 'tel')->ignore($user->id)],
         'role' => ['required', 'in:admin,user,fatou'],
         'role_kind' => ['nullable', Rule::in(array_merge(['user'], array_keys(User::specialServiceRoles())))],
         'division_of' => [Rule::requiredIf(in_array($request->role_kind, User::serviceNestedRoleKinds())), 'nullable', Rule::in(Orientation::pluck('name'))],
@@ -179,7 +227,7 @@ class UserController extends Controller
     ], [
         'name.regex' => "Le nom ne doit contenir que des lettres, espaces, apostrophes et tirets.",
         'email.unique' => 'Cet email est déjà utilisé par un autre utilisateur.',
-        'tel.required' => 'Le téléphone est obligatoire pour un compte Admin (utilisé pour identifier qui a déposé un courrier, et pour se connecter).',
+        'tel.required' => "Le téléphone est obligatoire pour ce compte, qui a accès à l'Accueil (utilisé pour identifier qui a déposé un courrier, et pour se connecter).",
         'tel.regex' => 'Le téléphone doit contenir 8 chiffres et commencer par 2, 3 ou 4.',
         'tel.unique' => 'Ce téléphone est déjà utilisé par un autre utilisateur.',
         'division_of.required' => 'Veuillez choisir de quel service dépend ce compte.',
@@ -213,10 +261,16 @@ class UserController extends Controller
         default => $request->service,
     };
 
+    if ($specialKind !== null && $this->routingKeyTaken($service, $user->id)) {
+        return back()
+            ->withErrors([($hasOwnTitle ? 'role_title' : 'name') => "« {$service} » est déjà utilisé comme identifiant de file par un autre compte ou service. Choisissez un nom/titre différent, pour éviter que deux comptes ne se partagent la même file."])
+            ->withInput();
+    }
+
     $user->update([
         'name' => $request->name,
         'email' => $request->email,
-        'tel' => $request->role === 'admin' ? $request->tel : null,
+        'tel' => $this->willAccessDepot($request) ? $request->tel : null,
         'role' => UserRole::from($request->role),
         'role_kind' => $specialKind,
         'division_of' => in_array($specialKind, User::serviceNestedRoleKinds()) ? $request->division_of : null,

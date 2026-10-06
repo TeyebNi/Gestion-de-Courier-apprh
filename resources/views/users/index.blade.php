@@ -262,7 +262,17 @@ Les Utilisateurs
                 @csrf
                 @method('PUT')
                 <input type="hidden" name="role_kind" id="edit_role_kind" value="user">
+                <input type="hidden" name="user_id" id="edit_user_id" value="{{ old('user_id') }}">
                 <div class="modal-body">
+                    @if ($errors->any())
+                        <div class="alert alert-danger">
+                            <ul class="mb-0">
+                                @foreach ($errors->all() as $error)
+                                    <li>{{ $error }}</li>
+                                @endforeach
+                            </ul>
+                        </div>
+                    @endif
                     <div class="input-group mb-3">
                         <div class="input-group-prepend">
                             <span class="input-group-text">Nom</span>
@@ -466,6 +476,7 @@ $('#editUserModal').on('show.bs.modal', function (event) {
     var kind = role === 'user' && roleKind ? roleKind : role;
 
     $('#editUserForm').attr('action', '{{ url('/utilisateurs') }}/' + id);
+    $('#edit_user_id').val(id);
     $('#edit_name').val(button.data('name'));
     $('#edit_email').val(button.data('email'));
     $('#edit_tel').val(button.data('tel'));
@@ -558,16 +569,32 @@ function toggleServiceField(kind, prefix) {
         $('#' + prefix + '_can_access_all_services').prop('checked', false);
     }
 
-    // Le téléphone n'a de sens (et n'est obligatoire) que pour un compte
-    // Admin : c'est lui qui accède au Dépôt des Courriers (Accueil), et qui
-    // pourra se connecter par téléphone à la place de l'email.
-    $('#' + prefix + '_tel_group').toggle(kind === 'admin');
-    $('#' + prefix + '_tel_note').toggle(kind === 'admin');
-    document.getElementById(prefix + '_tel').required = kind === 'admin';
-    if (kind !== 'admin') {
+    updateTelRequirement(prefix);
+}
+
+// Le téléphone n'a de sens (et n'est obligatoire) que pour un compte qui
+// accède réellement au Dépôt des Courriers (Accueil) : un compte Admin, ou
+// un compte "User" sans rôle à la carte ni service choisi (il a alors, lui
+// aussi, accès à l'Accueil — voir User::canAccessDepot()). Il permet de se
+// connecter par téléphone à la place de l'email, et d'identifier qui a
+// déposé chaque courrier.
+function updateTelRequirement(prefix) {
+    var kind = document.getElementById(prefix + '_role_kind').value;
+    var role = document.getElementById(prefix + '_role').value;
+    var service = $('#' + prefix + '_service').val();
+    var needsTel = role === 'admin' || (role === 'user' && kind === 'user' && !service);
+
+    $('#' + prefix + '_tel_group').toggle(needsTel);
+    $('#' + prefix + '_tel_note').toggle(needsTel);
+    document.getElementById(prefix + '_tel').required = needsTel;
+    if (!needsTel) {
         $('#' + prefix + '_tel').val('');
     }
 }
+
+$('#create_service, #edit_service').on('change', function () {
+    updateTelRequirement(this.id.startsWith('create_') ? 'create' : 'edit');
+});
 
 $('#createUserModal').on('hidden.bs.modal', function () {
     var form = this.querySelector('form');
@@ -601,6 +628,35 @@ if (closeBtn) {
 
 @if ($errors->any() && old('email') !== null && old('_method') === null)
 $('#createUserModal').modal('show');
+@endif
+
+@if ($errors->any() && old('_method') === 'PUT' && old('user_id'))
+(function () {
+    var reopenKind = @json(old('role')) === 'user' && @json(old('role_kind')) ? @json(old('role_kind')) : @json(old('role'));
+    $('#editUserForm').attr('action', '{{ url('/utilisateurs') }}/' + @json(old('user_id')));
+    $('#edit_user_id').val(@json(old('user_id')));
+    $('#edit_name').val(@json(old('name')));
+    $('#edit_email').val(@json(old('email')));
+    $('#edit_tel').val(@json(old('tel')));
+    $('#edit_role option[data-kind="' + reopenKind + '"]').prop('selected', true);
+    toggleServiceField(reopenKind, 'edit');
+    if (reopenKind === 'user') {
+        $('#edit_service').val(@json(old('service')));
+    }
+    if (SERVICE_NESTED_KINDS.indexOf(reopenKind) !== -1) {
+        $('#edit_division_of').val(@json(old('division_of')));
+    }
+    if (ROLES_WITH_OWN_TITLE.indexOf(reopenKind) !== -1) {
+        $('#edit_role_title').val(@json(old('role_title')));
+    }
+    if (ROLES_WITH_DISPLAY_ORDER.indexOf(reopenKind) !== -1) {
+        $('#edit_ordre').val(@json(old('ordre')));
+    }
+    $('#edit_can_manage_users').prop('checked', @json(old('can_manage_users')) == '1');
+    $('#edit_can_access_cabinet').prop('checked', @json(old('can_access_cabinet')) == '1');
+    $('#edit_can_access_all_services').prop('checked', @json(old('can_access_all_services')) == '1');
+    $('#editUserModal').modal('show');
+})();
 @endif
 </script>
 @endsection

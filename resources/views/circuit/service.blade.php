@@ -93,7 +93,7 @@ document.addEventListener('DOMContentLoaded', function () {
                                 <td>{{ $d->updated_at->format('d/m/Y H:i') }}</td>
                                 <td>
                                     @if($d->piece_jointe)
-                                    <a href="{{ asset('storage/' . $d->piece_jointe) }}" target="_blank" class="btn btn-secondary btn-sm" title="Voir la pièce jointe"><i class="fas fa-paperclip"></i></a>
+                                    <a href="{{ route('depot.piece-jointe', $d) }}" target="_blank" class="btn btn-secondary btn-sm" title="Voir la pièce jointe"><i class="fas fa-paperclip"></i></a>
                                     @endif
                                     <button type="button" class="btn btn-success btn-sm" title="Traiter" data-toggle="modal" data-target="#resolutionModal"
                                         data-id="{{ $d->id }}" data-resolution="traiter" data-btn-class="btn-success"
@@ -172,7 +172,7 @@ document.addEventListener('DOMContentLoaded', function () {
                                 <td>{{ $d->updated_at->format('d/m/Y H:i') }}</td>
                                 <td>
                                     @if($d->piece_jointe)
-                                    <a href="{{ asset('storage/' . $d->piece_jointe) }}" target="_blank" class="btn btn-secondary btn-sm" title="Voir la pièce jointe"><i class="fas fa-paperclip"></i></a>
+                                    <a href="{{ route('depot.piece-jointe', $d) }}" target="_blank" class="btn btn-secondary btn-sm" title="Voir la pièce jointe"><i class="fas fa-paperclip"></i></a>
                                     @endif
                                     <a href="{{ route('circuit.historique', $d) }}" class="btn btn-info btn-sm" title="Voir l'historique complet">
                                         <i class="fas fa-history"></i> Historique

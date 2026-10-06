@@ -30,6 +30,7 @@ Route::middleware('auth')->group(function () {
     Route::get('depot/export', [TabdepotController::class, 'exportExcel'])->name('depot.export');
     Route::post('depot', [TabdepotController::class, 'store'])->name('depot.store');
     Route::get('depot/print_reçu/{idt}',[TabdepotController::class,'print_facture'])->name('depot.print_reçu');
+    Route::get('depot/{tabdepot}/piece-jointe', [TabdepotController::class, 'pieceJointe'])->name('depot.piece-jointe');
     Route::put('depot/{tabdepot}', [TabdepotController::class, 'update'])->name('depot.update');
     Route::delete('depot/{tabdepot}', [TabdepotController::class, 'destroy'])->name('depot.destroy');
     Route::get('depot-corbeille', [TabdepotController::class, 'trashed'])->name('depot.trashed');

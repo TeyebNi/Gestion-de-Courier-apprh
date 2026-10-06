@@ -267,6 +267,11 @@ class CircuitWorkflowTest extends TestCase
         $this->assertSame('cloture', $depot->statut_circuit);
         $this->assertNull($depot->service_assigne);
         $this->assertDatabaseMissing('service_notifications', ['iddmd' => $depot->id]);
+
+        // Même résolution que "Classer" côté service, pour un statut affiché
+        // correct ("Classée") plutôt que le texte générique par défaut.
+        $this->assertSame('classer', $depot->resolution_service);
+        $this->assertSame('Clôturée (Classée)', $depot->statutLabel());
     }
 
     public function test_cabinet_can_print_the_depot_receipt_to_carry_to_the_maire(): void
@@ -1216,8 +1221,8 @@ class CircuitWorkflowTest extends TestCase
         $response->assertSee('22334455');
         $response->assertSee('Citoyen Traite');
         $response->assertSee('33445566');
-        $response->assertSee(asset('storage/pieces-jointes/scan-en-cours.jpg'), false);
-        $response->assertSee(asset('storage/pieces-jointes/scan-traite.jpg'), false);
+        $response->assertSee(route('depot.piece-jointe', $depot), false);
+        $response->assertSee(route('depot.piece-jointe', $traite), false);
     }
 
     public function test_service_index_search_filters_both_tables_by_code_objet_or_tel(): void
