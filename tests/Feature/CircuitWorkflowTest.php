@@ -626,8 +626,10 @@ class CircuitWorkflowTest extends TestCase
         });
     }
 
-    public function test_fatou_index_orders_conseillers_by_ordre_not_alphabetically(): void
+    public function test_fatou_index_orders_conseillers_alphabetically_by_title(): void
     {
+        // Les Conseillers n'ont pas de rang (contrairement aux Adjoints au
+        // Maire) : un éventuel "ordre" résiduel en base est ignoré.
         $fatou = User::factory()->create(['role' => UserRole::Fatou]);
         User::factory()->create(['role' => UserRole::User, 'role_kind' => 'conseiller', 'name' => 'Zaza', 'role_title' => 'Conseiller Z', 'service' => 'Conseiller Z', 'ordre' => 1]);
         User::factory()->create(['role' => UserRole::User, 'role_kind' => 'conseiller', 'name' => 'Aya', 'role_title' => 'Conseiller A', 'service' => 'Conseiller A', 'ordre' => 2]);
@@ -636,7 +638,7 @@ class CircuitWorkflowTest extends TestCase
 
         $response->assertOk();
         $response->assertViewHas('peopleByKind', function ($map) {
-            return $map['conseiller']->pluck('title')->toArray() === ['Conseiller Z', 'Conseiller A'];
+            return $map['conseiller']->pluck('title')->toArray() === ['Conseiller A', 'Conseiller Z'];
         });
     }
 

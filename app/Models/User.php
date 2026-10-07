@@ -181,14 +181,15 @@ class User extends Authenticatable
 
     /**
      * Parmi les rôles "à la carte", ceux qui répondent à un ordre protocolaire
-     * fixe (ex: ordre officiel des Adjoints au Maire, des Conseillers) plutôt
+     * fixe (ordre officiel des Adjoints au Maire : n° 1, n° 2...) plutôt
      * que d'être triés alphabétiquement : "ordre" identifie leur rang
      * d'affichage dans les listes de destination du Cabinet de Maire.
-     * Division/Chef de Service n'en ont pas besoin, déjà groupés par service.
+     * Les Conseillers n'ont pas de rang (tri alphabétique par titre), et
+     * Division/Chef de Service sont déjà groupés par service.
      */
     public static function rolesWithDisplayOrder(): array
     {
-        return ['maire_adjoint', 'conseiller'];
+        return ['maire_adjoint'];
     }
 
     /**

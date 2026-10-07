@@ -28,9 +28,7 @@ class CircuitController extends Controller
     {
         return User::where('role_kind', $roleKind)
             ->when($divisionOf !== null, fn ($q) => $q->where('division_of', $divisionOf))
-            // "ordre" (rang protocolaire, ex: pour les Conseillers) prime sur
-            // le titre quand il est renseigné ; sinon tri alphabétique par titre.
-            ->orderByRaw('ordre IS NULL, ordre')
+            // Conseillers et Divisions n'ont pas de rang : tri alphabétique par titre.
             ->orderBy('service')
             ->get(['service', 'name'])
             ->map(fn ($u) => ['title' => $u->service, 'name' => $u->name])

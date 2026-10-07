@@ -61,6 +61,54 @@ class UserController extends Controller
      * partagerait silencieusement sa file avec lui. Rien ne l'empêchait
      * jusqu'ici ; c'est ce que cette vérification bloque.
      */
+    /**
+     * Un poste = un seul titulaire : renvoie [champ => message] si le compte
+     * demandé occupe un poste déjà pris, null sinon.
+     * - un seul Chef de Service par service ;
+     * - un seul rang (ordre d'affichage) par Adjoint au Maire / Conseiller
+     *   (pas deux "Adjoint au Maire n° 1") ;
+     * - pas deux comptes avec le même identifiant de file (nom de Division,
+     *   titre de Conseiller, nom d'Adjoint/Chef de Service), ni un
+     *   identifiant identique à un service existant.
+     */
+    private function postConflict(Request $request, ?string $specialKind, ?string $service, ?int $ignoreUserId = null): ?array
+    {
+        if ($specialKind === null) {
+            return null;
+        }
+
+        $others = fn () => User::where('role_kind', $specialKind)
+            ->when($ignoreUserId, fn ($q) => $q->where('id', '!=', $ignoreUserId));
+
+        if ($specialKind === 'chef_service' && $request->division_of) {
+            $chef = $others()->where('division_of', $request->division_of)->first();
+            if ($chef) {
+                return ['division_of' => "Le service « {$request->division_of} » a déjà un Chef de Service : {$chef->name}. Modifiez ou supprimez ce compte avant d'en attribuer un autre."];
+            }
+        }
+
+        if (in_array($specialKind, User::rolesWithDisplayOrder(), true) && $request->filled('ordre')) {
+            $holder = $others()->where('ordre', (int) $request->ordre)->first();
+            if ($holder) {
+                $label = User::specialServiceRoles()[$specialKind];
+                return ['ordre' => "Le rang {$request->ordre} ({$label}) est déjà attribué à {$holder->name}. Choisissez un autre rang."];
+            }
+        }
+
+        if ($this->routingKeyTaken($service, $ignoreUserId)) {
+            $field = in_array($specialKind, User::rolesWithOwnTitle(), true) ? 'role_title' : 'name';
+            $holder = User::whereNotNull('role_kind')->where('service', $service)
+                ->when($ignoreUserId, fn ($q) => $q->where('id', '!=', $ignoreUserId))
+                ->first();
+
+            return [$field => $holder
+                ? "« {$service} » est déjà attribué à {$holder->name} ({$holder->specialServiceLabel()}). Deux comptes ne peuvent pas occuper le même poste."
+                : "« {$service} » est déjà le nom d'un service existant. Choisissez un autre nom/titre."];
+        }
+
+        return null;
+    }
+
     private function routingKeyTaken(?string $service, ?int $ignoreUserId = null): bool
     {
         if (! $service) {
@@ -178,10 +226,8 @@ class UserController extends Controller
             default => $request->service,
         };
 
-        if ($specialKind !== null && $this->routingKeyTaken($service)) {
-            return back()
-                ->withErrors([($hasOwnTitle ? 'role_title' : 'name') => "« {$service} » est déjà utilisé comme identifiant de file par un autre compte ou service. Choisissez un nom/titre différent, pour éviter que deux comptes ne se partagent la même file."])
-                ->withInput();
+        if ($conflict = $this->postConflict($request, $specialKind, $service)) {
+            return back()->withErrors($conflict)->withInput();
         }
 
         $user = User::create([
@@ -295,10 +341,8 @@ class UserController extends Controller
         default => $request->service,
     };
 
-    if ($specialKind !== null && $this->routingKeyTaken($service, $user->id)) {
-        return back()
-            ->withErrors([($hasOwnTitle ? 'role_title' : 'name') => "« {$service} » est déjà utilisé comme identifiant de file par un autre compte ou service. Choisissez un nom/titre différent, pour éviter que deux comptes ne se partagent la même file."])
-            ->withInput();
+    if ($conflict = $this->postConflict($request, $specialKind, $service, $user->id)) {
+        return back()->withErrors($conflict)->withInput();
     }
 
     $user->update([

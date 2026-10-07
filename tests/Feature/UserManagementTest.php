@@ -801,6 +801,103 @@ class UserManagementTest extends TestCase
         ])->assertForbidden();
     }
 
+    public function test_a_service_cannot_have_two_chefs_de_service(): void
+    {
+        $admin = User::factory()->create(['role' => UserRole::Admin]);
+        \App\Models\Orientation::create(['name' => 'Informatique']);
+        User::factory()->create(['role' => UserRole::User, 'role_kind' => 'chef_service', 'division_of' => 'Informatique', 'name' => 'Premier Chef', 'service' => 'Premier Chef']);
+
+        $response = $this->actingAs($admin)->post('/utilisateurs', [
+            'name' => 'Second Chef',
+            'email' => 'second-chef@commune.mr',
+            'password' => 'motdepasse123',
+            'password_confirmation' => 'motdepasse123',
+            'role' => 'user',
+            'role_kind' => 'chef_service',
+            'division_of' => 'Informatique',
+        ]);
+
+        $response->assertSessionHasErrors('division_of');
+        $this->assertDatabaseMissing('users', ['email' => 'second-chef@commune.mr']);
+    }
+
+    public function test_a_chef_de_service_can_still_be_edited_without_conflicting_with_himself(): void
+    {
+        $admin = User::factory()->create(['role' => UserRole::Admin]);
+        \App\Models\Orientation::create(['name' => 'Informatique']);
+        $chef = User::factory()->create(['role' => UserRole::User, 'role_kind' => 'chef_service', 'division_of' => 'Informatique', 'name' => 'Le Chef', 'service' => 'Le Chef']);
+
+        $this->actingAs($admin)->put("/utilisateurs/{$chef->id}", [
+            'name' => 'Le Chef',
+            'email' => $chef->email,
+            'role' => 'user',
+            'role_kind' => 'chef_service',
+            'division_of' => 'Informatique',
+        ])->assertSessionDoesntHaveErrors()->assertRedirect(route('users.index'));
+    }
+
+    public function test_two_divisions_cannot_have_the_same_name(): void
+    {
+        $admin = User::factory()->create(['role' => UserRole::Admin]);
+        \App\Models\Orientation::create(['name' => 'Etat Civil']);
+        User::factory()->create(['role' => UserRole::User, 'role_kind' => 'division', 'division_of' => 'Etat Civil', 'name' => 'Premier Titulaire', 'role_title' => 'Guichet Unique', 'service' => 'Guichet Unique']);
+
+        $response = $this->actingAs($admin)->post('/utilisateurs', [
+            'name' => 'Second Titulaire',
+            'email' => 'second-division@commune.mr',
+            'password' => 'motdepasse123',
+            'password_confirmation' => 'motdepasse123',
+            'role' => 'user',
+            'role_kind' => 'division',
+            'division_of' => 'Etat Civil',
+            'role_title' => 'Guichet Unique',
+        ]);
+
+        $response->assertSessionHasErrors('role_title');
+        $this->assertDatabaseMissing('users', ['email' => 'second-division@commune.mr']);
+    }
+
+    public function test_two_maire_adjoints_cannot_share_the_same_rank(): void
+    {
+        $admin = User::factory()->create(['role' => UserRole::Admin]);
+        User::factory()->create(['role' => UserRole::User, 'role_kind' => 'maire_adjoint', 'name' => 'Premier Adjoint', 'service' => 'Premier Adjoint', 'ordre' => 1]);
+
+        $response = $this->actingAs($admin)->post('/utilisateurs', [
+            'name' => 'Autre Adjoint',
+            'email' => 'autre-adjoint@commune.mr',
+            'password' => 'motdepasse123',
+            'password_confirmation' => 'motdepasse123',
+            'role' => 'user',
+            'role_kind' => 'maire_adjoint',
+            'ordre' => 1,
+        ]);
+
+        $response->assertSessionHasErrors('ordre');
+        $this->assertDatabaseMissing('users', ['email' => 'autre-adjoint@commune.mr']);
+
+        // Un autre rang, ou un Conseiller au même rang : accepté (rangs propres à chaque catégorie).
+        $this->actingAs($admin)->post('/utilisateurs', [
+            'name' => 'Autre Adjoint',
+            'email' => 'autre-adjoint@commune.mr',
+            'password' => 'motdepasse123',
+            'password_confirmation' => 'motdepasse123',
+            'role' => 'user',
+            'role_kind' => 'maire_adjoint',
+            'ordre' => 2,
+        ])->assertSessionDoesntHaveErrors();
+
+        $this->actingAs($admin)->post('/utilisateurs', [
+            'name' => 'Un Conseiller',
+            'email' => 'conseiller-rang1@commune.mr',
+            'password' => 'motdepasse123',
+            'password_confirmation' => 'motdepasse123',
+            'role' => 'user',
+            'role_kind' => 'conseiller',
+            'role_title' => 'Conseiller juridique',
+            'ordre' => 1,
+        ])->assertSessionDoesntHaveErrors();
+    }
+
     public function test_cabinet_cannot_promote_a_special_account_to_admin(): void
     {
         $cabinet = User::factory()->create(['role' => UserRole::Fatou]);
