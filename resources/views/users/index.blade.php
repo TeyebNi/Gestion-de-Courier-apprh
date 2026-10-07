@@ -10,8 +10,8 @@ Les Utilisateurs
         <div class="card">
             <div class="card-header d-flex justify-content-between align-items-center flex-wrap">
                 <h4 class="card-title mb-0" style="font-weight: 700; color: #212529;">
-                    {{ $cabinetScoped ? "Comptes Adjoints, Divisions, Chefs de Service et Conseillers" : "Gestion des Comptes Utilisateurs" }}
-                    <button class="btn btn-primary btn-sm ml-2" data-toggle="modal" data-target="#createUserModal">Nouvel Utilisateur</button>
+                    {{ $cabinetScoped ? "Destinataires" : "Gestion des Comptes Utilisateurs" }}
+                    <button class="btn btn-primary btn-sm ml-2" data-toggle="modal" data-target="#createUserModal">{{ $cabinetScoped ? 'Nouveau Destinataire' : 'Nouvel Utilisateur' }}</button>
                 </h4>
                 <div class="d-flex align-items-center flex-wrap">
                     @include('partials.search-box', ['route' => 'users.index', 'placeholder' => 'Rechercher par nom ou email...'])

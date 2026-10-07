@@ -772,6 +772,35 @@ class UserManagementTest extends TestCase
         $this->assertDatabaseMissing('users', ['id' => $adjoint->id]);
     }
 
+    public function test_an_admin_with_cabinet_access_but_no_user_management_can_manage_destinataires(): void
+    {
+        $cabinetAdmin = User::factory()->create([
+            'role' => UserRole::Admin,
+            'can_manage_users' => false,
+            'can_access_cabinet' => true,
+        ]);
+
+        $this->actingAs($cabinetAdmin)->post('/utilisateurs', [
+            'name' => 'Adjoint Cree',
+            'email' => 'adjoint-cree@commune.mr',
+            'password' => 'motdepasse123',
+            'password_confirmation' => 'motdepasse123',
+            'role' => 'user',
+            'role_kind' => 'maire_adjoint',
+        ])->assertRedirect(route('users.index'));
+
+        $this->assertDatabaseHas('users', ['email' => 'adjoint-cree@commune.mr']);
+
+        $this->actingAs($cabinetAdmin)->post('/utilisateurs', [
+            'name' => 'Admin Interdit',
+            'email' => 'admin-interdit@commune.mr',
+            'tel' => '22334455',
+            'password' => 'motdepasse123',
+            'password_confirmation' => 'motdepasse123',
+            'role' => 'admin',
+        ])->assertForbidden();
+    }
+
     public function test_cabinet_cannot_promote_a_special_account_to_admin(): void
     {
         $cabinet = User::factory()->create(['role' => UserRole::Fatou]);

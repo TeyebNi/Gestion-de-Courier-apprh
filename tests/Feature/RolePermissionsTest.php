@@ -56,11 +56,15 @@ class RolePermissionsTest extends TestCase
 
     public function test_admin_without_can_manage_users_keeps_other_admin_access(): void
     {
-        $restrictedAdmin = User::factory()->create(['role' => UserRole::Admin, 'can_manage_users' => false]);
+        $restrictedAdmin = User::factory()->create(['role' => UserRole::Admin, 'can_manage_users' => false, 'can_access_cabinet' => false]);
 
         $this->actingAs($restrictedAdmin)->get('/utilisateurs')->assertForbidden();
         $this->actingAs($restrictedAdmin)->get('/orientation')->assertOk();
         $this->actingAs($restrictedAdmin)->get('/depot')->assertOk();
+
+        // Avec l'accès Cabinet, il voit seulement "Destinataires" (pas tous les comptes).
+        $cabinetAdmin = User::factory()->create(['role' => UserRole::Admin, 'can_manage_users' => false, 'can_access_cabinet' => true]);
+        $this->actingAs($cabinetAdmin)->get('/utilisateurs')->assertOk()->assertViewHas('cabinetScoped', true);
     }
 
     public function test_cannot_remove_the_last_user_manager(): void

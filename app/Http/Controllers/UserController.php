@@ -83,7 +83,7 @@ class UserController extends Controller
      */
     private function cabinetScoped(): bool
     {
-        return ! auth()->user()->canManageUsers() && auth()->user()->isFatou();
+        return ! auth()->user()->canManageUsers() && auth()->user()->canAccessCabinet();
     }
 
     private function isSpecialAccount(?string $roleKind): bool
@@ -102,12 +102,12 @@ class UserController extends Controller
             return;
         }
 
-        $allowed = auth()->user()->isFatou()
+        $allowed = auth()->user()->canAccessCabinet()
             && ($target === null || $this->isSpecialAccount($target->role_kind))
             && ($request === null || ($request->role === 'user' && $this->isSpecialAccount($request->role_kind)));
 
         if (! $allowed) {
-            abort(403, auth()->user()->isFatou()
+            abort(403, auth()->user()->canAccessCabinet()
                 ? "Le Cabinet de Maire ne peut gérer que les comptes Adjoint au Maire, Division, Chef de Service et Conseiller."
                 : "Cette page est réservée aux administrateurs habilités à gérer les comptes.");
         }

@@ -123,19 +123,24 @@ class Tabdepot extends Model
 
     public function statutLabel(): string
     {
+        // Titulaire (Division/Conseiller) et service parent (Division/Chef de
+        // Service) : une seule requête chacun, même s'ils servent dans
+        // plusieurs branches ci-dessous.
+        $titulaire = $this->titulaireActuel();
+        $parent = $this->serviceParent();
+        $precisions = ($titulaire ? ' (' . $titulaire . ')' : '') . ($parent ? ' — Service : ' . $parent : '');
+
         return match ($this->statut_circuit) {
             'accueil' => 'À l\'accueil',
             'fatou' => 'Chez le Cabinet de Maire',
             'maire' => 'Chez le Maire',
             'service' => (self::DESTINATION_PREFIXES[$this->destination_type] ?? 'Chez le service')
                 . ' : ' . ($this->service_assigne ?? '—')
-                . ($this->titulaireActuel() ? ' (' . $this->titulaireActuel() . ')' : '')
-                . ($this->serviceParent() ? ' — Service : ' . $this->serviceParent() : ''),
+                . $precisions,
             'cloture' => 'Clôturée (' . ($this->resolutionLabel() ?: 'traitée par le service') . ')'
                 . ($this->service_assigne
                     ? ' — ' . (self::CLOTURE_PAR_PREFIXES[$this->destination_type] ?? 'par le service') . ' : ' . $this->service_assigne
-                        . ($this->titulaireActuel() ? ' (' . $this->titulaireActuel() . ')' : '')
-                        . ($this->serviceParent() ? ' — Service : ' . $this->serviceParent() : '')
+                        . $precisions
                     : ''),
             default => $this->statut_circuit ?? 'À l\'accueil',
         };
