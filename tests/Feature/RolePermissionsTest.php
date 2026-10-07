@@ -36,8 +36,14 @@ class RolePermissionsTest extends TestCase
     public function test_non_admin_cannot_access_admin_config_pages(): void
     {
         $fatou = User::factory()->create(['role' => UserRole::Fatou]);
+        $serviceUser = User::factory()->create(['role' => UserRole::User, 'service' => 'Etat Civil']);
 
-        $this->actingAs($fatou)->get('/utilisateurs')->assertForbidden();
+        // Le Cabinet gère ses propres comptes (Adjoints, Conseillers...) depuis
+        // /utilisateurs, mais pas les pages de configuration réservées aux admins.
+        $this->actingAs($fatou)->get('/orientation')->assertForbidden();
+        $this->actingAs($fatou)->get('/utilisateurs/journal')->assertForbidden();
+        $this->actingAs($fatou)->get('/utilisateurs/export')->assertForbidden();
+        $this->actingAs($serviceUser)->get('/utilisateurs')->assertForbidden();
     }
 
     public function test_admin_can_access_every_role_gated_page(): void

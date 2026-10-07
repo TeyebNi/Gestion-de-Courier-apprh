@@ -75,14 +75,52 @@ class UserController extends Controller
         return $usedByAnotherAccount || Orientation::where('name', $service)->exists();
     }
 
-    public function index(Request $request)
-{
-    if (! auth()->user()->canManageUsers()) {
-        abort(403, "Cette page est réservée aux administrateurs habilités à gérer les comptes.");
+    /**
+     * Le Cabinet de Maire oriente les courriers vers les Adjoints au Maire,
+     * Divisions, Chefs de Service et Conseillers : il peut gérer ces
+     * comptes-là — et uniquement ceux-là — sans avoir les autres droits de
+     * "Les Utilisateurs" (comptes Admin, Accueil, Cabinet, services).
+     */
+    private function cabinetScoped(): bool
+    {
+        return ! auth()->user()->canManageUsers() && auth()->user()->isFatou();
     }
 
+    private function isSpecialAccount(?string $roleKind): bool
+    {
+        return array_key_exists((string) $roleKind, User::specialServiceRoles());
+    }
+
+    /**
+     * Autorise un administrateur habilité, ou le Cabinet pour un compte "à la
+     * carte" uniquement (cible existante, et rôle demandé à la création/
+     * modification).
+     */
+    private function authorizeAccountManagement(?User $target = null, ?Request $request = null): void
+    {
+        if (auth()->user()->canManageUsers()) {
+            return;
+        }
+
+        $allowed = auth()->user()->isFatou()
+            && ($target === null || $this->isSpecialAccount($target->role_kind))
+            && ($request === null || ($request->role === 'user' && $this->isSpecialAccount($request->role_kind)));
+
+        if (! $allowed) {
+            abort(403, auth()->user()->isFatou()
+                ? "Le Cabinet de Maire ne peut gérer que les comptes Adjoint au Maire, Division, Chef de Service et Conseiller."
+                : "Cette page est réservée aux administrateurs habilités à gérer les comptes.");
+        }
+    }
+
+    public function index(Request $request)
+{
+    $this->authorizeAccountManagement();
+    $cabinetScoped = $this->cabinetScoped();
+
     $search = $request->input('search');
-    $query = User::orderBy('id', 'asc');
+    $query = User::orderBy('id', 'asc')
+        ->when($cabinetScoped, fn ($q) => $q->whereIn('role_kind', array_keys(User::specialServiceRoles())));
     if ($search) {
         $query->where(function ($q) use ($search) {
             $q->where('name', 'like', "%{$search}%")
@@ -92,14 +130,12 @@ class UserController extends Controller
     $users = $query->paginate(5)->appends(['search' => $search]);
     $services = Orientation::pluck('name');
     $adminCount = User::where('role', 'admin')->count();
-    return view('users.index', compact('users', 'services', 'adminCount', 'search'));
+    return view('users.index', compact('users', 'services', 'adminCount', 'search', 'cabinetScoped'));
 }
 
     public function store(Request $request)
     {
-        if (! auth()->user()->canManageUsers()) {
-            abort(403, "Cette page est réservée aux administrateurs habilités à gérer les comptes.");
-        }
+        $this->authorizeAccountManagement(null, $request);
 
         $request->validate([
             'name' => ['required', 'string', 'max:255', "regex:/^[\pL\s'-]+$/u"],
@@ -207,9 +243,7 @@ class UserController extends Controller
 
    public function update(Request $request, User $user)
 {
-    if (! auth()->user()->canManageUsers()) {
-        abort(403, "Cette page est réservée aux administrateurs habilités à gérer les comptes.");
-    }
+    $this->authorizeAccountManagement($user, $request);
 
     $request->validate([
         'name' => ['required', 'string', 'max:255', "regex:/^[\pL\s'-]+$/u"],
@@ -290,9 +324,7 @@ class UserController extends Controller
 }
     public function resetPassword(Request $request, User $user)
     {
-        if (! auth()->user()->canManageUsers()) {
-            abort(403, "Cette page est réservée aux administrateurs habilités à gérer les comptes.");
-        }
+        $this->authorizeAccountManagement($user);
 
         $request->validate([
             'password' => ['required', 'string', 'min:8', 'confirmed'],
@@ -307,9 +339,7 @@ class UserController extends Controller
 
     public function destroy(User $user)
     {
-        if (! auth()->user()->canManageUsers()) {
-            abort(403, "Cette page est réservée aux administrateurs habilités à gérer les comptes.");
-        }
+        $this->authorizeAccountManagement($user);
 
         if ($user->id === auth()->id()) {
             return redirect()->route('users.index')->with('error', 'Vous ne pouvez pas supprimer votre propre compte.');

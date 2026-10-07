@@ -10,13 +10,15 @@ Les Utilisateurs
         <div class="card">
             <div class="card-header d-flex justify-content-between align-items-center flex-wrap">
                 <h4 class="card-title mb-0" style="font-weight: 700; color: #212529;">
-                    Gestion des Comptes Utilisateurs
+                    {{ $cabinetScoped ? "Comptes Adjoints, Divisions, Chefs de Service et Conseillers" : "Gestion des Comptes Utilisateurs" }}
                     <button class="btn btn-primary btn-sm ml-2" data-toggle="modal" data-target="#createUserModal">Nouvel Utilisateur</button>
                 </h4>
                 <div class="d-flex align-items-center flex-wrap">
                     @include('partials.search-box', ['route' => 'users.index', 'placeholder' => 'Rechercher par nom ou email...'])
+                    @unless($cabinetScoped)
                     <a href="{{ route('users.audit-log') }}" class="btn btn-secondary btn-sm mr-2" title="Journal des actions sur les comptes"><i class="fas fa-history"></i> Journal</a>
                     <a href="{{ route('users.export') }}" class="btn btn-success btn-sm" title="Exporter en Excel"><i class="fas fa-file-excel"></i></a>
+                    @endunless
                 </div>
             </div>
             <div class="card-body">
@@ -177,13 +179,15 @@ Les Utilisateurs
                             <span class="input-group-text">Fonction</span>
                         </div>
                         <select class="form-control" name="role" id="create_role">
-                            <option value="user" data-kind="user">User</option>
+                            @unless($cabinetScoped)<option value="user" data-kind="user">User</option>@endunless
                             <option value="user" data-kind="maire_adjoint">Adjoint au Maire</option>
                             <option value="user" data-kind="division">Division</option>
                             <option value="user" data-kind="chef_service">Chef de Service</option>
                             <option value="user" data-kind="conseiller">Conseiller</option>
+                            @unless($cabinetScoped)
                             <option value="admin" data-kind="admin">Admin</option>
                             <option value="fatou" data-kind="fatou">Cabinet de Maire</option>
+                            @endunless
                         </select>
                     </div>
                     <div class="input-group" id="create_service_group">
@@ -300,13 +304,15 @@ Les Utilisateurs
                             <span class="input-group-text">Fonction</span>
                         </div>
                         <select class="form-control" name="role" id="edit_role">
-                            <option value="user" data-kind="user">User</option>
+                            @unless($cabinetScoped)<option value="user" data-kind="user">User</option>@endunless
                             <option value="user" data-kind="maire_adjoint">Adjoint au Maire</option>
                             <option value="user" data-kind="division">Division</option>
                             <option value="user" data-kind="chef_service">Chef de Service</option>
                             <option value="user" data-kind="conseiller">Conseiller</option>
+                            @unless($cabinetScoped)
                             <option value="admin" data-kind="admin">Admin</option>
                             <option value="fatou" data-kind="fatou">Cabinet de Maire</option>
+                            @endunless
                         </select>
                     </div>
                     <div class="input-group" id="edit_service_group">
@@ -462,6 +468,7 @@ Les Utilisateurs
 var SPECIAL_SERVICE_ROLES = @json(\App\Models\User::specialServiceRoles());
 var SERVICE_NESTED_KINDS = @json(\App\Models\User::serviceNestedRoleKinds());
 var ROLES_WITH_OWN_TITLE = @json(\App\Models\User::rolesWithOwnTitle());
+var DEFAULT_CREATE_KIND = @json($cabinetScoped ? 'maire_adjoint' : 'user');
 var ROLES_WITH_DISPLAY_ORDER = @json(\App\Models\User::rolesWithDisplayOrder());
 var DIVISION_OF_LABELS = { division: 'Division de', chef_service: 'Chef du service' };
 var ROLE_TITLE_LABELS = { division: 'Nom de la Division', conseiller: 'Titre du Conseiller' };
@@ -599,10 +606,10 @@ $('#create_service, #edit_service').on('change', function () {
 $('#createUserModal').on('hidden.bs.modal', function () {
     var form = this.querySelector('form');
     if (form) { form.reset(); }
-    toggleServiceField('user', 'create');
+    toggleServiceField(DEFAULT_CREATE_KIND, 'create');
 });
 
-toggleServiceField('user', 'create');
+toggleServiceField(DEFAULT_CREATE_KIND, 'create');
 
 $('#resetPasswordModal').on('show.bs.modal', function (event) {
     var button = $(event.relatedTarget);

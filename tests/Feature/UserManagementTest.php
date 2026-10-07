@@ -684,4 +684,103 @@ class UserManagementTest extends TestCase
         $response->assertSee('Jean Dupont');
         $response->assertDontSee('Autre Personne');
     }
+
+    public function test_cabinet_can_create_a_maire_adjoint_conseiller_and_division(): void
+    {
+        $cabinet = User::factory()->create(['role' => UserRole::Fatou]);
+        \App\Models\Orientation::create(['name' => 'Etat Civil']);
+
+        $this->actingAs($cabinet)->post('/utilisateurs', [
+            'name' => 'Nouvel Adjoint',
+            'email' => 'adjoint@commune.mr',
+            'password' => 'motdepasse123',
+            'password_confirmation' => 'motdepasse123',
+            'role' => 'user',
+            'role_kind' => 'maire_adjoint',
+        ])->assertRedirect(route('users.index'));
+
+        $this->actingAs($cabinet)->post('/utilisateurs', [
+            'name' => 'Nouveau Conseiller',
+            'email' => 'conseiller@commune.mr',
+            'password' => 'motdepasse123',
+            'password_confirmation' => 'motdepasse123',
+            'role' => 'user',
+            'role_kind' => 'conseiller',
+            'role_title' => 'Conseiller juridique',
+        ])->assertRedirect(route('users.index'));
+
+        $this->actingAs($cabinet)->post('/utilisateurs', [
+            'name' => 'Titulaire Division',
+            'email' => 'division@commune.mr',
+            'password' => 'motdepasse123',
+            'password_confirmation' => 'motdepasse123',
+            'role' => 'user',
+            'role_kind' => 'division',
+            'division_of' => 'Etat Civil',
+            'role_title' => 'Guichet Unique',
+        ])->assertRedirect(route('users.index'));
+
+        $this->assertDatabaseHas('users', ['email' => 'adjoint@commune.mr', 'role_kind' => 'maire_adjoint']);
+        $this->assertDatabaseHas('users', ['email' => 'conseiller@commune.mr', 'role_kind' => 'conseiller']);
+        $this->assertDatabaseHas('users', ['email' => 'division@commune.mr', 'role_kind' => 'division']);
+    }
+
+    public function test_cabinet_cannot_create_an_admin_a_cabinet_or_a_plain_service_account(): void
+    {
+        $cabinet = User::factory()->create(['role' => UserRole::Fatou]);
+
+        foreach ([
+            ['role' => 'admin', 'tel' => '22334455'],
+            ['role' => 'fatou'],
+            ['role' => 'user', 'service' => 'Etat Civil'],
+        ] as $i => $extra) {
+            $this->actingAs($cabinet)->post('/utilisateurs', array_merge([
+                'name' => 'Compte Interdit',
+                'email' => "interdit{$i}@commune.mr",
+                'password' => 'motdepasse123',
+                'password_confirmation' => 'motdepasse123',
+            ], $extra))->assertForbidden();
+        }
+
+        $this->assertDatabaseMissing('users', ['name' => 'Compte Interdit']);
+    }
+
+    public function test_cabinet_only_sees_and_manages_special_accounts(): void
+    {
+        $cabinet = User::factory()->create(['role' => UserRole::Fatou]);
+        $adjoint = User::factory()->create(['role' => UserRole::User, 'role_kind' => 'maire_adjoint', 'name' => 'Adjoint Visible', 'service' => 'Adjoint Visible']);
+        $admin = User::factory()->create(['role' => UserRole::Admin, 'name' => 'Admin Cache']);
+        $serviceUser = User::factory()->create(['role' => UserRole::User, 'name' => 'Agent Cache', 'service' => 'Etat Civil']);
+
+        $response = $this->actingAs($cabinet)->get('/utilisateurs');
+        $response->assertOk();
+        $response->assertSee('Adjoint Visible');
+        $response->assertDontSee('Admin Cache');
+        $response->assertDontSee('Agent Cache');
+
+        // Comptes hors de son périmètre : ni modification, ni mot de passe, ni suppression.
+        $this->actingAs($cabinet)->put("/utilisateurs/{$serviceUser->id}", [
+            'name' => 'Agent Cache', 'email' => $serviceUser->email, 'role' => 'user', 'role_kind' => 'maire_adjoint',
+        ])->assertForbidden();
+        $this->actingAs($cabinet)->put("/utilisateurs/{$admin->id}/mot-de-passe", [
+            'password' => 'nouveaumotdepasse', 'password_confirmation' => 'nouveaumotdepasse',
+        ])->assertForbidden();
+        $this->actingAs($cabinet)->delete("/utilisateurs/{$serviceUser->id}")->assertForbidden();
+
+        // Ses propres comptes : oui.
+        $this->actingAs($cabinet)->delete("/utilisateurs/{$adjoint->id}")->assertRedirect(route('users.index'));
+        $this->assertDatabaseMissing('users', ['id' => $adjoint->id]);
+    }
+
+    public function test_cabinet_cannot_promote_a_special_account_to_admin(): void
+    {
+        $cabinet = User::factory()->create(['role' => UserRole::Fatou]);
+        $adjoint = User::factory()->create(['role' => UserRole::User, 'role_kind' => 'maire_adjoint', 'name' => 'Un Adjoint', 'service' => 'Un Adjoint']);
+
+        $this->actingAs($cabinet)->put("/utilisateurs/{$adjoint->id}", [
+            'name' => 'Un Adjoint', 'email' => $adjoint->email, 'tel' => '22334455', 'role' => 'admin',
+        ])->assertForbidden();
+
+        $this->assertFalse($adjoint->fresh()->isAdmin());
+    }
 }

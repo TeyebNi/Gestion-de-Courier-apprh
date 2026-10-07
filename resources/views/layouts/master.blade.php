@@ -137,11 +137,11 @@
                         </a>
                     </li>
                     @endif
-                    @if(auth()->check() && auth()->user()->canManageUsers())
+                    @if(auth()->check() && (auth()->user()->canManageUsers() || auth()->user()->isFatou()))
                     <li class="{{ request()->is('utilisateurs*') ? 'active' : '' }}">
                         <a href="{{ route('users.index') }}">
                             <i class="now-ui-icons users_single-02"></i>
-                            <p>Les Utilisateurs</p>
+                            <p>{{ auth()->user()->canManageUsers() ? 'Les Utilisateurs' : 'Adjoints, Divisions, Conseillers' }}</p>
                         </a>
                     </li>
                     @endif

@@ -63,6 +63,15 @@ Route::middleware('auth')->group(function () {
     // sinon Laravel essaierait de les faire correspondre à {tabdepot} en premier.
     Route::get('circuit/{tabdepot}/historique', [CircuitController::class, 'historique'])->name('circuit.historique');
 
+    // Comptes : administrateurs habilités, et le Cabinet de Maire pour les
+    // seuls comptes Adjoint au Maire/Division/Chef de Service/Conseiller
+    // (contrôle fait dans UserController::authorizeAccountManagement()).
+    Route::get('utilisateurs', [UserController::class, 'index'])->name('users.index');
+    Route::post('utilisateurs', [UserController::class, 'store'])->name('users.store');
+    Route::put('utilisateurs/{user}', [UserController::class, 'update'])->name('users.update');
+    Route::put('utilisateurs/{user}/mot-de-passe', [UserController::class, 'resetPassword'])->name('users.reset-password');
+    Route::delete('utilisateurs/{user}', [UserController::class, 'destroy'])->name('users.destroy');
+
     // Réservé aux administrateurs (pages de configuration)
     Route::middleware('admin')->group(function () {
 
@@ -72,14 +81,7 @@ Route::middleware('auth')->group(function () {
         Route::put('orientation/{orientation}', [OrientationController::class, 'update'])->name('orientation.update');
         Route::delete('orientation/{orientation}', [OrientationController::class, 'destroy'])->name('orientation.destroy');
 
-        Route::get('utilisateurs', [UserController::class, 'index'])->name('users.index');
         Route::get('utilisateurs/journal', [UserController::class, 'auditLog'])->name('users.audit-log');
         Route::get('utilisateurs/export', [UserController::class, 'exportExcel'])->name('users.export');
-        Route::post('utilisateurs', [UserController::class, 'store'])->name('users.store');
-        Route::put('utilisateurs/{user}', [UserController::class, 'update'])->name('users.update');
-        Route::put('utilisateurs/{user}/mot-de-passe', [UserController::class, 'resetPassword'])->name('users.reset-password');
-        Route::delete('utilisateurs/{user}', [UserController::class, 'destroy'])->name('users.destroy');
-
-        
     });
 });
